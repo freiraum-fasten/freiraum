@@ -119,7 +119,7 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .lb{list-style:none;margin:0;padding:0}
 .lb li{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
 .lb li:last-child{border-bottom:0}
-.lb .rank{width:22px;font-weight:800;color:var(--muted);text-align:center}
+.lb .rank{width:28px;font-weight:800;color:var(--muted);text-align:center;font-size:17px}
 .lb .av{width:42px;height:42px;border-radius:14px;background:var(--soft);display:grid;place-items:center;font-size:22px;flex:none}
 .lb .who{flex:1;min-width:0}
 .lb .who b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -175,6 +175,30 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 .lb li.tap{cursor:pointer}
 .sheet{max-height:88dvh;overflow:auto}
 .sheet img.full{width:100%;border-radius:14px;margin:12px 0;background:var(--soft)}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.stats3 div{background:var(--card);border-radius:18px;padding:12px 6px;text-align:center;box-shadow:var(--shadow)}
+.stats3 b{display:block;font-size:22px;font-weight:800;letter-spacing:-.02em}
+.stats3 span{font-size:12px;color:var(--muted);font-weight:600}
+.mecard{position:relative;border-radius:var(--r);padding:18px 18px 16px;margin-bottom:16px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(135deg,var(--flame1),var(--flame2)) border-box;border:2.5px solid transparent;box-shadow:0 10px 28px rgba(255,61,90,.16)}
+.mehead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.youtag{background:linear-gradient(135deg,var(--flame1),var(--flame2));color:#fff;font-weight:800;font-size:12px;letter-spacing:.12em;padding:5px 10px;border-radius:99px}
+.merow{display:flex;align-items:center;gap:12px}
+.bigrank{display:flex;flex-direction:column;align-items:center;font-size:34px;font-weight:800;line-height:1;letter-spacing:-.03em;min-width:58px}
+.bigrank small{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:0}
+.av.big{width:52px;height:52px;border-radius:16px;background:var(--soft);display:grid;place-items:center;font-size:28px;flex:none}
+.mecard .who b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mecard .who span{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.mestats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.mestats div{background:var(--soft);border-radius:14px;padding:10px 4px;text-align:center;display:flex;flex-direction:column;align-items:center}
+.mestats svg{width:18px;height:18px;margin-bottom:2px}
+.mestats b{font-size:20px;font-weight:800}
+.mestats span{font-size:11px;color:var(--muted);font-weight:600}
+.strip{display:grid;grid-template-columns:repeat(40,1fr);gap:2px;margin-top:12px}
+.strip i{height:14px;border-radius:3px;background:var(--soft)}
+.strip i.ok{background:linear-gradient(180deg,var(--flame1),var(--flame2))}
+.strip i.no{background:var(--no);opacity:.55}
+.strip i.t{outline:1.5px solid var(--ink)}
+.status.bad{background:var(--nobg);color:var(--no)}
 .countdown div{background:var(--soft);border-radius:16px;padding:12px 0;width:76px;text-align:center}
 .countdown b{display:block;font-size:28px;font-weight:800;letter-spacing:-.03em}
 .countdown span{font-size:12px;color:var(--muted);font-weight:600}
@@ -215,7 +239,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
       <label class="field"><span>E-Mail</span><input class="input" id="inEmail" type="email" autocomplete="email" inputmode="email" placeholder="name@beispiel.de"></label>
       <label class="field"><span>Passwort</span><input class="input" id="inPw" type="password" autocomplete="current-password" placeholder="mind. 8 Zeichen"></label>
       <div id="regFields" class="hidden">
-        <label class="field"><span>Dein Spitzname (sieht deine Gruppe)</span><input class="input" id="inName" maxlength="24" placeholder="z. B. Lena oder Sonnenschein" autocomplete="off"></label>
+        <label class="field"><span>Dein Spitzname (sehen alle in der Rangliste)</span><input class="input" id="inName" maxlength="24" placeholder="z. B. Lena oder Sonnenschein" autocomplete="off"></label>
         <div class="field"><span>Dein Symbol</span><div class="emojis" id="emojiPick"></div></div>
         <p class="muted small" style="margin:0 4px 12px">🔒 Deine E-Mail sieht niemand außer den Admins. Kein Tracking, keine Werbung.</p>
       </div>
@@ -251,7 +275,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 
 <nav class="tabbar hidden" id="tabbar">
   <button data-t="today" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.8 4.3-1.6 6.7-3.6 9C6.9 13.8 6 15.4 6 17.5 6 20 8.7 22 12 22s6-2 6-5c0-2.3-1-4-2.4-5.3-.2 1.5-.9 2.4-2 2.9.9-4.1-.3-7.8-1.6-11.6z"/></svg>Heute</button>
-  <button data-t="group"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.7-3.4 3.3-5.5 6.5-5.5s5.8 2.1 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M17.5 14.5c2.2.3 3.6 1.9 4 4.5"/></svg>Gruppe</button>
+  <button data-t="group"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.7-3.4 3.3-5.5 6.5-5.5s5.8 2.1 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M17.5 14.5c2.2.3 3.6 1.9 4 4.5"/></svg>Rangliste</button>
   <button data-t="admin" id="tabAdmin" class="hidden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4 5.5v6c0 5 3.4 8.8 8 10 4.6-1.2 8-5 8-10v-6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Admin</button>
   <button data-t="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></svg>Infos</button>
 </nav>
@@ -262,7 +286,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "6";
+const APP_VERSION = "7";
 const START = "2026-11-14", END = "2026-12-23", DAYS = 40, GRACE = 2;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -489,7 +513,7 @@ function renderToday(){
     html += calendarCard(s, today);
   }
   $("#vToday").innerHTML = html;
-  $("#goInvite")?.addEventListener("click", ()=>{ tab="group"; show(); });
+  $("#goInvite")?.addEventListener("click", invite);
   $("#goAdmin")?.addEventListener("click", ()=>{ tab="admin"; show(); });
   $("#goSetup")?.addEventListener("click", ()=>{ tab="info"; show(); setTimeout(()=>{ const d=$("#dSetup"); if(d){d.open=true;d.scrollIntoView({behavior:"smooth"});} },50); });
   document.querySelectorAll("#vToday [data-up]").forEach(b=>b.addEventListener("click", ()=>uploadFlow(b.dataset.up)));
@@ -500,7 +524,7 @@ function checkinCard(s, today){
     const ok = e.success;
     return `<div class="card"><div class="done">
       <div class="badge ${ok?"ok":"no"}">${ok?"✅":"⏱️"}</div>
-      <div style="flex:1"><b style="font-size:17px">${ok?"Heute geschafft!":"Heute nicht geschafft"}</b>
+      <div style="flex:1"><b style="font-size:17px;${ok?"":"color:var(--no)"}">${ok?"Heute geschafft!":"Heute ungültig ❌"}</b>
       <div class="muted small" style="margin-top:2px">${ok? e.minutes+" Min. Social Media – stark!" : (e.valid===false?"Ein Admin oder dein Gruppenleiter hat den Screenshot abgelehnt.":e.minutes+" Min. – über dem Limit von "+LIMIT+" Min. Keine Flamme, morgen neu angreifen! 💪")}</div></div>
     </div><button class="linkbtn" data-up="${today}">Neuen Screenshot hochladen</button></div>`;
   }
@@ -709,12 +733,14 @@ async function analyse(root, files, day, test){
     </div></div>
     <div class="status ${dateOk?"ok":"warn"}">${dateOk?"✅ Datum passt":"⚠️ Datum im Screenshot nicht erkannt – wird von einem Admin geprüft."}</div>
     <div class="minutes"><label for="minIn">Social-Media-Minuten gesamt</label><input id="minIn" type="number" inputmode="numeric" min="0" max="1440" value="${total}"></div>
-    <div class="status" id="limitInfo" style="background:var(--soft);color:var(--muted)"></div>
+    <div class="status" id="limitInfo" style="font-size:15px"></div>
     <div class="muted small" style="margin:8px 4px 0">Messenger wie WhatsApp oder Telegram zählen nicht. Änderst du die Zahl, sehen das die Prüfer.</div>
     ${test ? `<details style="margin-top:8px"><summary class="small">Erkannter Text (für Admins)</summary><pre style="white-space:pre-wrap;font-size:11px;max-height:180px;overflow:auto">${esc(text)}</pre></details>` : ""}
     <button class="btn btn-primary" id="sendShot" style="margin-top:14px">${test?"Test speichern":"Eintragen"}</button>`;
   const upd = ()=>{ const v = parseInt(root.querySelector("#minIn").value,10); const li = root.querySelector("#limitInfo");
-    li.textContent = Number.isNaN(v) ? "" : v <= LIMIT ? `🔥 Max. ${LIMIT} Min. eingehalten – das gibt eine Flamme!` : `✕ Über ${LIMIT} Min. – der Tag zählt als nicht geschafft (keine Flamme).`; };
+    if (Number.isNaN(v)){ li.textContent=""; li.className="status"; return; }
+    if (v <= LIMIT){ li.className="status ok"; li.textContent=`✅ GÜLTIG – ${v} Min. Social Media, max. ${LIMIT} erlaubt. Das gibt eine Flamme! 🔥`; }
+    else { li.className="status bad"; li.textContent=`❌ UNGÜLTIG – ${v} Min. Social Media, erlaubt sind max. ${LIMIT}. Keine Flamme, der Tag zählt als nicht geschafft.`; } };
   root.querySelector("#minIn").oninput = upd; upd();
   root.querySelector("#sendShot").onclick = async ()=>{
     const btn = root.querySelector("#sendShot"); btn.disabled = true;
@@ -731,58 +757,75 @@ async function analyse(root, files, day, test){
       await rpc("sf_upload",{p_token:T(),p_day:day,p_minutes:minutes,p_shot:shot,p_ocr_minutes:ocrMin,p_date_ok:dateOk});
       closeSheet(); done(); await refresh(); show();
       if (minutes <= LIMIT){ confetti(); navigator.vibrate?.(30); $("#bigFlame")?.classList.add("pop"); toast("🔥 Stark! Deine Flamme wächst."); }
-      else toast(`Hochgeladen. Über ${LIMIT} Min. – zählt als nicht geschafft, keine Flamme.`);
+      else toast(`❌ Ungültig: über ${LIMIT} Min. – keine Flamme heute.`);
     }catch(err){ toast(err.message); btn.disabled = false; }
   };
 }
 
-/* ---------- Gruppe ---------- */
+/* ---------- Rangliste (eine gemeinsame Gruppe für alle) ---------- */
+function rankRows(){
+  let rows = group.members.map(m=>({m, s:statsFor(m)}));
+  const key = rankMode==="streak" ? (r=>[r.s.streak, r.s.total]) : (r=>[r.s.validDays, -r.s.minutes]);
+  const better = (a,b)=>{ const ka=key(a), kb=key(b); return ka[0]>kb[0] || (ka[0]===kb[0] && ka[1]>kb[1]); };
+  rows.forEach(r=>{ r.rank = 1 + rows.filter(o=>better(o,r)).length; });   // Gleichstand = gleicher Platz
+  rows.sort((a,b)=> a.rank-b.rank || a.m.name.localeCompare(b.m.name));
+  return rows;
+}
 function renderGroup(){
   if (!group){ $("#vGroup").innerHTML = `<div class="loader"></div>`; return; }
-  const today = berlinToday();
-  const meM = myMember(), canReview = !!meM?.leader || !!acc?.admin;
-  let rows = group.members.map(m=>({m, s:statsFor(m)}));
-  if (rankMode==="streak") rows.sort((a,b)=> b.s.streak-a.s.streak || b.s.total-a.s.total || a.m.name.localeCompare(b.m.name));
-  else rows.sort((a,b)=> b.s.validDays-a.s.validDays || a.s.minutes-b.s.minutes || a.m.name.localeCompare(b.m.name));
-  const doneToday = rows.filter(r=>r.s.todayEntry).length;
+  const today = berlinToday(), active = inWindow(today), canReview = !!acc?.admin;
+  const rows = rankRows();
+  const mine = rows.find(r=>r.m.id===acc.member_id);
+  const n = rows.length;
   const succToday = rows.filter(r=>r.s.todayEntry?.success).length;
-  const active = inWindow(today);
-  const list = rows.map((r,i)=>{
-    const e = r.s.todayEntry;
-    let sub, right;
-    if (rankMode==="streak"){
-      sub = !active ? r.s.total+" Tage geschafft" : e ? (e.success?`<span class="dot" style="background:var(--ok)"></span>heute geschafft`:`<span class="dot" style="background:var(--no)"></span>heute nicht geschafft`) : `<span class="dot" style="background:var(--line)"></span>heute noch offen`;
-      right = `<div class="st"><svg class="${r.s.streak?"":"flame off"}"><use href="#flame"/></svg>${r.s.streak}</div>`;
-    } else {
-      sub = `${r.s.validDays} ${r.s.validDays===1?"Tag":"Tage"} geschafft${r.s.missed?` · ${r.s.missed} nicht geschafft`:""}`;
-      right = `<div style="text-align:right"><b style="font-size:17px">${r.s.minutes}</b><div class="muted small">Min.</div></div>`;
-    }
+  const flamesAll = rows.reduce((a,r)=>a+r.s.total,0);
+  const statusOf = r => { const e=r.s.todayEntry; return !active ? "" : e ? (e.success?`<span class="dot" style="background:var(--ok)"></span>heute geschafft`:`<span class="dot" style="background:var(--no)"></span>heute ungültig`) : `<span class="dot" style="background:var(--line)"></span>heute noch offen`; };
+  const valueOf = r => rankMode==="streak"
+    ? `<div class="st"><svg class="${r.s.streak?"":"flame off"}"><use href="#flame"/></svg>${r.s.streak}</div>`
+    : `<div style="text-align:right"><b style="font-size:17px">${r.s.validDays}</b><div class="muted small">${r.s.minutes} Min.</div></div>`;
+  const medal = k => k===1?"🥇":k===2?"🥈":k===3?"🥉":k;
+  const list = rows.filter(r=>r!==mine).map(r=>{
     const flags = canReview ? (r.m.checkins||[]).filter(c=>!c.reviewed && (c.edited || c.date_ok===false)).length : 0;
-    return `<li class="${r.m.id===acc.member_id?"me":""} ${canReview?"tap":""}" data-mid="${r.m.id}"><div class="rank">${i+1}</div><div class="av">${esc(r.m.emoji)}</div>
-      <div class="who"><b>${esc(r.m.name)}${r.m.id===acc.member_id?" (du)":""}${r.m.leader?" 👑":""}</b><span>${sub}${flags?` · <span class="flag">⚠️ ${flags}</span>`:""}</span></div>${right}</li>`;
+    return `<li class="${canReview?"tap":""}" data-mid="${r.m.id}"><div class="rank">${medal(r.rank)}</div><div class="av">${esc(r.m.emoji)}</div>
+      <div class="who"><b>${esc(r.m.name)}</b><span>${statusOf(r) || (r.s.total+" 🔥 gesamt")}${flags?` · <span class="flag">⚠️ ${flags}</span>`:""}</span></div>${valueOf(r)}</li>`;
   }).join("");
+  // eigene 40-Tage-Leiste
+  let strip = "";
+  for (let i=0;i<DAYS;i++){ const d=addDays(START,i), e=mine?.s.map[d]; strip += `<i class="${e?(e.success?"ok":"no"):""} ${d===today?"t":""}"></i>`; }
   $("#vGroup").innerHTML = `
-    <div class="card">
-      <div class="muted small" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em">Deine Gruppe</div>
-      <h2 style="font-size:26px;margin-top:4px">${esc(group.name)}</h2>
-      <div class="muted small" style="margin-top:4px">${group.members.length} ${group.members.length===1?"Person":"Personen"}${active?` · heute ${succToday}/${group.members.length} geschafft`:""}</div>
-      <div class="code-box"><div><div class="muted small" style="font-weight:600">Gruppen-Code</div><b>${esc(group.code)}</b></div><button class="pill" id="btnCopyCode">Kopieren</button></div>
-      <button class="btn btn-flame" id="btnInvite">Freunde einladen</button>
+    <div class="stats3">
+      <div><b>${n}</b><span>dabei</span></div>
+      <div><b>${active?succToday:"–"}</b><span>heute 🔥</span></div>
+      <div><b>${flamesAll}</b><span>🔥 gesamt</span></div>
     </div>
-    <div class="card">
-      <div class="seg" id="segRank"><button data-r="streak" class="${rankMode==="streak"?"on":""}">🔥 Flammen</button><button data-r="comp" class="${rankMode==="comp"?"on":""}">🏆 Wettbewerb</button></div>
-      <div class="muted small" style="margin:-4px 2px 8px;line-height:1.5">${rankMode==="streak" ? `Sortiert nach Flammen-Serie (Tage in Folge mit max. ${LIMIT} Min.).` : "Wer die meisten geschafften Tage hat, liegt vorn. Bei Gleichstand gewinnt, wer an diesen Tagen insgesamt weniger Minuten hatte. Tage über dem Limit zählen wie vergessene Tage."}${canReview?"<br><b>Prüfen:</b> Tippe auf eine Person, um ihre Screenshots zu sehen.":""}</div>
-      <ul class="lb">${list}</ul></div>
-    <p class="muted small" style="text-align:center">${active && doneToday<group.members.length ? "Erinnere die anderen ans Hochladen 😉" : ""}</p>`;
-  const link = `${location.origin}${location.pathname}?g=${group.code}`;
-  const text = `Mach mit bei „${group.name}“: 40 Tage Social-Media-Fasten bis Weihnachten – max. ${LIMIT} Minuten am Tag. 🔥 Code: ${group.code}`;
-  $("#btnCopyCode").onclick = ()=>copy(group.code, "Code kopiert");
-  $("#btnInvite").onclick = async ()=>{
-    if (navigator.share){ try{ await navigator.share({title:"Freiraum",text,url:link}); return; }catch(e){ if(e.name==="AbortError") return; } }
-    copy(text+"\n"+link, "Einladung kopiert – jetzt in WhatsApp einfügen");
-  };
+    ${mine ? `<div class="mecard">
+      <div class="mehead"><span class="youtag">DU</span><span class="muted small">${rankMode==="streak"?"Flammen-Rangliste":"Wettbewerb"}</span></div>
+      <div class="merow">
+        <div class="bigrank"><small>Platz</small>${mine.rank}<small>von ${n}</small></div>
+        <div class="av big">${esc(mine.m.emoji)}</div>
+        <div class="who" style="flex:1;min-width:0"><b style="font-size:19px">${esc(mine.m.name)}</b><span>${statusOf(mine) || "Start am 14. November"}</span></div>
+      </div>
+      <div class="mestats">
+        <div><svg class="${mine.s.streak?"":"flame off"}"><use href="#flame"/></svg><b>${mine.s.streak}</b><span>in Folge</span></div>
+        <div><b>${mine.s.total}</b><span>🔥 geschafft</span></div>
+        <div><b>${mine.s.minutes}</b><span>Min. gesamt</span></div>
+      </div>
+      <div class="strip">${strip}</div>
+    </div>` : ""}
+    <div class="seg" id="segRank"><button data-r="streak" class="${rankMode==="streak"?"on":""}">🔥 Flammen</button><button data-r="comp" class="${rankMode==="comp"?"on":""}">🏆 Wettbewerb</button></div>
+    <p class="muted small" style="margin:-6px 4px 12px;line-height:1.5">${rankMode==="streak" ? `Sortiert nach Flammen in Folge (Tage mit max. ${LIMIT} Min.). Gleichstand = gleicher Platz.` : `Wer die meisten geschafften Tage hat, liegt vorn. Bei Gleichstand gewinnt, wer weniger Minuten hatte. Ungültige Tage zählen nicht.`}${canReview?" <b>Admin:</b> Tippe auf eine Person, um Screenshots zu prüfen.":""}</p>
+    <div class="card" style="padding:8px 20px"><ul class="lb">${list || `<li><div class="who"><span>Noch niemand sonst dabei – lade Freunde ein!</span></div></li>`}</ul></div>
+    <button class="btn btn-flame" id="btnInvite" style="margin-bottom:14px">Freunde einladen</button>`;
+  $("#btnInvite").onclick = invite;
   $("#segRank").onclick = e => { const b=e.target.closest("button"); if(!b) return; rankMode=b.dataset.r; renderGroup(); };
-  if (canReview) document.querySelectorAll("#vGroup .lb li").forEach(li=>li.onclick=()=>memberSheet(li.dataset.mid));
+  if (canReview) document.querySelectorAll("#vGroup .lb li[data-mid]").forEach(li=>li.onclick=()=>memberSheet(li.dataset.mid));
+  if (canReview && mine) $("#vGroup .mecard").onclick = ()=>memberSheet(mine.m.id);
+}
+async function invite(){
+  const link = `${location.origin}${location.pathname}`;
+  const text = `Mach mit bei Freiraum: 40 Tage Social-Media-Fasten bis Weihnachten – max. ${LIMIT} Minuten am Tag. 🔥 Einfach registrieren und du bist dabei:`;
+  if (navigator.share){ try{ await navigator.share({title:"Freiraum",text,url:link}); return; }catch(e){ if(e.name==="AbortError") return; } }
+  copy(text+"\n"+link, "Einladung kopiert – jetzt in WhatsApp einfügen");
 }
 function memberSheet(mid){
   const m = group.members.find(x=>x.id===mid); if (!m) return;
@@ -939,7 +982,8 @@ function renderInfo(){
         <li>Vergessen? Du kannst einen Tag noch <b>bis zu 2 Tage später</b> nachtragen – danach ist er weg.</li>
         <li>Max. ${LIMIT} Min. = <b>geschafft 🔥</b>. Mehr als ${LIMIT} Min. = <b>nicht geschafft</b> – du kannst trotzdem hochladen, bekommst aber keine Flamme. Tage in Folge = deine Flammen-Serie.</li>
         <li><b>🏆 Wettbewerb:</b> Wer die meisten geschafften Tage hat, liegt vorn. Bei Gleichstand gewinnt, wer an diesen Tagen insgesamt weniger Minuten hatte.</li>
-        <li>Gruppenleiter 👑 und Admins 🛡️ können Screenshots prüfen und falsche Tage korrigieren oder als ungültig markieren. Ehrlich bleiben!</li>
+        <li>Alle, die sich registrieren, sind in <b>einer gemeinsamen Rangliste</b>. Am Anfang ist jeder auf Platz 1. Du siehst dich immer ganz oben.</li>
+        <li>Admins 🛡️ können Screenshots prüfen und falsche Tage korrigieren oder als ungültig markieren. Ehrlich bleiben!</li>
       </ol>
     </div>
     <div class="card"><h3 style="font-size:17px;margin-bottom:10px">📵 Was zählt als Social Media?</h3>${platformsHtml()}</div>
@@ -958,8 +1002,8 @@ function renderInfo(){
       <h3 style="font-size:17px;margin-bottom:8px">🔒 Datenschutz & Sicherheit</h3>
       <ul class="steps" style="padding-left:18px">
         <li>Gespeichert werden: E-Mail, Passwort (nur verschlüsselt, niemand kann es lesen), Spitzname, Symbol, Gruppe, deine Minuten und Screenshots (verkleinert).</li>
-        <li>Deine E-Mail sehen nur Admins. Deine Gruppe sieht nur Spitzname, Symbol und Minuten.</li>
-        <li>Deine Screenshots sehen nur dein Gruppenleiter und die Admins – nicht die anderen Mitglieder.</li>
+        <li>Deine E-Mail sehen nur Admins. Die anderen sehen nur Spitzname, Symbol, Flammen und Minuten.</li>
+        <li>Deine Screenshots sehen nur die Admins – nicht die anderen Teilnehmer.</li>
         <li>Die Texterkennung läuft komplett auf deinem Handy. Kein Bild geht an eine KI-Firma.</li>
         <li>Keine Werbung, kein Tracking, keine Cookies, keine Daten an Google & Co.</li>
         <li>Am 31.01.2027 werden alle Daten automatisch gelöscht.</li>
@@ -973,16 +1017,20 @@ function renderInfo(){
         <div style="min-width:0"><b style="font-size:18px">${esc(acc.name)}${acc.admin?" 🛡️":""}</b><div class="muted small" style="word-break:break-all">${esc(acc.email)}</div></div></div>
       <button class="btn btn-ghost" id="btnEdit" style="margin-bottom:10px">Name & Symbol ändern</button>
       <button class="btn btn-ghost" id="btnPw" style="margin-bottom:10px">Passwort ändern</button>
-      ${acc.member_id ? `<button class="btn btn-ghost" id="btnLeave" style="margin-bottom:10px;color:var(--no)">Gruppe verlassen</button>` : ""}
-      <button class="btn btn-ghost" id="btnLogout">Abmelden</button>
+      
+      <button class="btn btn-ghost" id="btnLogout" style="margin-bottom:10px">Abmelden</button>
+      <button class="btn btn-ghost" id="btnDel" style="color:var(--no)">Konto löschen</button>
     </div>
     <p class="muted small" style="text-align:center;margin-top:20px">Freiraum · 40 Tage Social-Media-Fasten 🎄</p>`;
   $("#btnEdit").onclick = editProfile;
   $("#btnPw").onclick = changePw;
   $("#btnLogout").onclick = async ()=>{ try{ await rpc("sf_logout",{p_token:T()}); }catch{} logoutLocal(); };
-  $("#btnLeave")?.addEventListener("click", ()=>confirmSheet("Gruppe wirklich verlassen? Deine Flammen und Einträge werden gelöscht.", async ()=>{
-    try{ await rpc("sf_leave2",{p_token:T()}); await refresh(); tab="today"; show(); toast("Gruppe verlassen"); }catch(err){ toast(err.message); }
-  }));
+  $("#btnDel").onclick = ()=>sheet(`<h3 style="margin-bottom:6px">Konto löschen?</h3><p class="muted small" style="margin:0 0 12px">Alle deine Daten, Screenshots und Flammen werden sofort gelöscht. Das geht nicht rückgängig.</p>
+    <label class="field"><span>Zur Sicherheit: dein Passwort</span><input class="input" id="delPw" type="password" autocomplete="current-password"></label>
+    <button class="btn" id="delYes" style="background:var(--no);color:#fff;margin-bottom:10px">Endgültig löschen</button><button class="btn btn-ghost" id="delNo">Abbrechen</button>`, r=>{
+      r.querySelector("#delNo").onclick = closeSheet;
+      r.querySelector("#delYes").onclick = async ()=>{ try{ await rpc("sf_delete_account",{p_token:T(),p_password:r.querySelector("#delPw").value}); closeSheet(); logoutLocal(); toast("Konto gelöscht"); }catch(err){ toast(err.message); } };
+    });
 }
 function editProfile(){
   let em = acc.emoji;
@@ -1029,7 +1077,7 @@ function show(){
   $("#vOnboard").classList.toggle("hidden", logged);
   $("#tabbar").classList.toggle("hidden", !logged);
   $("#tabAdmin").classList.toggle("hidden", !(logged && acc.admin));
-  $("#topPill").textContent = hasGroup && group ? group.name : "bis Weihnachten";
+  $("#topPill").textContent = "bis Weihnachten 🎄";
   const needGroup = logged && !hasGroup && (tab==="today" || tab==="group");
   $("#vNoGroup").classList.toggle("hidden", !needGroup);
   ["today","group","info","admin"].forEach(t=>$("#v"+t[0].toUpperCase()+t.slice(1)).classList.toggle("hidden", !logged || needGroup || tab!==t));
