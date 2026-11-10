@@ -14,7 +14,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-180.png">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://jrbfbvlwngvjzddfuesu.supabase.co; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://jrbfbvlwngvjzddfuesu.supabase.co; manifest-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <style>
 @font-face{font-family:"Plus Jakarta Sans";src:url("font.woff2") format("woff2");font-weight:200 800;font-display:swap}
@@ -158,6 +158,23 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .hint{display:flex;gap:10px;align-items:flex-start;padding:14px;border-radius:16px;background:var(--soft);font-size:14px;line-height:1.5;margin-bottom:14px}
 .countdown{display:flex;justify-content:center;gap:10px;margin:18px 0 4px}
+.shotwrap{display:flex;gap:14px;align-items:flex-start;margin:14px 0}
+.shotwrap img{width:84px;border-radius:12px;box-shadow:var(--shadow);flex:none}
+.approw{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-weight:600;font-size:15px}
+.approw:last-child{border-bottom:0}
+.status{display:flex;gap:8px;align-items:flex-start;padding:10px 12px;border-radius:12px;font-size:14px;font-weight:600;line-height:1.4;margin-top:10px}
+.status.ok{background:var(--okbg);color:var(--ok)} .status.warn{background:#FFF3DC;color:#A15C00}
+@media (prefers-color-scheme:dark){.status.warn{background:#3A2B10;color:#FFB547}}
+.bar{height:6px;background:var(--soft);border-radius:9px;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--flame1),var(--flame2));transition:width .3s}
+.daylist .row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px}
+.daylist .row:last-child{border-bottom:0}
+.daylist .row b{flex:1;font-weight:600}
+.flag{font-size:12px;padding:3px 7px;border-radius:8px;background:var(--soft);font-weight:700;color:var(--muted)}
+.flag.bad{background:var(--nobg);color:var(--no)}
+.lb li.tap{cursor:pointer}
+.sheet{max-height:88dvh;overflow:auto}
+.sheet img.full{width:100%;border-radius:14px;margin:12px 0;background:var(--soft)}
 .countdown div{background:var(--soft);border-radius:16px;padding:12px 0;width:76px;text-align:center}
 .countdown b{display:block;font-size:28px;font-weight:800;letter-spacing:-.03em}
 .countdown span{font-size:12px;color:var(--muted);font-weight:600}
@@ -225,7 +242,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const START = "2026-11-14", END = "2026-12-23", DAYS = 40, LIMIT = 30;
+const START = "2026-11-14", END = "2026-12-23", DAYS = 40, LIMIT = 30, GRACE = 2;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
 
 /* 40 Impulse – je ein Gedanke + eine Offline-Mini-Challenge */
@@ -326,9 +343,14 @@ function statsFor(m){
   let d = map[today] ? today : addDays(today,-1);
   while (inWindow(d) && map[d] && map[d].success) { streak++; d = addDays(d,-1); }
   const total = (m.checkins||[]).filter(c=>c.success).length;
+  const validList = (m.checkins||[]).filter(c=>c.valid!==false);
+  const validDays = validList.length;
+  const minutes = validList.reduce((a,c)=>a+(c.minutes||0),0);
+  let missed = 0; // Tage, deren Frist abgelaufen ist, ohne gültigen Eintrag
+  for (let i=0;i<DAYS;i++){ const dd=addDays(START,i); if (diffDays(today,dd) > GRACE && !(map[dd] && map[dd].valid!==false)) missed++; }
   let best=0, run=0;
   for (let i=0;i<DAYS;i++){ const dd=addDays(START,i); if(map[dd]&&map[dd].success){run++;best=Math.max(best,run);} else run=0; }
-  return { map, streak, total, best, todayEntry: map[today] };
+  return { map, streak, total, best, validDays, minutes, missed, todayEntry: map[today] };
 }
 const myMember = () => group?.members.find(m => m.id === me?.member_id);
 
@@ -424,11 +446,14 @@ function renderToday(){
       <div class="progress"><i style="width:${pct}%"></i></div>`;
     html += `<div class="card"><div class="streak">
       <svg class="flame ${s.streak? "":"off"}" id="bigFlame"><use href="#flame"/></svg>
-      <div><div class="num">${s.streak}</div><div class="sub">${s.streak===1?"Tag in Folge":"Tage in Folge"} · ${s.total} gesamt</div></div>
+      <div><div class="num">${s.streak}</div><div class="sub">${s.streak===1?"Tag in Folge":"Tage in Folge"} · ${s.minutes} Min. gesamt</div></div>
     </div></div>`;
     html += checkinCard(s, today);
-    const y = addDays(today,-1);
-    if (inWindow(y) && !s.map[y]) html += `<div class="card" style="padding:16px 20px"><div class="sectionhead"><div><b>Gestern vergessen?</b><div class="muted small">${esc(fmtDate(y))}</div></div><button class="pill" id="btnYesterday">Nachtragen</button></div></div>`;
+    const open = [1,2].map(n=>addDays(today,-n)).filter(d=>inWindow(d) && !s.map[d]);
+    open.forEach(d=>{
+      const left = GRACE - diffDays(today,d);
+      html += `<div class="card" style="padding:16px 20px"><div class="sectionhead"><div><b>${esc(fmtDate(d))} fehlt</b><div class="muted small">${left===0?"Heute letzte Chance!":"Noch bis morgen nachtragbar"}</div></div><button class="pill" data-up="${d}">Nachtragen</button></div></div>`;
+    });
     html += impulseCard(idx-1, `Impuls · Tag ${idx}`);
     html += calendarCard(s, today);
   }
@@ -436,47 +461,148 @@ function renderToday(){
 
   $("#goInvite")?.addEventListener("click", ()=>{ tab="group"; show(); });
   $("#goSetup")?.addEventListener("click", ()=>{ tab="info"; show(); setTimeout(()=>{ const d=$("#dSetup"); if(d){d.open=true;d.scrollIntoView({behavior:"smooth"});} },50); });
-  $("#btnYesterday")?.addEventListener("click", ()=>askCheckin(addDays(today,-1)));
-  document.querySelectorAll("[data-ci]").forEach(b=>b.addEventListener("click", ()=>doCheckin(today, b.dataset.ci==="1")));
-  $("#btnChange")?.addEventListener("click", ()=>askCheckin(today));
+  document.querySelectorAll("[data-up]").forEach(b=>b.addEventListener("click", ()=>uploadFlow(b.dataset.up)));
 }
 function checkinCard(s, today){
   const e = s.todayEntry;
   if (e){
+    const ok = e.success;
     return `<div class="card"><div class="done">
-      <div class="badge ${e.success?"ok":"no"}">${e.success?"✅":"💪"}</div>
-      <div style="flex:1"><b style="font-size:17px">${e.success?"Heute geschafft!":"Heute nicht geklappt"}</b>
-      <div class="muted small" style="margin-top:2px">${e.success? (e.minutes!=null? e.minutes+" Minuten Social Media – stark!":"Deine Flamme brennt weiter."):"Kein Problem – morgen ist ein neuer Tag."}</div></div>
-    </div><button class="linkbtn" id="btnChange">Ändern</button></div>`;
+      <div class="badge ${ok?"ok":"no"}">${ok?"✅":"⏱️"}</div>
+      <div style="flex:1"><b style="font-size:17px">${ok?"Heute geschafft!":(e.valid===false?"Vom Gruppenleiter nicht anerkannt":"Heute über dem Limit")}</b>
+      <div class="muted small" style="margin-top:2px">${e.minutes} Min. Social Media${ok?" – stark!":(e.valid===false?"":" – zählt trotzdem für den Wettbewerb.")}</div></div>
+    </div><button class="linkbtn" data-up="${today}">Neuen Screenshot hochladen</button></div>`;
   }
   return `<div class="card">
-    <p class="q">Hast du heute max. ${LIMIT} Minuten Social Media genutzt?</p>
-    <div class="muted small">Am besten abends eintragen. Ehrlich bleiben – es geht um dich.</div>
-    <div class="minutes"><label for="inMin">Minuten laut Bildschirmzeit (optional)</label><input id="inMin" type="number" inputmode="numeric" min="0" max="1440" placeholder="–"></div>
-    <div class="choice">
-      <button class="yes" data-ci="1"><span class="ic">✓</span>Geschafft</button>
-      <button class="no" data-ci="0"><span class="ic">✕</span>Nicht geschafft</button>
-    </div></div>`;
+    <p class="q">Deine Social-Media-Zeit für heute</p>
+    <div class="muted small" style="line-height:1.5">Am besten abends: Screenshot von deiner Bildschirmzeit machen und hier hochladen. Die Minuten werden direkt auf deinem Handy ausgelesen.</div>
+    <button class="btn btn-flame" data-up="${today}" style="margin-top:16px">📷 Screenshot hochladen</button>
+    <div class="muted small" style="text-align:center;margin-top:10px">Max. ${LIMIT} Min. = 🔥 · Vergessen? Du hast 2 Tage Zeit zum Nachtragen.</div>
+  </div>`;
 }
-function askCheckin(day){
-  sheet(`<h3 style="margin-bottom:4px">${esc(fmtDate(day))}</h3>
-    <p class="muted small" style="margin:0 0 6px">Max. ${LIMIT} Minuten Social Media eingehalten?</p>
-    <div class="minutes"><label for="inMin2">Minuten (optional)</label><input id="inMin2" type="number" inputmode="numeric" min="0" max="1440" placeholder="–"></div>
-    <div class="choice"><button class="yes" data-v="1"><span class="ic">✓</span>Geschafft</button><button class="no" data-v="0"><span class="ic">✕</span>Nicht geschafft</button></div>`,
-    root => root.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{ const v=root.querySelector("#inMin2").value; closeSheet(); doCheckin(day, b.dataset.v==="1", v); }));
+
+/* ---------- Screenshot + Texterkennung (läuft komplett auf dem Handy) ---------- */
+const SOCIAL = [
+  ["Instagram",/insta\s?gram/i],["TikTok",/tik\s?tok/i],["YouTube",/you\s?tube/i],["Snapchat",/snap\s?chat/i],
+  ["Facebook",/face\s?book/i],["X / Twitter",/twitter|^\s*x\s*$/i],["Threads",/threads/i],["Pinterest",/pinterest/i],
+  ["Reddit",/reddit/i],["BeReal",/be\s?real/i],["Twitch",/twitch/i],["Tumblr",/tumblr/i],["Lemon8",/lemon\s?8/i],["Likee",/likee/i]
+];
+let ocrWorker = null, ocrProgress = null;
+async function getOcr(){
+  if (ocrWorker) return ocrWorker;
+  if (!window.Tesseract) await new Promise((res,rej)=>{ const sc=document.createElement("script"); sc.src="ocr/tesseract.min.js"; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); });
+  const base = new URL(".", location.href).href;
+  ocrWorker = await Tesseract.createWorker(["deu","eng"], 1, {
+    workerPath: base+"ocr/worker.min.js", corePath: base+"ocr/core/", langPath: base+"ocr/lang",
+    gzip: true, workerBlobURL: false, logger: m => ocrProgress && ocrProgress(m)
+  });
+  return ocrWorker;
 }
-async function doCheckin(day, success, minutesRaw){
-  const raw = minutesRaw ?? $("#inMin")?.value;
-  let minutes = raw==="" || raw==null ? null : Math.max(0, Math.min(1440, parseInt(raw,10)));
-  if (Number.isNaN(minutes)) minutes = null;
-  if (success && minutes!=null && minutes > LIMIT){ toast(`${minutes} Min. sind über dem Limit – dann zählt es leider nicht`); return; }
+function parseDur(str){
+  const s = str.toLowerCase().replace(/[,|]/g," ");
+  let h=0, m=0, found=false;
+  const hm = s.match(/(\d{1,2})\s*(std|stunden?|h|hr|hrs|hours?)(?![a-z])/); if (hm){ h=+hm[1]; found=true; }
+  const mm = s.match(/(\d{1,3})\s*(min|minuten?|minutes?|mins|m)(?![a-z])/); if (mm){ m=+mm[1]; found=true; }
+  if (!found && /\d{1,2}\s*(sek|sec|s)(?![a-z])/.test(s)) found=true;
+  return found ? h*60+m : null;
+}
+function parseScreenTime(text){
+  const lines = text.split(/\n/).map(l=>l.trim()).filter(Boolean);
+  const apps = [];
+  lines.forEach((l,i)=>{
+    for (const [name,re] of SOCIAL){
+      if (apps.some(a=>a.name===name)) continue;
+      const cleaned = l.replace(/\d.*$/,"").trim(); // Name-Teil vor der Zeit
+      if (re.test(name==="X / Twitter" ? cleaned : l)){
+        let d = parseDur(l);
+        const nx = lines[i+1];
+        if (d==null && nx && /^\d/.test(nx) && nx.length < 24 && !SOCIAL.some(([,r])=>r.test(nx))) d = parseDur(nx);
+        if (d!=null) apps.push({name, min:d});
+      }
+    }
+  });
+  return apps;
+}
+function dateMatches(text, day){
+  const t = text.toLowerCase(), today = berlinToday(), dt = toDate(day);
+  const pats = [];
+  if (day===today) pats.push("heute","today");
+  if (day===addDays(today,-1)) pats.push("gestern","yesterday");
+  pats.push(dt.toLocaleDateString("de-DE",{weekday:"long",timeZone:"UTC"}).toLowerCase(), dt.toLocaleDateString("en-US",{weekday:"long",timeZone:"UTC"}).toLowerCase());
+  const d = dt.getUTCDate();
+  const mDe = dt.toLocaleDateString("de-DE",{month:"short",timeZone:"UTC"}).toLowerCase().replace(".","").slice(0,3);
+  const mEn = dt.toLocaleDateString("en-US",{month:"short",timeZone:"UTC"}).toLowerCase().slice(0,3);
+  pats.push(`${d}. ${mDe}`, `${d} ${mDe}`, `${mEn} ${d}`, `${d}.${dt.getUTCMonth()+1}.`);
+  return pats.some(p=>t.includes(p));
+}
+function loadImage(file){ return new Promise((res,rej)=>{ const url=URL.createObjectURL(file); const im=new Image(); im.onload=()=>res({im,url}); im.onerror=rej; im.src=url; }); }
+function ocrCanvas(im){
+  const scale = Math.min(1, 1400/im.width), c = document.createElement("canvas");
+  c.width = Math.round(im.width*scale); c.height = Math.round(im.height*scale);
+  const g = c.getContext("2d"); g.drawImage(im,0,0,c.width,c.height);
+  const px = g.getImageData(0,0,c.width,c.height), d = px.data;
+  let sum=0; for (let i=0;i<d.length;i+=16) sum += (d[i]+d[i+1]+d[i+2])/3;
+  const dark = sum/(d.length/16) < 110; // Dark Mode → invertieren
+  for (let i=0;i<d.length;i+=4){ let v=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; if(dark) v=255-v; d[i]=d[i+1]=d[i+2]=v; }
+  g.putImageData(px,0,0); return c;
+}
+function compressShot(im){
+  let w = Math.min(720, im.width), q = 0.62;
+  for (let i=0;i<6;i++){
+    const c=document.createElement("canvas"); c.width=w; c.height=Math.round(im.height*w/im.width);
+    c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+    const data = c.toDataURL("image/jpeg", q);
+    if (data.length < 380000) return data;
+    w = Math.round(w*0.82); q = Math.max(0.35, q-0.07);
+  }
+  throw new Error("Bild ist zu groß");
+}
+function uploadFlow(day){
+  sheet(`<h3 style="margin-bottom:4px">Screenshot für ${esc(fmtDate(day))}</h3>
+    <p class="muted small" style="margin:0 0 12px;line-height:1.5"><b>iPhone:</b> Einstellungen → Bildschirmzeit → Alle Aktivitäten anzeigen → Tag antippen → Screenshot.<br><b>Android:</b> Digital Wellbeing → Dashboard → Tag wählen → Screenshot.<br>Der Tag sollte im Bild zu sehen sein.</p>
+    <label class="btn btn-flame" style="cursor:pointer">📷 Screenshot auswählen<input type="file" accept="image/*" id="shotIn" hidden></label>
+    <div id="shotRes"></div>`, root=>{
+    root.querySelector("#shotIn").onchange = e => { const f=e.target.files[0]; if (f) analyse(root, f, day); };
+  });
+}
+async function analyse(root, file, day){
+  const res = root.querySelector("#shotRes");
+  let im, url;
+  try { ({im,url} = await loadImage(file)); } catch { toast("Bild konnte nicht geöffnet werden"); return; }
+  res.innerHTML = `<div class="shotwrap"><img src="${url}" alt=""><div style="flex:1"><b id="ocrMsg">Lese Bildschirmzeit …</b><div class="muted small" style="margin-top:4px">Läuft direkt auf deinem Handy. Beim ersten Mal kann es etwas dauern.</div><div class="bar"><i id="ocrBar"></i></div></div></div>`;
+  let text = "", apps = [], ocrOk = true;
   try{
-    await rpc("sf_checkin",{p_member:me.member_id,p_secret:me.secret,p_day:day,p_success:success,p_minutes:minutes});
-    await refresh(); show();
-    if (success){ confetti(); navigator.vibrate?.(30); $("#bigFlame")?.classList.add("pop"); toast("🔥 Stark! Deine Flamme wächst."); }
-    else toast("Danke für deine Ehrlichkeit. Morgen neu starten! 💪");
-  }catch(err){ toast(err.message); }
+    ocrProgress = m => { const b=root.querySelector("#ocrBar"); if (b && m.progress!=null) b.style.width = Math.round((m.status==="recognizing text"?50:0) + m.progress*50)+"%"; };
+    const w = await getOcr();
+    const { data } = await w.recognize(ocrCanvas(im));
+    text = data.text || ""; apps = parseScreenTime(text);
+  }catch(err){ ocrOk = false; console.warn(err); }
+  ocrProgress = null;
+  const total = apps.reduce((a,x)=>a+x.min,0);
+  const dateOk = ocrOk ? dateMatches(text, day) : false;
+  const ocrMin = ocrOk ? total : null;
+  res.innerHTML = `<div class="shotwrap"><img src="${url}" alt=""><div style="flex:1">
+      ${apps.length ? apps.map(a=>`<div class="approw"><span>${esc(a.name)}</span><span>${a.min} Min.</span></div>`).join("")
+        : `<div class="muted small" style="line-height:1.5">${ocrOk ? "Keine Social-Media-Apps erkannt. Wenn du wirklich nichts genutzt hast: super! Sonst trag die Minuten unten selbst ein." : "Automatisches Auslesen hat nicht geklappt. Trag die Minuten bitte selbst ein."}</div>`}
+    </div></div>
+    <div class="status ${dateOk?"ok":"warn"}">${dateOk?"✅ Datum passt":"⚠️ Datum im Screenshot nicht erkannt – der Gruppenleiter schaut es sich an."}</div>
+    <div class="minutes"><label for="minIn">Social-Media-Minuten gesamt</label><input id="minIn" type="number" inputmode="numeric" min="0" max="1440" value="${total}"></div>
+    <div class="muted small" style="margin:8px 4px 0">Zählt: Insta, TikTok, YouTube, Snapchat, Facebook, X, Pinterest, Reddit … – nicht WhatsApp & Co. Änderst du die Zahl, sieht das der Gruppenleiter.</div>
+    <button class="btn btn-primary" id="sendShot" style="margin-top:14px">Eintragen</button>`;
+  root.querySelector("#sendShot").onclick = async ()=>{
+    const btn = root.querySelector("#sendShot"); btn.disabled = true;
+    const minutes = Math.max(0, Math.min(1440, parseInt(root.querySelector("#minIn").value,10)));
+    if (Number.isNaN(minutes)){ toast("Bitte Minuten eintragen"); btn.disabled=false; return; }
+    try{
+      const shot = compressShot(im);
+      await rpc("sf_checkin",{p_member:me.member_id,p_secret:me.secret,p_day:day,p_minutes:minutes,p_shot:shot,p_ocr_minutes:ocrMin,p_date_ok:dateOk});
+      closeSheet(); URL.revokeObjectURL(url); await refresh(); show();
+      if (minutes <= LIMIT){ confetti(); navigator.vibrate?.(30); $("#bigFlame")?.classList.add("pop"); toast("🔥 Stark! Deine Flamme wächst."); }
+      else toast("Eingetragen. Über 30 Min. – keine Flamme, aber der Tag zählt im Wettbewerb.");
+    }catch(err){ toast(err.message); btn.disabled = false; }
+  };
 }
+
 function impulseCard(i, tag){
   const [t,x,a] = IMPULSES[Math.max(0,Math.min(DAYS-1,i))];
   return `<div class="card impulse"><div class="tag grad">${esc(tag)}</div><h3>${esc(t)}</h3><p>${esc(x)}</p><div class="todo">🎯 ${esc(a)}</div></div>`;
@@ -486,26 +612,36 @@ function calendarCard(s, today){
   for (let i=0;i<DAYS;i++){
     const d = addDays(START,i), e = s.map[d];
     const cls = [e ? (e.success?"ok":"no") : "", d===today?"today":""].join(" ");
-    cells += `<div class="${cls}" title="${d}">${e? (e.success?"🔥":"✕") : i+1}</div>`;
+    cells += `<div class="${cls}" title="${d}${e?" · "+e.minutes+" Min.":""}">${e? (e.success?"🔥":e.minutes) : i+1}</div>`;
   }
-  return `<div class="card"><div class="sectionhead"><h3>Deine 40 Tage</h3><span class="muted small">${s.total}/${DAYS}</span></div><div class="grid40">${cells}</div></div>`;
+  return `<div class="card"><div class="sectionhead"><h3>Deine 40 Tage</h3><span class="muted small">${s.total} 🔥 · ${s.validDays}/${DAYS} hochgeladen</span></div><div class="grid40">${cells}</div></div>`;
 }
 
 /* ---------- Render: Group ---------- */
+let rankMode = "streak";
 function renderGroup(){
   if (!group){ $("#vGroup").innerHTML = `<div class="loader"></div>`; return; }
   const today = berlinToday();
-  const rows = group.members.map(m=>({m, s:statsFor(m)}))
-    .sort((a,b)=> b.s.streak-a.s.streak || b.s.total-a.s.total || a.m.name.localeCompare(b.m.name));
+  const meM = myMember(), leader = !!meM?.leader;
+  let rows = group.members.map(m=>({m, s:statsFor(m)}));
+  if (rankMode==="streak") rows.sort((a,b)=> b.s.streak-a.s.streak || b.s.total-a.s.total || a.m.name.localeCompare(b.m.name));
+  else rows.sort((a,b)=> b.s.validDays-a.s.validDays || a.s.minutes-b.s.minutes || a.m.name.localeCompare(b.m.name));
   const doneToday = rows.filter(r=>r.s.todayEntry).length;
   const succToday = rows.filter(r=>r.s.todayEntry?.success).length;
   const active = inWindow(today);
   const list = rows.map((r,i)=>{
     const e = r.s.todayEntry;
-    const status = !active ? "" : e ? (e.success?`<span class="dot" style="background:var(--ok)"></span>heute geschafft`:`<span class="dot" style="background:var(--no)"></span>heute nicht geschafft`) : `<span class="dot" style="background:var(--line)"></span>noch nicht eingetragen`;
-    return `<li class="${r.m.id===me.member_id?"me":""}"><div class="rank">${i+1}</div><div class="av">${esc(r.m.emoji)}</div>
-      <div class="who"><b>${esc(r.m.name)}${r.m.id===me.member_id?" (du)":""}</b><span>${status || r.s.total+" Tage geschafft"}</span></div>
-      <div class="st"><svg class="${r.s.streak?"":"flame off"}"><use href="#flame"/></svg>${r.s.streak}</div></li>`;
+    let sub, right;
+    if (rankMode==="streak"){
+      sub = !active ? r.s.total+" Tage geschafft" : e ? (e.success?`<span class="dot" style="background:var(--ok)"></span>heute geschafft`:`<span class="dot" style="background:var(--no)"></span>heute über dem Limit`) : `<span class="dot" style="background:var(--line)"></span>heute noch offen`;
+      right = `<div class="st"><svg class="${r.s.streak?"":"flame off"}"><use href="#flame"/></svg>${r.s.streak}</div>`;
+    } else {
+      sub = `${r.s.validDays} ${r.s.validDays===1?"Tag":"Tage"} hochgeladen${r.s.missed?` · ${r.s.missed} verpasst`:""}`;
+      right = `<div style="text-align:right"><b style="font-size:17px">${r.s.minutes}</b><div class="muted small">Min.</div></div>`;
+    }
+    const flags = leader ? (r.m.checkins||[]).filter(c=>c.edited || c.date_ok===false || c.valid===false).length : 0;
+    return `<li class="${r.m.id===me.member_id?"me":""} ${leader?"tap":""}" data-mid="${r.m.id}"><div class="rank">${i+1}</div><div class="av">${esc(r.m.emoji)}</div>
+      <div class="who"><b>${esc(r.m.name)}${r.m.id===me.member_id?" (du)":""}${r.m.leader?" 👑":""}</b><span>${sub}${flags?` · <span class="flag">⚠️ ${flags}</span>`:""}</span></div>${right}</li>`;
   }).join("");
   $("#vGroup").innerHTML = `
     <div class="card">
@@ -515,8 +651,11 @@ function renderGroup(){
       <div class="code-box"><div><div class="muted small" style="font-weight:600">Gruppen-Code</div><b>${esc(group.code)}</b></div><button class="pill" id="btnCopyCode">Kopieren</button></div>
       <button class="btn btn-flame" id="btnInvite">Freunde einladen</button>
     </div>
-    <div class="card"><div class="sectionhead" style="margin-bottom:4px"><h3>Rangliste</h3><span class="muted small">nach Flammen-Serie</span></div><ul class="lb">${list}</ul></div>
-    <p class="muted small" style="text-align:center">${active && doneToday<group.members.length ? "Erinnere die anderen ans Eintragen 😉" : ""}</p>`;
+    <div class="card">
+      <div class="seg" id="segRank"><button data-r="streak" class="${rankMode==="streak"?"on":""}">🔥 Flammen</button><button data-r="comp" class="${rankMode==="comp"?"on":""}">🏆 Wettbewerb</button></div>
+      <div class="muted small" style="margin:-4px 2px 8px;line-height:1.5">${rankMode==="streak" ? "Sortiert nach Flammen-Serie (Tage in Folge mit max. 30 Min.)." : "Wer die meisten Tage hochgeladen hat, liegt vorn. Bei Gleichstand gewinnt, wer insgesamt weniger Social-Media-Minuten hat."}${leader?"<br><b>Als Gruppenleiter 👑:</b> Tippe auf eine Person, um ihre Screenshots zu prüfen.":""}</div>
+      <ul class="lb">${list}</ul></div>
+    <p class="muted small" style="text-align:center">${active && doneToday<group.members.length ? "Erinnere die anderen ans Hochladen 😉" : ""}</p>`;
   const link = `${location.origin}${location.pathname}?g=${group.code}`;
   const text = `Mach mit bei „${group.name}“: 40 Tage Social-Media-Fasten bis Weihnachten – max. 30 Minuten am Tag. 🔥 Code: ${group.code}`;
   $("#btnCopyCode").onclick = ()=>copy(group.code, "Code kopiert");
@@ -524,6 +663,38 @@ function renderGroup(){
     if (navigator.share){ try{ await navigator.share({title:"Freiraum",text,url:link}); return; }catch(e){ if(e.name==="AbortError") return; } }
     copy(text+"\n"+link, "Einladung kopiert – jetzt in WhatsApp einfügen");
   };
+  $("#segRank").onclick = e => { const b=e.target.closest("button"); if(!b) return; rankMode=b.dataset.r; renderGroup(); };
+  if (leader) document.querySelectorAll("#vGroup .lb li").forEach(li=>li.onclick=()=>memberSheet(li.dataset.mid));
+}
+function memberSheet(mid){
+  const m = group.members.find(x=>x.id===mid); if (!m) return;
+  const s = statsFor(m);
+  const rows = [...(m.checkins||[])].sort((a,b)=>a.day<b.day?1:-1).map(c=>`<div class="row"><b>${esc(toDate(c.day).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"}))}</b>
+      <span>${c.minutes} Min.</span>
+      ${c.valid===false?`<span class="flag bad">ungültig</span>`:""}${c.edited?`<span class="flag" title="Erkannt: ${c.ocr ?? "–"} Min.">✏️ ${c.ocr ?? "–"}→${c.minutes}</span>`:""}${c.date_ok===false?`<span class="flag">📅?</span>`:""}
+      <button class="pill" data-day="${c.day}">Ansehen</button></div>`).join("") || `<p class="muted">Noch keine Screenshots.</p>`;
+  sheet(`<h3 style="margin-bottom:2px">${esc(m.emoji)} ${esc(m.name)}</h3>
+    <p class="muted small" style="margin:0 0 10px">${s.validDays} Tage · ${s.minutes} Min. · ✏️ = Minuten von Hand geändert · 📅? = Datum nicht erkannt</p>
+    <div class="daylist">${rows}</div>`, root=>{
+    root.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>viewShot(m, b.dataset.day));
+  });
+}
+async function viewShot(m, day){
+  const c = m.checkins.find(x=>x.day===day);
+  sheet(`<h3>${esc(m.name)} · ${esc(fmtDate(day))}</h3><div class="loader" id="shotLoad"></div><div id="shotBox"></div>`);
+  try{
+    const img = await rpc("sf_shot",{p_member:me.member_id,p_secret:me.secret,p_target:m.id,p_day:day});
+    const box = $("#shotBox"); $("#shotLoad")?.remove(); if (!box) return;
+    box.innerHTML = `${img && img.startsWith("data:image/jpeg;base64,") ? `<img class="full" src="${img}" alt="Screenshot">` : `<p class="muted">Kein Bild vorhanden.</p>`}
+      <p class="muted small" style="margin:0 0 12px">Eingetragen: <b>${c.minutes} Min.</b>${c.edited?` · erkannt: ${c.ocr ?? "–"} Min.`:""}</p>
+      <div class="choice" style="margin-top:0"><button class="yes" data-v="1"><span class="ic">✓</span>Gültig</button><button class="no" data-v="0"><span class="ic">✕</span>Ungültig</button></div>
+      <button class="btn btn-ghost" id="backBtn" style="margin-top:10px">Zurück</button>`;
+    box.querySelectorAll("[data-v]").forEach(b=>b.onclick=async ()=>{
+      try{ await rpc("sf_set_valid",{p_member:me.member_id,p_secret:me.secret,p_target:m.id,p_day:day,p_valid:b.dataset.v==="1"}); await refresh(); show(); memberSheet(m.id); toast(b.dataset.v==="1"?"Als gültig markiert":"Als ungültig markiert"); }
+      catch(err){ toast(err.message); }
+    });
+    $("#backBtn").onclick = ()=>memberSheet(m.id);
+  }catch(err){ toast(err.message); closeSheet(); }
 }
 async function copy(t,msg){ try{ await navigator.clipboard.writeText(t); toast(msg); } catch { sheet(`<h3 style="margin-bottom:10px">Zum Kopieren</h3><textarea class="input" rows="4" readonly>${esc(t)}</textarea>`, r=>r.querySelector("textarea").select()); } }
 
@@ -536,9 +707,12 @@ function renderInfo(){
       <ol class="steps">
         <li>Vom <b>14.11. bis 23.12.</b> – 40 Tage bis Heiligabend.</li>
         <li>Pro Tag <b>max. ${LIMIT} Minuten</b> für alle Social-Media-Apps zusammen (YouTube, Insta, TikTok, Snapchat …).</li>
-        <li>Jeden Abend in Freiraum eintragen: geschafft oder nicht.</li>
-        <li>Jeder geschaffte Tag bringt eine 🔥. Tage in Folge = deine Flammen-Serie.</li>
-        <li>Ehrlich bleiben. Ein schlechter Tag ist kein Weltuntergang – einfach weitermachen.</li>
+        <li>Jeden Tag einen <b>Screenshot deiner Bildschirmzeit</b> hochladen. Die Minuten werden direkt auf deinem Handy ausgelesen.</li>
+        <li>Vergessen? Du kannst einen Tag noch <b>bis zu 2 Tage später</b> nachtragen – danach ist er weg.</li>
+        <li>Max. ${LIMIT} Min. = 🔥. Tage in Folge = deine Flammen-Serie.</li>
+        <li><b>🏆 Wettbewerb:</b> Wer die meisten Tage hochgeladen hat, liegt vorn. Bei Gleichstand gewinnt, wer insgesamt am wenigsten Social-Media-Zeit hatte.</li>
+        <li>Es zählen Insta, TikTok, YouTube, Snapchat, Facebook, X, Pinterest, Reddit & Co. – nicht WhatsApp oder andere Messenger.</li>
+        <li>Der Gruppenleiter 👑 kann Screenshots prüfen und falsche Tage als ungültig markieren. Ehrlich bleiben!</li>
       </ol>
     </div>
     <div class="card">
@@ -555,13 +729,15 @@ function renderInfo(){
       <h3 style="font-size:17px;margin-bottom:8px">🔒 Datenschutz & Sicherheit</h3>
       <ul class="steps" style="padding-left:18px">
         <li>Kein Konto, keine E-Mail, keine Telefonnummer, kein Standort.</li>
-        <li>Gespeichert werden nur: Spitzname, Symbol, Gruppenname und deine Tages-Einträge.</li>
+        <li>Gespeichert werden nur: Spitzname, Symbol, Gruppenname, deine Minuten und deine Screenshots (verkleinert).</li>
+        <li>Deine Screenshots sieht <b>nur der Gruppenleiter</b> – nicht die anderen Mitglieder.</li>
+        <li>Die Texterkennung läuft komplett auf deinem Handy. Kein Bild geht an eine KI-Firma.</li>
         <li>Nur wer den Gruppen-Code kennt, sieht eure Gruppe. Es gibt keine öffentliche Liste.</li>
         <li>Keine Werbung, kein Tracking, keine Cookies, keine Daten an Google & Co. (auch die Schrift liegt direkt in der App).</li>
         <li>„Gruppe verlassen“ löscht deine Daten sofort. Am 31.01.2027 wird automatisch alles gelöscht.</li>
         <li>Die App lädt nur eigenen Code und spricht nur mit ihrer eigenen Datenbank (verschlüsselt über HTTPS).</li>
       </ul>
-      <p class="muted small" style="margin:8px 0 0">Tipp: Benutze einen Spitznamen statt deines vollen Namens.</p>
+      <p class="muted small" style="margin:8px 0 0">Tipp: Benutze einen Spitznamen statt deines vollen Namens. Und schneide Mitteilungen oder Privates vor dem Hochladen weg, wenn welche auf dem Screenshot sind.</p>
     </div>
     ${m ? `<div class="card">
       <h3 style="font-size:17px;margin-bottom:12px">Dein Profil</h3>
