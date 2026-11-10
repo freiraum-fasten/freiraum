@@ -141,7 +141,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 
 /* Tabbar */
 .tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 14px);display:flex;gap:4px;padding:6px;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.12);z-index:20}
-.tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 20px;border-radius:16px;font-size:11px;font-weight:700;color:var(--muted)}
+.tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 15px;border-radius:16px;font-size:11px;font-weight:700;color:var(--muted)}
 .tabbar button svg{width:22px;height:22px}
 .tabbar button.on{background:var(--soft);color:var(--ink)}
 
@@ -206,19 +206,36 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
       <div class="rule"><b>40</b><span>Tage durchziehen</span></div>
       <div class="rule"><b>🔥</b><span>Flammen sammeln</span></div>
     </div>
-    <div class="hint hidden" id="iosHint"><span>📱</span><div><b>Tipp fürs iPhone:</b> Tippe zuerst unten auf <b>Teilen → Zum Home-Bildschirm</b>, öffne Freiraum von dort und tritt dann bei. So bleibst du angemeldet.</div></div>
+    <div class="hint hidden" id="iosHint"><span>📱</span><div><b>Tipp fürs iPhone:</b> Tippe unten auf <b>Teilen → Zum Home-Bildschirm</b> und öffne Freiraum von dort – dann fühlt es sich an wie eine echte App.</div></div>
+    <div class="card">
+      <div class="seg" id="segAuth">
+        <button class="on" data-a="login">Anmelden</button>
+        <button data-a="register">Registrieren</button>
+      </div>
+      <label class="field"><span>E-Mail</span><input class="input" id="inEmail" type="email" autocomplete="email" inputmode="email" placeholder="name@beispiel.de"></label>
+      <label class="field"><span>Passwort</span><input class="input" id="inPw" type="password" autocomplete="current-password" placeholder="mind. 8 Zeichen"></label>
+      <div id="regFields" class="hidden">
+        <label class="field"><span>Dein Spitzname (sieht deine Gruppe)</span><input class="input" id="inName" maxlength="24" placeholder="z. B. Lena oder Sonnenschein" autocomplete="off"></label>
+        <div class="field"><span>Dein Symbol</span><div class="emojis" id="emojiPick"></div></div>
+        <p class="muted small" style="margin:0 4px 12px">🔒 Deine E-Mail sieht niemand außer den Admins. Kein Tracking, keine Werbung.</p>
+      </div>
+      <button class="btn btn-flame" id="btnAuth" style="margin-top:6px">Anmelden</button>
+      <p class="muted small" style="text-align:center;margin:12px 0 0">Passwort vergessen? Ein Admin kann es zurücksetzen.</p>
+    </div>
+  </section>
+
+  <!-- KEINE GRUPPE -->
+  <section id="vNoGroup" class="hidden">
+    <div class="hero" style="padding-top:6px"><div class="big" style="font-size:30px">Fast geschafft!<br><span class="grad">Jetzt deine Gruppe.</span></div>
+      <p>Tritt mit dem Code deiner Freunde bei oder gründe eine eigene Gruppe.</p></div>
     <div class="card">
       <div class="seg" id="segMode">
         <button class="on" data-m="join">Beitreten</button>
         <button data-m="create">Gruppe gründen</button>
       </div>
-      <label class="field"><span>Dein Spitzname</span><input class="input" id="inName" maxlength="24" placeholder="z. B. Lena oder Sonnenschein" autocomplete="off"></label>
-      <p class="muted small" style="margin:-4px 4px 12px">🔒 Kein Konto, keine E-Mail, keine Telefonnummer. Nur deine Gruppe sieht deinen Spitznamen.</p>
-      <div class="field"><span>Dein Symbol</span><div class="emojis" id="emojiPick"></div></div>
       <label class="field" id="fCode"><span>Gruppen-Code</span><input class="input code-input" id="inCode" maxlength="6" placeholder="ABC123" autocapitalize="characters" autocomplete="off"></label>
       <label class="field hidden" id="fGroup"><span>Name der Gruppe</span><input class="input" id="inGroup" maxlength="40" placeholder="z. B. Die Freundesgruppe"></label>
-      <button class="btn btn-flame" id="btnStart" style="margin-top:6px">Los geht's</button>
-      <button class="linkbtn" id="btnRestore" style="display:block;margin:12px auto 0">Ich mache schon mit (Zugangscode)</button>
+      <button class="btn btn-flame" id="btnStart" style="margin-top:6px">Beitreten</button>
     </div>
   </section>
 
@@ -228,11 +245,14 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
   <section id="vGroup" class="hidden"></section>
   <!-- INFO -->
   <section id="vInfo" class="hidden"></section>
+  <!-- ADMIN -->
+  <section id="vAdmin" class="hidden"></section>
 </div>
 
 <nav class="tabbar hidden" id="tabbar">
   <button data-t="today" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.8 4.3-1.6 6.7-3.6 9C6.9 13.8 6 15.4 6 17.5 6 20 8.7 22 12 22s6-2 6-5c0-2.3-1-4-2.4-5.3-.2 1.5-.9 2.4-2 2.9.9-4.1-.3-7.8-1.6-11.6z"/></svg>Heute</button>
   <button data-t="group"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.7-3.4 3.3-5.5 6.5-5.5s5.8 2.1 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M17.5 14.5c2.2.3 3.6 1.9 4 4.5"/></svg>Gruppe</button>
+  <button data-t="admin" id="tabAdmin" class="hidden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4 5.5v6c0 5 3.4 8.8 8 10 4.6-1.2 8-5 8-10v-6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Admin</button>
   <button data-t="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></svg>Infos</button>
 </nav>
 
@@ -242,7 +262,8 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const START = "2026-11-14", END = "2026-12-23", DAYS = 40, LIMIT = 30, GRACE = 2;
+const START = "2026-11-14", END = "2026-12-23", DAYS = 40, GRACE = 2;
+let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
 
 /* 40 Impulse – je ein Gedanke + eine Offline-Mini-Challenge */
@@ -330,11 +351,15 @@ function confetti(){
 }
 
 /* ---------- State ---------- */
-let me = load();
-let group = null;   // {name, code, members:[{id,name,emoji,checkins:[{day,success,minutes}]}]}
+let auth = load();          // {token}
+let acc = null;             // Konto: {id,email,name,emoji,admin,member_id,group_code,limit}
+let group = null;           // {name, code, members:[...]}
+let adminData = null;
 let tab = "today";
-let mode = "join";
+let mode = "join", authMode = "login";
 let pickedEmoji = EMOJIS[0];
+let rankMode = "streak";
+const T = () => auth?.token;
 
 function statsFor(m){
   const map = {}; (m.checkins||[]).forEach(c => map[c.day] = c);
@@ -346,85 +371,91 @@ function statsFor(m){
   const validList = (m.checkins||[]).filter(c=>c.valid!==false);
   const validDays = validList.length;
   const minutes = validList.reduce((a,c)=>a+(c.minutes||0),0);
-  let missed = 0; // Tage, deren Frist abgelaufen ist, ohne gültigen Eintrag
+  let missed = 0;
   for (let i=0;i<DAYS;i++){ const dd=addDays(START,i); if (diffDays(today,dd) > GRACE && !(map[dd] && map[dd].valid!==false)) missed++; }
   let best=0, run=0;
   for (let i=0;i<DAYS;i++){ const dd=addDays(START,i); if(map[dd]&&map[dd].success){run++;best=Math.max(best,run);} else run=0; }
   return { map, streak, total, best, validDays, minutes, missed, todayEntry: map[today] };
 }
-const myMember = () => group?.members.find(m => m.id === me?.member_id);
+const myMember = () => group?.members.find(m => m.id === acc?.member_id);
 
-/* ---------- Render: Onboarding ---------- */
+/* ---------- Anmelden / Registrieren ---------- */
 function renderOnboard(){
   $("#emojiPick").innerHTML = EMOJIS.map(e=>`<button type="button" class="${e===pickedEmoji?"on":""}" data-e="${e}">${e}</button>`).join("");
-  $("#fCode").classList.toggle("hidden", mode!=="join");
-  $("#fGroup").classList.toggle("hidden", mode!=="create");
-  document.querySelectorAll("#segMode button").forEach(b=>b.classList.toggle("on", b.dataset.m===mode));
-  $("#btnStart").textContent = mode==="join" ? "Beitreten" : "Gruppe gründen";
+  $("#regFields").classList.toggle("hidden", authMode!=="register");
+  document.querySelectorAll("#segAuth button").forEach(b=>b.classList.toggle("on", b.dataset.a===authMode));
+  $("#btnAuth").textContent = authMode==="login" ? "Anmelden" : "Konto erstellen";
+  $("#inPw").autocomplete = authMode==="login" ? "current-password" : "new-password";
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
   $("#iosHint").classList.toggle("hidden", !(isIOS && !standalone));
 }
 $("#emojiPick").addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return; pickedEmoji=b.dataset.e; renderOnboard(); });
-$("#segMode").addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return; mode=b.dataset.m; renderOnboard(); });
-$("#btnStart").addEventListener("click", async ()=>{
-  const name = $("#inName").value.trim();
-  if (!name) { toast("Bitte gib deinen Namen ein"); $("#inName").focus(); return; }
-  const btn = $("#btnStart"); btn.disabled = true;
-  try {
-    let res;
-    if (mode==="join"){
-      const code = $("#inCode").value.trim().toUpperCase();
-      if (code.length!==6) { toast("Der Code hat 6 Zeichen"); btn.disabled=false; return; }
-      res = await rpc("sf_join_group",{p_code:code,p_name:name,p_emoji:pickedEmoji});
-    } else {
-      const g = $("#inGroup").value.trim();
-      if (!g) { toast("Wie soll eure Gruppe heißen?"); btn.disabled=false; return; }
-      res = await rpc("sf_create_group",{p_group_name:g,p_name:name,p_emoji:pickedEmoji});
+$("#segAuth").addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return; authMode=b.dataset.a; renderOnboard(); });
+$("#btnAuth").addEventListener("click", async ()=>{
+  const email = $("#inEmail").value.trim(), pw = $("#inPw").value;
+  if (!email || !pw){ toast("Bitte E-Mail und Passwort eingeben"); return; }
+  const btn = $("#btnAuth"); btn.disabled = true;
+  try{
+    let r;
+    if (authMode==="login") r = await rpc("sf_login",{p_email:email,p_password:pw});
+    else {
+      const name = $("#inName").value.trim();
+      if (!name){ toast("Bitte gib einen Spitznamen ein"); btn.disabled=false; return; }
+      if (pw.length < 8){ toast("Passwort braucht mindestens 8 Zeichen"); btn.disabled=false; return; }
+      r = await rpc("sf_register",{p_email:email,p_password:pw,p_name:name,p_emoji:pickedEmoji});
     }
-    me = { code:res.code, member_id:res.member_id, secret:res.secret };
-    save(me);
-    history.replaceState(null,"",location.pathname);
-    await refresh(); tab = mode==="create" ? "group" : "today"; show();
-    toast(mode==="create" ? "Gruppe erstellt – lade jetzt deine Leute ein!" : "Willkommen in der Gruppe! 🔥");
-  } catch(err){ toast(err.message); }
+    auth = { token:r.token }; save(auth);
+    $("#inPw").value = "";
+    await refresh(); tab = "today"; show();
+    toast(authMode==="login" ? `Hallo ${acc?.name || ""} 👋` : "Konto erstellt – willkommen! 🔥");
+  }catch(err){ toast(err.message); }
   btn.disabled = false;
 });
-$("#btnRestore").addEventListener("click", ()=>openRestore());
 
-function accessCode(){ return btoa(JSON.stringify([me.code, me.member_id, me.secret])).replace(/=+$/,""); }
-function openRestore(){
-  sheet(`<h3 style="margin-bottom:6px">Mit Zugangscode anmelden</h3>
-    <p class="muted small" style="margin:0 0 14px">Deinen Zugangscode findest du auf dem anderen Gerät unter „Infos“.</p>
-    <input class="input" id="inAccess" placeholder="Zugangscode einfügen" autocomplete="off">
-    <button class="btn btn-primary" id="btnAccess" style="margin-top:12px">Anmelden</button>`, root=>{
-    root.querySelector("#btnAccess").onclick = async ()=>{
-      try{
-        let raw = root.querySelector("#inAccess").value.trim();
-        const m = raw.match(/zugang=([A-Za-z0-9+/]+)/); if (m) raw = m[1];
-        const [code, member_id, secret] = JSON.parse(atob(raw));
-        me = {code, member_id, secret}; save(me); closeSheet(); await refresh(); show(); toast("Angemeldet 👍");
-      }catch{ toast("Dieser Code passt nicht"); }
-    };
-  });
+/* ---------- Gruppe beitreten / gründen ---------- */
+$("#segMode").addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return; mode=b.dataset.m; renderNoGroup(); });
+function renderNoGroup(){
+  $("#fCode").classList.toggle("hidden", mode!=="join");
+  $("#fGroup").classList.toggle("hidden", mode!=="create");
+  document.querySelectorAll("#segMode button").forEach(b=>b.classList.toggle("on", b.dataset.m===mode));
+  $("#btnStart").textContent = mode==="join" ? "Beitreten" : "Gruppe gründen";
 }
+$("#btnStart").addEventListener("click", async ()=>{
+  const btn = $("#btnStart"); btn.disabled = true;
+  try{
+    if (mode==="join"){
+      const code = $("#inCode").value.trim().toUpperCase();
+      if (code.length!==6){ toast("Der Code hat 6 Zeichen"); btn.disabled=false; return; }
+      await rpc("sf_join_group2",{p_token:T(),p_code:code});
+    } else {
+      const g = $("#inGroup").value.trim();
+      if (!g){ toast("Wie soll eure Gruppe heißen?"); btn.disabled=false; return; }
+      await rpc("sf_create_group2",{p_token:T(),p_group_name:g});
+    }
+    try { sessionStorage.removeItem("freiraum_g"); } catch {}
+    await refresh(); tab = mode==="create" ? "group" : "today"; show();
+    toast(mode==="create" ? "Gruppe erstellt – lade jetzt deine Leute ein!" : "Willkommen in der Gruppe! 🔥");
+  }catch(err){ toast(err.message); }
+  btn.disabled = false;
+});
 
-/* ---------- Render: Today ---------- */
+/* ---------- Heute ---------- */
 function renderToday(){
   const today = berlinToday();
   const m = myMember();
-  const s = m ? statsFor(m) : {streak:0,total:0,best:0,map:{}};
+  const s = m ? statsFor(m) : {streak:0,total:0,best:0,map:{},minutes:0,validDays:0};
   const idx = dayIndex(today);
   let html = "";
-
   if (today < START){
     const left = diffDays(START, today);
     html += `<div class="card" style="text-align:center">
       <div class="daystrip" style="justify-content:center"><div class="label">Start am Samstag, 14. November</div></div>
       <svg class="flame off" style="width:64px;height:64px"><use href="#flame"/></svg>
       <div class="countdown"><div><b>${left}</b><span>${left===1?"Tag":"Tage"}</span></div></div>
-      <p class="muted" style="margin:10px 0 0;line-height:1.5">Noch bis zum Start. Nutze die Zeit: Lade Freunde ein und stell dein 30-Minuten-Limit ein.</p>
+      <p class="muted" style="margin:10px 0 0;line-height:1.5">Noch bis zum Start. Nutze die Zeit: Lade Freunde ein und stell dein ${LIMIT}-Minuten-Limit ein.</p>
     </div>
+    ${acc?.admin ? `<button class="btn btn-primary" id="goAdmin" style="margin-bottom:14px">🧪 Screenshot-Erkennung testen (Admin)</button>` : ""}
     <button class="btn btn-flame" id="goInvite" style="margin-bottom:14px">Freunde einladen</button>
     <button class="btn btn-ghost" id="goSetup" style="margin-bottom:14px">Limit einrichten – so geht's</button>`;
     html += impulseCard(0, "Vorgeschmack auf Tag 1");
@@ -434,9 +465,9 @@ function renderToday(){
       <h2 style="font-size:28px;margin:8px 0 6px">Ihr habt's geschafft!</h2>
       <p class="muted" style="margin:0 0 16px;line-height:1.5">40 Tage Freiraum sind vorbei. Frohe Weihnachten!</p>
       <div class="rules" style="margin:0">
-        <div class="rule"><b>${s.total}</b><span>Tage geschafft</span></div>
-        <div class="rule"><b>${s.best}</b><span>beste Serie</span></div>
-        <div class="rule"><b>${Math.round(s.total/DAYS*100)}%</b><span>Quote</span></div>
+        <div class="rule"><b>${s.validDays}</b><span>Tage hochgeladen</span></div>
+        <div class="rule"><b>${s.total}</b><span>🔥 Tage</span></div>
+        <div class="rule"><b>${s.minutes}</b><span>Min. gesamt</span></div>
       </div></div>`;
     html += calendarCard(s, today);
   } else {
@@ -449,8 +480,7 @@ function renderToday(){
       <div><div class="num">${s.streak}</div><div class="sub">${s.streak===1?"Tag in Folge":"Tage in Folge"} · ${s.minutes} Min. gesamt</div></div>
     </div></div>`;
     html += checkinCard(s, today);
-    const open = [1,2].map(n=>addDays(today,-n)).filter(d=>inWindow(d) && !s.map[d]);
-    open.forEach(d=>{
+    [1,2].map(n=>addDays(today,-n)).filter(d=>inWindow(d) && !s.map[d]).forEach(d=>{
       const left = GRACE - diffDays(today,d);
       html += `<div class="card" style="padding:16px 20px"><div class="sectionhead"><div><b>${esc(fmtDate(d))} fehlt</b><div class="muted small">${left===0?"Heute letzte Chance!":"Noch bis morgen nachtragbar"}</div></div><button class="pill" data-up="${d}">Nachtragen</button></div></div>`;
     });
@@ -458,10 +488,10 @@ function renderToday(){
     html += calendarCard(s, today);
   }
   $("#vToday").innerHTML = html;
-
   $("#goInvite")?.addEventListener("click", ()=>{ tab="group"; show(); });
+  $("#goAdmin")?.addEventListener("click", ()=>{ tab="admin"; show(); });
   $("#goSetup")?.addEventListener("click", ()=>{ tab="info"; show(); setTimeout(()=>{ const d=$("#dSetup"); if(d){d.open=true;d.scrollIntoView({behavior:"smooth"});} },50); });
-  document.querySelectorAll("[data-up]").forEach(b=>b.addEventListener("click", ()=>uploadFlow(b.dataset.up)));
+  document.querySelectorAll("#vToday [data-up]").forEach(b=>b.addEventListener("click", ()=>uploadFlow(b.dataset.up)));
 }
 function checkinCard(s, today){
   const e = s.todayEntry;
@@ -469,8 +499,8 @@ function checkinCard(s, today){
     const ok = e.success;
     return `<div class="card"><div class="done">
       <div class="badge ${ok?"ok":"no"}">${ok?"✅":"⏱️"}</div>
-      <div style="flex:1"><b style="font-size:17px">${ok?"Heute geschafft!":(e.valid===false?"Vom Gruppenleiter nicht anerkannt":"Heute über dem Limit")}</b>
-      <div class="muted small" style="margin-top:2px">${e.minutes} Min. Social Media${ok?" – stark!":(e.valid===false?"":" – zählt trotzdem für den Wettbewerb.")}</div></div>
+      <div style="flex:1"><b style="font-size:17px">${ok?"Heute geschafft!":(e.valid===false?"Nicht anerkannt":"Heute über dem Limit")}</b>
+      <div class="muted small" style="margin-top:2px">${e.minutes} Min. Social Media${ok?" – stark!":(e.valid===false?" – ein Admin oder dein Gruppenleiter hat den Screenshot abgelehnt.":" – zählt trotzdem für den Wettbewerb.")}</div></div>
     </div><button class="linkbtn" data-up="${today}">Neuen Screenshot hochladen</button></div>`;
   }
   return `<div class="card">
@@ -557,19 +587,34 @@ function compressShot(im){
   }
   throw new Error("Bild ist zu groß");
 }
-function uploadFlow(day){
-  sheet(`<h3 style="margin-bottom:4px">Screenshot für ${esc(fmtDate(day))}</h3>
+function impulseCard(i, tag){
+  const [t,x,a] = IMPULSES[Math.max(0,Math.min(DAYS-1,i))];
+  return `<div class="card impulse"><div class="tag grad">${esc(tag)}</div><h3>${esc(t)}</h3><p>${esc(x)}</p><div class="todo">🎯 ${esc(a)}</div></div>`;
+}
+function calendarCard(s, today){
+  let cells = "";
+  for (let i=0;i<DAYS;i++){
+    const d = addDays(START,i), e = s.map[d];
+    const cls = [e ? (e.success?"ok":"no") : "", d===today?"today":""].join(" ");
+    cells += `<div class="${cls}" title="${d}${e?" · "+e.minutes+" Min.":""}">${e? (e.success?"🔥":e.minutes) : i+1}</div>`;
+  }
+  return `<div class="card"><div class="sectionhead"><h3>Deine 40 Tage</h3><span class="muted small">${s.total} 🔥 · ${s.validDays}/${DAYS} hochgeladen</span></div><div class="grid40">${cells}</div></div>`;
+}
+
+function uploadFlow(day, test=false){
+  sheet(`<h3 style="margin-bottom:4px">${test ? "🧪 Test-Upload (Admin)" : "Screenshot für "+esc(fmtDate(day))}</h3>
+    ${test ? `<p class="muted small" style="margin:0 0 10px">Läuft genauso wie später bei allen – zählt aber nirgends. Du kannst danach prüfen, ob die KI richtig lag.</p>` : ""}
     <p class="muted small" style="margin:0 0 12px;line-height:1.5"><b>iPhone:</b> Einstellungen → Bildschirmzeit → Alle Aktivitäten anzeigen → Tag antippen → Screenshot.<br><b>Android:</b> Digital Wellbeing → Dashboard → Tag wählen → Screenshot.<br>Der Tag sollte im Bild zu sehen sein.</p>
     <label class="btn btn-flame" style="cursor:pointer">📷 Screenshot auswählen<input type="file" accept="image/*" id="shotIn" hidden></label>
     <div id="shotRes"></div>`, root=>{
-    root.querySelector("#shotIn").onchange = e => { const f=e.target.files[0]; if (f) analyse(root, f, day); };
+    root.querySelector("#shotIn").onchange = e => { const f=e.target.files[0]; if (f) analyse(root, f, day, test); };
   });
 }
-async function analyse(root, file, day){
+async function analyse(root, file, day, test){
   const res = root.querySelector("#shotRes");
   let im, url;
   try { ({im,url} = await loadImage(file)); } catch { toast("Bild konnte nicht geöffnet werden"); return; }
-  res.innerHTML = `<div class="shotwrap"><img src="${url}" alt=""><div style="flex:1"><b id="ocrMsg">Lese Bildschirmzeit …</b><div class="muted small" style="margin-top:4px">Läuft direkt auf deinem Handy. Beim ersten Mal kann es etwas dauern.</div><div class="bar"><i id="ocrBar"></i></div></div></div>`;
+  res.innerHTML = `<div class="shotwrap"><img src="${url}" alt=""><div style="flex:1"><b>Lese Bildschirmzeit …</b><div class="muted small" style="margin-top:4px">Läuft direkt auf deinem Handy. Beim ersten Mal kann es etwas dauern.</div><div class="bar"><i id="ocrBar"></i></div></div></div>`;
   let text = "", apps = [], ocrOk = true;
   try{
     ocrProgress = m => { const b=root.querySelector("#ocrBar"); if (b && m.progress!=null) b.style.width = Math.round((m.status==="recognizing text"?50:0) + m.progress*50)+"%"; };
@@ -585,44 +630,35 @@ async function analyse(root, file, day){
       ${apps.length ? apps.map(a=>`<div class="approw"><span>${esc(a.name)}</span><span>${a.min} Min.</span></div>`).join("")
         : `<div class="muted small" style="line-height:1.5">${ocrOk ? "Keine Social-Media-Apps erkannt. Wenn du wirklich nichts genutzt hast: super! Sonst trag die Minuten unten selbst ein." : "Automatisches Auslesen hat nicht geklappt. Trag die Minuten bitte selbst ein."}</div>`}
     </div></div>
-    <div class="status ${dateOk?"ok":"warn"}">${dateOk?"✅ Datum passt":"⚠️ Datum im Screenshot nicht erkannt – der Gruppenleiter schaut es sich an."}</div>
+    <div class="status ${dateOk?"ok":"warn"}">${dateOk?"✅ Datum passt":"⚠️ Datum im Screenshot nicht erkannt – wird von einem Admin geprüft."}</div>
     <div class="minutes"><label for="minIn">Social-Media-Minuten gesamt</label><input id="minIn" type="number" inputmode="numeric" min="0" max="1440" value="${total}"></div>
-    <div class="muted small" style="margin:8px 4px 0">Zählt: Insta, TikTok, YouTube, Snapchat, Facebook, X, Pinterest, Reddit … – nicht WhatsApp & Co. Änderst du die Zahl, sieht das der Gruppenleiter.</div>
-    <button class="btn btn-primary" id="sendShot" style="margin-top:14px">Eintragen</button>`;
+    <div class="muted small" style="margin:8px 4px 0">Zählt: Insta, TikTok, YouTube, Snapchat, Facebook, X, Pinterest, Reddit … – nicht WhatsApp & Co. Änderst du die Zahl, sehen das die Prüfer.</div>
+    ${test ? `<details style="margin-top:8px"><summary class="small">Erkannter Text (für Admins)</summary><pre style="white-space:pre-wrap;font-size:11px;max-height:180px;overflow:auto">${esc(text)}</pre></details>` : ""}
+    <button class="btn btn-primary" id="sendShot" style="margin-top:14px">${test?"Test speichern":"Eintragen"}</button>`;
   root.querySelector("#sendShot").onclick = async ()=>{
     const btn = root.querySelector("#sendShot"); btn.disabled = true;
     const minutes = Math.max(0, Math.min(1440, parseInt(root.querySelector("#minIn").value,10)));
     if (Number.isNaN(minutes)){ toast("Bitte Minuten eintragen"); btn.disabled=false; return; }
     try{
       const shot = compressShot(im);
-      await rpc("sf_checkin",{p_member:me.member_id,p_secret:me.secret,p_day:day,p_minutes:minutes,p_shot:shot,p_ocr_minutes:ocrMin,p_date_ok:dateOk});
+      if (test){
+        await rpc("sf_admin_test_upload",{p_token:T(),p_minutes:minutes,p_shot:shot,p_ocr_minutes:ocrMin,p_date_ok:dateOk});
+        closeSheet(); URL.revokeObjectURL(url); await loadAdmin(); show(); toast("Test gespeichert – jetzt unten prüfen");
+        return;
+      }
+      await rpc("sf_upload",{p_token:T(),p_day:day,p_minutes:minutes,p_shot:shot,p_ocr_minutes:ocrMin,p_date_ok:dateOk});
       closeSheet(); URL.revokeObjectURL(url); await refresh(); show();
       if (minutes <= LIMIT){ confetti(); navigator.vibrate?.(30); $("#bigFlame")?.classList.add("pop"); toast("🔥 Stark! Deine Flamme wächst."); }
-      else toast("Eingetragen. Über 30 Min. – keine Flamme, aber der Tag zählt im Wettbewerb.");
+      else toast(`Eingetragen. Über ${LIMIT} Min. – keine Flamme, aber der Tag zählt im Wettbewerb.`);
     }catch(err){ toast(err.message); btn.disabled = false; }
   };
 }
 
-function impulseCard(i, tag){
-  const [t,x,a] = IMPULSES[Math.max(0,Math.min(DAYS-1,i))];
-  return `<div class="card impulse"><div class="tag grad">${esc(tag)}</div><h3>${esc(t)}</h3><p>${esc(x)}</p><div class="todo">🎯 ${esc(a)}</div></div>`;
-}
-function calendarCard(s, today){
-  let cells = "";
-  for (let i=0;i<DAYS;i++){
-    const d = addDays(START,i), e = s.map[d];
-    const cls = [e ? (e.success?"ok":"no") : "", d===today?"today":""].join(" ");
-    cells += `<div class="${cls}" title="${d}${e?" · "+e.minutes+" Min.":""}">${e? (e.success?"🔥":e.minutes) : i+1}</div>`;
-  }
-  return `<div class="card"><div class="sectionhead"><h3>Deine 40 Tage</h3><span class="muted small">${s.total} 🔥 · ${s.validDays}/${DAYS} hochgeladen</span></div><div class="grid40">${cells}</div></div>`;
-}
-
-/* ---------- Render: Group ---------- */
-let rankMode = "streak";
+/* ---------- Gruppe ---------- */
 function renderGroup(){
   if (!group){ $("#vGroup").innerHTML = `<div class="loader"></div>`; return; }
   const today = berlinToday();
-  const meM = myMember(), leader = !!meM?.leader;
+  const meM = myMember(), canReview = !!meM?.leader || !!acc?.admin;
   let rows = group.members.map(m=>({m, s:statsFor(m)}));
   if (rankMode==="streak") rows.sort((a,b)=> b.s.streak-a.s.streak || b.s.total-a.s.total || a.m.name.localeCompare(b.m.name));
   else rows.sort((a,b)=> b.s.validDays-a.s.validDays || a.s.minutes-b.s.minutes || a.m.name.localeCompare(b.m.name));
@@ -639,9 +675,9 @@ function renderGroup(){
       sub = `${r.s.validDays} ${r.s.validDays===1?"Tag":"Tage"} hochgeladen${r.s.missed?` · ${r.s.missed} verpasst`:""}`;
       right = `<div style="text-align:right"><b style="font-size:17px">${r.s.minutes}</b><div class="muted small">Min.</div></div>`;
     }
-    const flags = leader ? (r.m.checkins||[]).filter(c=>c.edited || c.date_ok===false || c.valid===false).length : 0;
-    return `<li class="${r.m.id===me.member_id?"me":""} ${leader?"tap":""}" data-mid="${r.m.id}"><div class="rank">${i+1}</div><div class="av">${esc(r.m.emoji)}</div>
-      <div class="who"><b>${esc(r.m.name)}${r.m.id===me.member_id?" (du)":""}${r.m.leader?" 👑":""}</b><span>${sub}${flags?` · <span class="flag">⚠️ ${flags}</span>`:""}</span></div>${right}</li>`;
+    const flags = canReview ? (r.m.checkins||[]).filter(c=>!c.reviewed && (c.edited || c.date_ok===false)).length : 0;
+    return `<li class="${r.m.id===acc.member_id?"me":""} ${canReview?"tap":""}" data-mid="${r.m.id}"><div class="rank">${i+1}</div><div class="av">${esc(r.m.emoji)}</div>
+      <div class="who"><b>${esc(r.m.name)}${r.m.id===acc.member_id?" (du)":""}${r.m.leader?" 👑":""}</b><span>${sub}${flags?` · <span class="flag">⚠️ ${flags}</span>`:""}</span></div>${right}</li>`;
   }).join("");
   $("#vGroup").innerHTML = `
     <div class="card">
@@ -653,73 +689,169 @@ function renderGroup(){
     </div>
     <div class="card">
       <div class="seg" id="segRank"><button data-r="streak" class="${rankMode==="streak"?"on":""}">🔥 Flammen</button><button data-r="comp" class="${rankMode==="comp"?"on":""}">🏆 Wettbewerb</button></div>
-      <div class="muted small" style="margin:-4px 2px 8px;line-height:1.5">${rankMode==="streak" ? "Sortiert nach Flammen-Serie (Tage in Folge mit max. 30 Min.)." : "Wer die meisten Tage hochgeladen hat, liegt vorn. Bei Gleichstand gewinnt, wer insgesamt weniger Social-Media-Minuten hat."}${leader?"<br><b>Als Gruppenleiter 👑:</b> Tippe auf eine Person, um ihre Screenshots zu prüfen.":""}</div>
+      <div class="muted small" style="margin:-4px 2px 8px;line-height:1.5">${rankMode==="streak" ? `Sortiert nach Flammen-Serie (Tage in Folge mit max. ${LIMIT} Min.).` : "Wer die meisten Tage hochgeladen hat, liegt vorn. Bei Gleichstand gewinnt, wer insgesamt weniger Social-Media-Minuten hat."}${canReview?"<br><b>Prüfen:</b> Tippe auf eine Person, um ihre Screenshots zu sehen.":""}</div>
       <ul class="lb">${list}</ul></div>
     <p class="muted small" style="text-align:center">${active && doneToday<group.members.length ? "Erinnere die anderen ans Hochladen 😉" : ""}</p>`;
   const link = `${location.origin}${location.pathname}?g=${group.code}`;
-  const text = `Mach mit bei „${group.name}“: 40 Tage Social-Media-Fasten bis Weihnachten – max. 30 Minuten am Tag. 🔥 Code: ${group.code}`;
+  const text = `Mach mit bei „${group.name}“: 40 Tage Social-Media-Fasten bis Weihnachten – max. ${LIMIT} Minuten am Tag. 🔥 Code: ${group.code}`;
   $("#btnCopyCode").onclick = ()=>copy(group.code, "Code kopiert");
   $("#btnInvite").onclick = async ()=>{
     if (navigator.share){ try{ await navigator.share({title:"Freiraum",text,url:link}); return; }catch(e){ if(e.name==="AbortError") return; } }
     copy(text+"\n"+link, "Einladung kopiert – jetzt in WhatsApp einfügen");
   };
   $("#segRank").onclick = e => { const b=e.target.closest("button"); if(!b) return; rankMode=b.dataset.r; renderGroup(); };
-  if (leader) document.querySelectorAll("#vGroup .lb li").forEach(li=>li.onclick=()=>memberSheet(li.dataset.mid));
+  if (canReview) document.querySelectorAll("#vGroup .lb li").forEach(li=>li.onclick=()=>memberSheet(li.dataset.mid));
 }
 function memberSheet(mid){
   const m = group.members.find(x=>x.id===mid); if (!m) return;
   const s = statsFor(m);
   const rows = [...(m.checkins||[])].sort((a,b)=>a.day<b.day?1:-1).map(c=>`<div class="row"><b>${esc(toDate(c.day).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"}))}</b>
       <span>${c.minutes} Min.</span>
-      ${c.valid===false?`<span class="flag bad">ungültig</span>`:""}${c.edited?`<span class="flag" title="Erkannt: ${c.ocr ?? "–"} Min.">✏️ ${c.ocr ?? "–"}→${c.minutes}</span>`:""}${c.date_ok===false?`<span class="flag">📅?</span>`:""}
+      ${c.valid===false?`<span class="flag bad">ungültig</span>`:""}${c.edited?`<span class="flag">✏️ ${c.ocr ?? "–"}→${c.minutes}</span>`:""}${c.date_ok===false?`<span class="flag">📅?</span>`:""}${c.reviewed?`<span class="flag">✓</span>`:""}
       <button class="pill" data-day="${c.day}">Ansehen</button></div>`).join("") || `<p class="muted">Noch keine Screenshots.</p>`;
   sheet(`<h3 style="margin-bottom:2px">${esc(m.emoji)} ${esc(m.name)}</h3>
-    <p class="muted small" style="margin:0 0 10px">${s.validDays} Tage · ${s.minutes} Min. · ✏️ = Minuten von Hand geändert · 📅? = Datum nicht erkannt</p>
+    <p class="muted small" style="margin:0 0 10px">${s.validDays} Tage · ${s.minutes} Min. · ✏️ = Minuten von Hand geändert · 📅? = Datum nicht erkannt · ✓ = geprüft</p>
     <div class="daylist">${rows}</div>`, root=>{
-    root.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>viewShot(m, b.dataset.day));
+    root.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>{ const c=m.checkins.find(x=>x.day===b.dataset.day); reviewSheet({member:m.id,name:m.name,day:c.day,minutes:c.minutes,ocr:c.ocr,edited:c.edited,date_ok:c.date_ok}, ()=>memberSheet(m.id)); });
   });
 }
-async function viewShot(m, day){
-  const c = m.checkins.find(x=>x.day===day);
-  sheet(`<h3>${esc(m.name)} · ${esc(fmtDate(day))}</h3><div class="loader" id="shotLoad"></div><div id="shotBox"></div>`);
+/* Prüfen eines echten Eintrags (Admin oder Gruppenleiter) */
+async function reviewSheet(item, back){
+  sheet(`<h3>${esc(item.name)} · ${esc(fmtDate(item.day))}</h3><div class="loader" id="shotLoad"></div><div id="shotBox"></div>`);
   try{
-    const img = await rpc("sf_shot",{p_member:me.member_id,p_secret:me.secret,p_target:m.id,p_day:day});
+    const img = await rpc("sf_shot2",{p_token:T(),p_member:item.member,p_day:item.day});
     const box = $("#shotBox"); $("#shotLoad")?.remove(); if (!box) return;
     box.innerHTML = `${img && img.startsWith("data:image/jpeg;base64,") ? `<img class="full" src="${img}" alt="Screenshot">` : `<p class="muted">Kein Bild vorhanden.</p>`}
-      <p class="muted small" style="margin:0 0 12px">Eingetragen: <b>${c.minutes} Min.</b>${c.edited?` · erkannt: ${c.ocr ?? "–"} Min.`:""}</p>
-      <div class="choice" style="margin-top:0"><button class="yes" data-v="1"><span class="ic">✓</span>Gültig</button><button class="no" data-v="0"><span class="ic">✕</span>Ungültig</button></div>
+      <div class="muted small" style="margin:0 0 8px">KI erkannt: <b>${item.ocr ?? "–"} Min.</b> · eingetragen: <b>${item.minutes} Min.</b>${item.date_ok===false?" · 📅 Datum nicht erkannt":""}</div>
+      <div class="minutes" style="margin-top:0"><label for="revMin">Richtige Minuten (falls nötig korrigieren)</label><input id="revMin" type="number" inputmode="numeric" min="0" max="1440" value="${item.minutes}"></div>
+      <div class="choice"><button class="yes" data-v="1"><span class="ic">✓</span>Gültig</button><button class="no" data-v="0"><span class="ic">✕</span>Ungültig</button></div>
       <button class="btn btn-ghost" id="backBtn" style="margin-top:10px">Zurück</button>`;
     box.querySelectorAll("[data-v]").forEach(b=>b.onclick=async ()=>{
-      try{ await rpc("sf_set_valid",{p_member:me.member_id,p_secret:me.secret,p_target:m.id,p_day:day,p_valid:b.dataset.v==="1"}); await refresh(); show(); memberSheet(m.id); toast(b.dataset.v==="1"?"Als gültig markiert":"Als ungültig markiert"); }
-      catch(err){ toast(err.message); }
+      const mv = parseInt($("#revMin").value,10);
+      try{
+        await rpc("sf_review",{p_token:T(),p_member:item.member,p_day:item.day,p_valid:b.dataset.v==="1",p_minutes:Number.isNaN(mv)?null:mv});
+        await refresh(); if (acc?.admin) await loadAdmin(); show(); back ? back() : closeSheet();
+        toast(b.dataset.v==="1"?"Als gültig gespeichert":"Als ungültig markiert");
+      }catch(err){ toast(err.message); }
     });
-    $("#backBtn").onclick = ()=>memberSheet(m.id);
+    $("#backBtn").onclick = ()=> back ? back() : closeSheet();
   }catch(err){ toast(err.message); closeSheet(); }
 }
-async function copy(t,msg){ try{ await navigator.clipboard.writeText(t); toast(msg); } catch { sheet(`<h3 style="margin-bottom:10px">Zum Kopieren</h3><textarea class="input" rows="4" readonly>${esc(t)}</textarea>`, r=>r.querySelector("textarea").select()); } }
 
-/* ---------- Render: Info ---------- */
+/* ---------- Admin ---------- */
+async function loadAdmin(){
+  if (!acc?.admin) { adminData = null; return; }
+  try { adminData = await rpc("sf_admin_overview",{p_token:T()}); } catch(err){ toast(err.message); }
+}
+let accSearch = "";
+function renderAdmin(){
+  const v = $("#vAdmin");
+  if (!adminData){ v.innerHTML = `<div class="loader"></div>`; loadAdmin().then(()=>{ if(tab==="admin") renderAdmin(); }); return; }
+  const d = adminData, st = d.settings || {};
+  const tests = d.tests.map(t=>`<div class="row"><b>${esc(new Date(t.created).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))} · ${esc(t.by)}</b>
+      <span>${t.minutes} Min.${t.ocr!==t.minutes?` <span class="flag">KI: ${t.ocr ?? "–"}</span>`:""}</span>
+      ${t.verdict===true?`<span class="flag" style="color:var(--ok)">KI ✓</span>`:t.verdict===false?`<span class="flag bad">KI ✕</span>`:""}
+      <button class="pill" data-test="${t.id}">Prüfen</button></div>`).join("") || `<p class="muted small">Noch keine Tests.</p>`;
+  const queue = d.queue.slice(0,60).map((q,i)=>`<div class="row"><b>${esc(q.emoji)} ${esc(q.name)} <span class="muted small">· ${esc(q.group)} · ${esc(toDate(q.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
+      <span>${q.minutes}</span>${q.edited?`<span class="flag">✏️</span>`:""}${q.date_ok===false?`<span class="flag">📅?</span>`:""}
+      <button class="pill" data-q="${i}">Prüfen</button></div>`).join("") || `<p class="muted small">Alles geprüft 👍</p>`;
+  const accs = d.accounts.filter(a=>!accSearch || (a.email+" "+a.name).toLowerCase().includes(accSearch.toLowerCase()));
+  const accRows = accs.map(a=>`<div class="row" style="flex-wrap:wrap"><b style="min-width:0;flex:1 1 100%">${esc(a.emoji)} ${esc(a.name)}${a.admin?" 🛡️":""}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)}${a.group?" · "+esc(a.group):" · ohne Gruppe"}</div></b>
+      <button class="pill" data-adm="${a.id}" data-v="${a.admin?0:1}">${a.admin?"Admin entziehen":"Zum Admin"}</button>
+      <button class="pill" data-pw="${a.id}">Passwort neu</button></div>`).join("");
+  v.innerHTML = `
+    <div class="card"><div class="sectionhead"><h3>🛡️ Admin-Bereich</h3><span class="muted small">${d.accounts.length} Konten · ${d.groups} Gruppen</span></div>
+      <p class="muted small" style="margin:6px 0 0">Nur Admins sehen diesen Bereich.</p></div>
+    <div class="card"><h3 style="font-size:17px">🧪 KI-Test</h3>
+      <p class="muted small" style="margin:6px 0 12px;line-height:1.5">Lade einen echten Bildschirmzeit-Screenshot hoch. Die App liest die Minuten aus – danach kannst du sagen, ob die KI richtig lag. Tests zählen nirgends.</p>
+      <button class="btn btn-flame" id="btnTest">📷 Test-Screenshot hochladen</button>
+      <div class="daylist" style="margin-top:10px">${tests}</div></div>
+    <div class="card"><div class="sectionhead"><h3 style="font-size:17px">📋 Zu prüfen</h3><span class="muted small">${d.queue.length} offen</span></div>
+      <p class="muted small" style="margin:6px 0 8px">Alle noch nicht geprüften Screenshots aus allen Gruppen. ✏️ = Minuten geändert · 📅? = Datum nicht erkannt.</p>
+      <div class="daylist">${queue}</div></div>
+    <div class="card"><h3 style="font-size:17px;margin-bottom:10px">👥 Konten & Admins</h3>
+      <input class="input" id="accSearch" placeholder="Suchen (Name oder E-Mail)" value="${esc(accSearch)}" style="margin-bottom:6px">
+      <div class="daylist">${accRows || `<p class="muted small">Keine Treffer.</p>`}</div></div>
+    <div class="card"><h3 style="font-size:17px;margin-bottom:10px">⚙️ Einstellungen</h3>
+      <div class="minutes" style="margin-top:0"><label for="setLimit">Tageslimit (Minuten) für 🔥</label><input id="setLimit" type="number" inputmode="numeric" min="1" max="600" value="${esc(st.limit_minutes||30)}"></div>
+      <div class="minutes"><label for="setReg">Neue Registrierungen erlauben</label><input id="setReg" type="checkbox" style="width:24px;height:24px" ${st.registration_open==="true"?"checked":""}></div>
+      <button class="btn btn-primary" id="btnSaveSet" style="margin-top:12px">Einstellungen speichern</button>
+      <button class="btn btn-ghost" id="btnClearTests" style="margin-top:10px;color:var(--no)">Alle Tests löschen</button></div>`;
+  $("#btnTest").onclick = ()=>uploadFlow(berlinToday(), true);
+  v.querySelectorAll("[data-test]").forEach(b=>b.onclick=()=>testSheet(d.tests.find(t=>t.id===b.dataset.test)));
+  v.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>reviewSheet(d.queue[+b.dataset.q], null));
+  const si = $("#accSearch"); si.oninput = ()=>{ accSearch = si.value; const pos=si.selectionStart; renderAdmin(); const n=$("#accSearch"); n.focus(); n.setSelectionRange(pos,pos); };
+  v.querySelectorAll("[data-adm]").forEach(b=>b.onclick=async ()=>{
+    const a = d.accounts.find(x=>x.id===b.dataset.adm), make = b.dataset.v==="1";
+    confirmSheet(make ? `${a.name} (${a.email}) zum Admin machen?` : `${a.name} die Admin-Rechte entziehen?`, async ()=>{
+      try{ await rpc("sf_admin_set_admin",{p_token:T(),p_account:a.id,p_admin:make}); await refresh(); await loadAdmin(); show(); toast(make?"Ist jetzt Admin 🛡️":"Admin-Rechte entzogen"); }catch(err){ toast(err.message); }
+    });
+  });
+  v.querySelectorAll("[data-pw]").forEach(b=>b.onclick=()=>{
+    const a = d.accounts.find(x=>x.id===b.dataset.pw);
+    confirmSheet(`Neues Passwort für ${a.name} (${a.email}) erzeugen? Das alte gilt dann nicht mehr.`, async ()=>{
+      try{ const pw = await rpc("sf_admin_reset_pw",{p_token:T(),p_account:a.id});
+        sheet(`<h3 style="margin-bottom:6px">Neues Passwort</h3><p class="muted small" style="margin:0 0 12px">Gib es ${esc(a.name)} persönlich weiter. Danach unter „Infos → Passwort ändern“ ein eigenes setzen.</p>
+          <div class="code-box" style="margin:0 0 12px"><b style="letter-spacing:.06em;font-size:22px">${esc(pw)}</b><button class="pill" id="cpPw">Kopieren</button></div>`, r=>{ r.querySelector("#cpPw").onclick=()=>copy(pw,"Passwort kopiert"); });
+      }catch(err){ toast(err.message); }
+    });
+  });
+  $("#btnSaveSet").onclick = async ()=>{
+    try{
+      await rpc("sf_admin_setting",{p_token:T(),p_key:"limit_minutes",p_value:String(parseInt($("#setLimit").value,10))});
+      await rpc("sf_admin_setting",{p_token:T(),p_key:"registration_open",p_value:$("#setReg").checked?"true":"false"});
+      await refresh(); await loadAdmin(); show(); toast("Gespeichert");
+    }catch(err){ toast(err.message); }
+  };
+  $("#btnClearTests").onclick = ()=>confirmSheet("Alle Test-Uploads löschen?", async ()=>{
+    try{ await rpc("sf_admin_clear_tests",{p_token:T()}); await loadAdmin(); show(); toast("Tests gelöscht"); }catch(err){ toast(err.message); }
+  });
+}
+async function testSheet(t){
+  sheet(`<h3>🧪 Test von ${esc(t.by)}</h3><div class="loader" id="shotLoad"></div><div id="shotBox"></div>`);
+  try{
+    const img = await rpc("sf_admin_test_shot",{p_token:T(),p_id:t.id});
+    const box = $("#shotBox"); $("#shotLoad")?.remove(); if (!box) return;
+    box.innerHTML = `${img ? `<img class="full" src="${img}" alt="Screenshot">` : ""}
+      <p class="muted small" style="margin:0 0 12px">KI hat erkannt: <b>${t.ocr ?? "–"} Min.</b> · eingetragen: <b>${t.minutes} Min.</b> · Datum: ${t.date_ok?"✅ erkannt":"⚠️ nicht erkannt"}</p>
+      <p class="q" style="font-size:16px">Hat die KI richtig gezählt?</p>
+      <div class="choice"><button class="yes" data-v="1"><span class="ic">✓</span>Richtig</button><button class="no" data-v="0"><span class="ic">✕</span>Falsch</button></div>`;
+    box.querySelectorAll("[data-v]").forEach(b=>b.onclick=async ()=>{
+      try{ await rpc("sf_admin_test_verdict",{p_token:T(),p_id:t.id,p_ok:b.dataset.v==="1"}); await loadAdmin(); show(); closeSheet();
+        toast(b.dataset.v==="1"?"👍 Notiert: KI lag richtig":"Notiert: KI lag falsch – schick mir den Screenshot, dann verbessere ich die Erkennung"); }
+      catch(err){ toast(err.message); }
+    });
+  }catch(err){ toast(err.message); closeSheet(); }
+}
+function confirmSheet(text, onYes){
+  sheet(`<h3 style="margin-bottom:14px;line-height:1.35">${esc(text)}</h3>
+    <button class="btn btn-primary" id="cfYes" style="margin-bottom:10px">Ja</button><button class="btn btn-ghost" id="cfNo">Abbrechen</button>`, r=>{
+    r.querySelector("#cfNo").onclick = closeSheet;
+    r.querySelector("#cfYes").onclick = ()=>{ closeSheet(); onYes(); };
+  });
+}
+
+/* ---------- Infos ---------- */
 function renderInfo(){
-  const m = myMember();
   $("#vInfo").innerHTML = `
     <div class="card">
       <h3 style="font-size:20px;margin-bottom:8px">So funktioniert's</h3>
       <ol class="steps">
         <li>Vom <b>14.11. bis 23.12.</b> – 40 Tage bis Heiligabend.</li>
-        <li>Pro Tag <b>max. ${LIMIT} Minuten</b> für alle Social-Media-Apps zusammen (YouTube, Insta, TikTok, Snapchat …).</li>
+        <li>Pro Tag <b>max. ${LIMIT} Minuten</b> für alle Social-Media-Apps zusammen.</li>
         <li>Jeden Tag einen <b>Screenshot deiner Bildschirmzeit</b> hochladen. Die Minuten werden direkt auf deinem Handy ausgelesen.</li>
         <li>Vergessen? Du kannst einen Tag noch <b>bis zu 2 Tage später</b> nachtragen – danach ist er weg.</li>
         <li>Max. ${LIMIT} Min. = 🔥. Tage in Folge = deine Flammen-Serie.</li>
         <li><b>🏆 Wettbewerb:</b> Wer die meisten Tage hochgeladen hat, liegt vorn. Bei Gleichstand gewinnt, wer insgesamt am wenigsten Social-Media-Zeit hatte.</li>
         <li>Es zählen Insta, TikTok, YouTube, Snapchat, Facebook, X, Pinterest, Reddit & Co. – nicht WhatsApp oder andere Messenger.</li>
-        <li>Der Gruppenleiter 👑 kann Screenshots prüfen und falsche Tage als ungültig markieren. Ehrlich bleiben!</li>
+        <li>Gruppenleiter 👑 und Admins 🛡️ können Screenshots prüfen und falsche Tage korrigieren oder als ungültig markieren. Ehrlich bleiben!</li>
       </ol>
     </div>
     <div class="card">
       <details id="dSetup"><summary>📱 Limit am iPhone einstellen</summary>
-        <ol class="steps"><li>Einstellungen → <b>Bildschirmzeit</b> öffnen (ggf. aktivieren).</li><li><b>App-Limits</b> → <b>Limit hinzufügen</b>.</li><li>Kategorie <b>Soziale Netze</b> anhaken, dazu YouTube und andere Apps einzeln auswählen.</li><li>Zeit auf <b>30 Min.</b> stellen, „Am Ende des Limits blockieren“ an.</li><li>Tipp: Einen Freund den Bildschirmzeit-Code festlegen lassen 😉</li></ol></details>
+        <ol class="steps"><li>Einstellungen → <b>Bildschirmzeit</b> öffnen (ggf. aktivieren).</li><li><b>App-Limits</b> → <b>Limit hinzufügen</b>.</li><li>Kategorie <b>Soziale Netze</b> anhaken, dazu YouTube und andere Apps einzeln auswählen.</li><li>Zeit auf <b>${LIMIT} Min.</b> stellen, „Am Ende des Limits blockieren“ an.</li><li>Tipp: Einen Freund den Bildschirmzeit-Code festlegen lassen 😉</li></ol></details>
       <details><summary>🤖 Limit bei Android einstellen</summary>
-        <ol class="steps"><li>Einstellungen → <b>Digital Wellbeing & Jugendschutz</b>.</li><li><b>Dashboard</b> bzw. „App-Timer“ öffnen.</li><li>Bei jeder Social-App ein Limit setzen – zusammen max. 30 Minuten (z. B. 10 Min. Insta, 10 Min. YouTube, 10 Min. TikTok).</li><li>Bei Samsung heißt es „Digital Wellbeing und Kindersicherung“.</li></ol></details>
+        <ol class="steps"><li>Einstellungen → <b>Digital Wellbeing & Jugendschutz</b>.</li><li><b>Dashboard</b> bzw. „App-Timer“ öffnen.</li><li>Bei jeder Social-App ein Limit setzen – zusammen max. ${LIMIT} Minuten.</li><li>Bei Samsung heißt es „Digital Wellbeing und Kindersicherung“.</li></ol></details>
       <details><summary>📊 Wo sehe ich meine Minuten?</summary>
         <p>iPhone: Einstellungen → Bildschirmzeit → „Alle Aktivitäten anzeigen“. Android: Digital Wellbeing → Dashboard. Dort siehst du genau, wie lange du heute in jeder App warst.</p></details>
       <details><summary>➕ Freiraum als App installieren</summary>
@@ -728,54 +860,57 @@ function renderInfo(){
     <div class="card">
       <h3 style="font-size:17px;margin-bottom:8px">🔒 Datenschutz & Sicherheit</h3>
       <ul class="steps" style="padding-left:18px">
-        <li>Kein Konto, keine E-Mail, keine Telefonnummer, kein Standort.</li>
-        <li>Gespeichert werden nur: Spitzname, Symbol, Gruppenname, deine Minuten und deine Screenshots (verkleinert).</li>
-        <li>Deine Screenshots sieht <b>nur der Gruppenleiter</b> – nicht die anderen Mitglieder.</li>
+        <li>Gespeichert werden: E-Mail, Passwort (nur verschlüsselt, niemand kann es lesen), Spitzname, Symbol, Gruppe, deine Minuten und Screenshots (verkleinert).</li>
+        <li>Deine E-Mail sehen nur Admins. Deine Gruppe sieht nur Spitzname, Symbol und Minuten.</li>
+        <li>Deine Screenshots sehen nur dein Gruppenleiter und die Admins – nicht die anderen Mitglieder.</li>
         <li>Die Texterkennung läuft komplett auf deinem Handy. Kein Bild geht an eine KI-Firma.</li>
-        <li>Nur wer den Gruppen-Code kennt, sieht eure Gruppe. Es gibt keine öffentliche Liste.</li>
-        <li>Keine Werbung, kein Tracking, keine Cookies, keine Daten an Google & Co. (auch die Schrift liegt direkt in der App).</li>
-        <li>„Gruppe verlassen“ löscht deine Daten sofort. Am 31.01.2027 wird automatisch alles gelöscht.</li>
-        <li>Die App lädt nur eigenen Code und spricht nur mit ihrer eigenen Datenbank (verschlüsselt über HTTPS).</li>
+        <li>Keine Werbung, kein Tracking, keine Cookies, keine Daten an Google & Co.</li>
+        <li>Am 31.01.2027 werden alle Daten automatisch gelöscht.</li>
+        <li>Die App spricht nur mit ihrer eigenen Datenbank (verschlüsselt über HTTPS).</li>
       </ul>
-      <p class="muted small" style="margin:8px 0 0">Tipp: Benutze einen Spitznamen statt deines vollen Namens. Und schneide Mitteilungen oder Privates vor dem Hochladen weg, wenn welche auf dem Screenshot sind.</p>
+      <p class="muted small" style="margin:8px 0 0">Tipp: Schneide Mitteilungen oder Privates vor dem Hochladen weg, wenn welche auf dem Screenshot sind.</p>
     </div>
-    ${m ? `<div class="card">
-      <h3 style="font-size:17px;margin-bottom:12px">Dein Profil</h3>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div class="lb"><div class="av" style="width:48px;height:48px;border-radius:16px;background:var(--soft);display:grid;place-items:center;font-size:26px">${esc(m.emoji)}</div></div><b style="font-size:18px">${esc(m.name)}</b></div>
+    <div class="card">
+      <h3 style="font-size:17px;margin-bottom:12px">Dein Konto</h3>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div style="width:48px;height:48px;border-radius:16px;background:var(--soft);display:grid;place-items:center;font-size:26px">${esc(acc.emoji)}</div>
+        <div style="min-width:0"><b style="font-size:18px">${esc(acc.name)}${acc.admin?" 🛡️":""}</b><div class="muted small" style="word-break:break-all">${esc(acc.email)}</div></div></div>
       <button class="btn btn-ghost" id="btnEdit" style="margin-bottom:10px">Name & Symbol ändern</button>
-      <button class="btn btn-ghost" id="btnAccessShow" style="margin-bottom:10px">Zugangscode für anderes Gerät</button>
-      <button class="btn btn-ghost" id="btnLeave" style="color:var(--no)">Gruppe verlassen</button>
-    </div>`:""}
+      <button class="btn btn-ghost" id="btnPw" style="margin-bottom:10px">Passwort ändern</button>
+      ${acc.member_id ? `<button class="btn btn-ghost" id="btnLeave" style="margin-bottom:10px;color:var(--no)">Gruppe verlassen</button>` : ""}
+      <button class="btn btn-ghost" id="btnLogout">Abmelden</button>
+    </div>
     <p class="muted small" style="text-align:center;margin-top:20px">Freiraum · 40 Tage Social-Media-Fasten 🎄</p>`;
-  $("#btnEdit")?.addEventListener("click", ()=>editProfile(m));
-  $("#btnAccessShow")?.addEventListener("click", ()=>{
-    const link = `${location.origin}${location.pathname}?zugang=${accessCode()}`;
-    sheet(`<h3 style="margin-bottom:6px">Dein Zugangscode</h3>
-      <p class="muted small" style="margin:0 0 12px">Damit meldest du dich auf einem anderen Gerät (oder nach dem Installieren als App) wieder an. <b>Nicht weitergeben</b> – wer den Code hat, kann für dich eintragen.</p>
-      <textarea class="input" rows="3" readonly style="font-size:13px">${esc(accessCode())}</textarea>
-      <button class="btn btn-primary" id="cpAcc" style="margin-top:10px">Kopieren</button>`, r=>{ r.querySelector("#cpAcc").onclick=()=>copy(accessCode(),"Zugangscode kopiert"); });
-  });
-  $("#btnLeave")?.addEventListener("click", ()=>{
-    sheet(`<h3 style="margin-bottom:6px">Gruppe wirklich verlassen?</h3><p class="muted small" style="margin:0 0 14px">Deine Flammen und Einträge werden gelöscht.</p>
-      <button class="btn" id="yesLeave" style="background:var(--no);color:#fff;margin-bottom:10px">Ja, verlassen</button><button class="btn btn-ghost" id="noLeave">Abbrechen</button>`, r=>{
-      r.querySelector("#noLeave").onclick=closeSheet;
-      r.querySelector("#yesLeave").onclick=async ()=>{ try{ await rpc("sf_leave",{p_member:me.member_id,p_secret:me.secret}); }catch{} localStorage.removeItem("freiraum"); me=null; group=null; closeSheet(); show(); };
-    });
-  });
+  $("#btnEdit").onclick = editProfile;
+  $("#btnPw").onclick = changePw;
+  $("#btnLogout").onclick = async ()=>{ try{ await rpc("sf_logout",{p_token:T()}); }catch{} logoutLocal(); };
+  $("#btnLeave")?.addEventListener("click", ()=>confirmSheet("Gruppe wirklich verlassen? Deine Flammen und Einträge werden gelöscht.", async ()=>{
+    try{ await rpc("sf_leave2",{p_token:T()}); await refresh(); tab="today"; show(); toast("Gruppe verlassen"); }catch(err){ toast(err.message); }
+  }));
 }
-function editProfile(m){
-  let em = m.emoji;
+function editProfile(){
+  let em = acc.emoji;
   sheet(`<h3 style="margin-bottom:14px">Profil bearbeiten</h3>
-    <label class="field"><span>Name</span><input class="input" id="eName" maxlength="24" value="${esc(m.name)}"></label>
+    <label class="field"><span>Spitzname</span><input class="input" id="eName" maxlength="24" value="${esc(acc.name)}"></label>
     <div class="field"><span>Symbol</span><div class="emojis" id="eEmo">${EMOJIS.map(e=>`<button type="button" class="${e===em?"on":""}" data-e="${e}">${e}</button>`).join("")}</div></div>
     <button class="btn btn-primary" id="eSave">Speichern</button>`, r=>{
     r.querySelector("#eEmo").onclick = e=>{ const b=e.target.closest("button"); if(!b) return; em=b.dataset.e; r.querySelectorAll("#eEmo button").forEach(x=>x.classList.toggle("on",x===b)); };
     r.querySelector("#eSave").onclick = async ()=>{
       const n = r.querySelector("#eName").value.trim(); if(!n) return;
-      try{ await rpc("sf_update_me",{p_member:me.member_id,p_secret:me.secret,p_name:n,p_emoji:em}); closeSheet(); await refresh(); show(); toast("Gespeichert"); }catch(err){ toast(err.message); }
+      try{ await rpc("sf_profile",{p_token:T(),p_name:n,p_emoji:em}); closeSheet(); await refresh(); show(); toast("Gespeichert"); }catch(err){ toast(err.message); }
     };
   });
 }
+function changePw(){
+  sheet(`<h3 style="margin-bottom:14px">Passwort ändern</h3>
+    <label class="field"><span>Aktuelles Passwort</span><input class="input" id="pOld" type="password" autocomplete="current-password"></label>
+    <label class="field"><span>Neues Passwort (mind. 8 Zeichen)</span><input class="input" id="pNew" type="password" autocomplete="new-password"></label>
+    <button class="btn btn-primary" id="pSave">Speichern</button>`, r=>{
+    r.querySelector("#pSave").onclick = async ()=>{
+      try{ await rpc("sf_change_password",{p_token:T(),p_old:r.querySelector("#pOld").value,p_new:r.querySelector("#pNew").value}); closeSheet(); toast("Passwort geändert 🔒"); }catch(err){ toast(err.message); }
+    };
+  });
+}
+function logoutLocal(){ try{ localStorage.removeItem("freiraum"); }catch{} auth=null; acc=null; group=null; adminData=null; tab="today"; show(); }
 
 /* ---------- Sheet ---------- */
 function sheet(html, init){
@@ -786,42 +921,49 @@ function sheet(html, init){
   document.body.appendChild(bg); init && init(bg);
 }
 function closeSheet(){ $("#sheetBg")?.remove(); }
+async function copy(t,msg){ try{ await navigator.clipboard.writeText(t); toast(msg); } catch { sheet(`<h3 style="margin-bottom:10px">Zum Kopieren</h3><textarea class="input" rows="4" readonly>${esc(t)}</textarea>`, r=>r.querySelector("textarea").select()); } }
 
 /* ---------- Navigation ---------- */
-document.querySelectorAll("#tabbar button").forEach(b=>b.addEventListener("click", ()=>{ tab=b.dataset.t; show(); window.scrollTo({top:0}); }));
+document.querySelectorAll("#tabbar button").forEach(b=>b.addEventListener("click", ()=>{ tab=b.dataset.t; show(); window.scrollTo({top:0}); if(tab==="admin") loadAdmin().then(()=>{ if(tab==="admin") renderAdmin(); }); }));
 function show(){
-  const logged = !!(me && me.member_id);
+  const logged = !!(auth?.token && acc);
+  const hasGroup = logged && !!acc.member_id;
+  if (logged && tab==="admin" && !acc.admin) tab = "today";
   $("#vOnboard").classList.toggle("hidden", logged);
   $("#tabbar").classList.toggle("hidden", !logged);
-  $("#topPill").textContent = logged && group ? group.name : "bis Weihnachten";
-  ["today","group","info"].forEach(t=>$("#v"+t[0].toUpperCase()+t.slice(1)).classList.toggle("hidden", !logged || tab!==t));
+  $("#tabAdmin").classList.toggle("hidden", !(logged && acc.admin));
+  $("#topPill").textContent = hasGroup && group ? group.name : "bis Weihnachten";
+  const needGroup = logged && !hasGroup && (tab==="today" || tab==="group");
+  $("#vNoGroup").classList.toggle("hidden", !needGroup);
+  ["today","group","info","admin"].forEach(t=>$("#v"+t[0].toUpperCase()+t.slice(1)).classList.toggle("hidden", !logged || needGroup || tab!==t));
   document.querySelectorAll("#tabbar button").forEach(b=>b.classList.toggle("on", b.dataset.t===tab));
   if (!logged){ renderOnboard(); return; }
-  if (!group){ $("#vToday").innerHTML = `<div class="loader"></div>`; return; }
-  if (!myMember()){ // Mitglied gelöscht
-    localStorage.removeItem("freiraum"); me=null; group=null; show(); return;
-  }
-  if (tab==="today") renderToday(); else if (tab==="group") renderGroup(); else renderInfo();
+  if (needGroup){ renderNoGroup(); return; }
+  if (tab==="info") return renderInfo();
+  if (tab==="admin") return renderAdmin();
+  if (!group){ $("#v"+tab[0].toUpperCase()+tab.slice(1)).innerHTML = `<div class="loader"></div>`; return; }
+  if (tab==="today") renderToday(); else renderGroup();
 }
 async function refresh(){
-  if (!me) return;
+  if (!auth?.token) return;
   try {
-    group = await rpc("sf_group_state",{p_code:me.code});
-    if (!group){ localStorage.removeItem("freiraum"); me=null; toast("Gruppe nicht gefunden"); }
+    acc = await rpc("sf_me",{p_token:T()});
+    if (!acc){ logoutLocal(); toast("Bitte neu anmelden"); return; }
+    LIMIT = acc.limit || 30;
+    group = acc.member_id ? await rpc("sf_state",{p_token:T()}) : null;
+  } catch(err){
+    if (/anmelden/i.test(err.message)) { logoutLocal(); toast("Bitte neu anmelden"); }
+    else toast("Keine Verbindung – bitte später nochmal");
   }
-  catch(err){ toast("Keine Verbindung – bitte später nochmal"); }
 }
 
 /* ---------- Start ---------- */
 (async function init(){
-  if (params.get("g")){ $("#inCode").value = params.get("g").toUpperCase().slice(0,6); mode="join"; }
-  if (params.get("zugang") && !me){
-    try{ const [code,member_id,secret]=JSON.parse(atob(params.get("zugang"))); me={code,member_id,secret}; save(me); }catch{}
-    history.replaceState(null,"",location.pathname);
-  }
+  if (params.get("g")){ $("#inCode").value = params.get("g").toUpperCase().slice(0,6); mode="join"; authMode = auth ? "login" : "register"; }
+  if (params.get("g") || params.get("zugang")) history.replaceState(null,"",location.pathname + (params.get("heute")?`?heute=${params.get("heute")}`:""));
   show();
-  if (me){ await refresh(); show(); }
-  document.addEventListener("visibilitychange", async ()=>{ if(!document.hidden && me){ await refresh(); show(); } });
+  if (auth?.token){ await refresh(); show(); }
+  document.addEventListener("visibilitychange", async ()=>{ if(!document.hidden && auth?.token){ await refresh(); show(); } });
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
 })();
 </script>
