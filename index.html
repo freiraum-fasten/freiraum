@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Freiraum – 40 Tage Social-Media-Fasten</title>
+<meta name="description" content="40 Tage bis Weihnachten: max. 30 Minuten Social Media am Tag. Gemeinsam durchziehen, Flammen sammeln.">
+<meta name="theme-color" content="#FAF7F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121110" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Freiraum">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://jrbfbvlwngvjzddfuesu.supabase.co; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<style>
+@font-face{font-family:"Plus Jakarta Sans";src:url("font.woff2") format("woff2");font-weight:200 800;font-display:swap}
+:root{
+  --bg:#FAF7F2; --card:#FFFFFF; --ink:#1C1B19; --muted:#7A756C; --line:#ECE6DC; --soft:#F3EEE6;
+  --flame1:#FF8A1F; --flame2:#FF3D5A; --ok:#14A06B; --okbg:#E3F5EC; --no:#E5484D; --nobg:#FDECEC;
+  --shadow:0 1px 2px rgba(28,27,25,.04),0 8px 24px rgba(28,27,25,.06);
+  --r:22px;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#121110;--card:#1C1B19;--ink:#F5F1EA;--muted:#9C968C;--line:#2B2926;--soft:#252320;
+  --okbg:#12301F;--nobg:#3A1A1B;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25)}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Plus Jakarta Sans",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body{min-height:100dvh}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+.wrap{max-width:520px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 100px)}
+.hidden{display:none!important}
+h1,h2,h3{margin:0;letter-spacing:-.02em}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.grad{background:linear-gradient(135deg,var(--flame1),var(--flame2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.card{background:var(--card);border-radius:var(--r);padding:20px;box-shadow:var(--shadow);margin-bottom:14px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px}
+.brand svg{width:32px;height:32px}
+#topPill{max-width:55vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:var(--soft);font-weight:600;font-size:13px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;border-radius:16px;font-weight:700;font-size:16px;transition:transform .12s ease,opacity .2s}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--ink);color:var(--bg)}
+.btn-flame{background:linear-gradient(135deg,var(--flame1),var(--flame2));color:#fff;box-shadow:0 8px 20px rgba(255,61,90,.25)}
+.btn-ghost{background:var(--soft)}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.field{display:block;margin-bottom:12px}
+.field span{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:0 0 6px 4px}
+.input{width:100%;padding:15px 16px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);font-size:16px;outline:none;transition:border-color .2s}
+.input:focus{border-color:var(--flame1)}
+.code-input{text-transform:uppercase;letter-spacing:.3em;font-weight:800;text-align:center;font-size:22px}
+.emojis{display:flex;gap:8px;flex-wrap:wrap}
+.emojis button{width:44px;height:44px;border-radius:12px;background:var(--soft);font-size:22px;border:2px solid transparent}
+.emojis button.on{border-color:var(--flame1);background:var(--card)}
+.seg{display:flex;background:var(--soft);border-radius:14px;padding:4px;margin-bottom:16px}
+.seg button{flex:1;padding:11px;border-radius:11px;font-weight:700;font-size:14px;color:var(--muted)}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+
+/* Hero */
+.hero{text-align:center;padding:26px 6px 10px}
+.hero .big{font-size:40px;font-weight:800;line-height:1.05;letter-spacing:-.035em;margin:18px 0 12px}
+.hero p{font-size:16px;line-height:1.5;color:var(--muted);margin:0 auto 6px;max-width:380px}
+.hero-icon{width:84px;height:84px;margin:0 auto;filter:drop-shadow(0 10px 22px rgba(255,61,90,.3))}
+.rules{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:22px 0 18px}
+.rule{background:var(--card);border-radius:18px;padding:14px 8px;text-align:center;box-shadow:var(--shadow)}
+.rule b{display:block;font-size:22px;font-weight:800}
+.rule span{font-size:12px;color:var(--muted);font-weight:600}
+
+/* Today */
+.daystrip{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px}
+.daystrip .label{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.daystrip .day{font-size:30px;font-weight:800;letter-spacing:-.03em}
+.progress{height:8px;background:var(--soft);border-radius:99px;overflow:hidden;margin-bottom:18px}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--flame1),var(--flame2));border-radius:99px;transition:width .6s ease}
+.streak{display:flex;align-items:center;gap:16px}
+.streak .flame{width:66px;height:66px;flex:none}
+.streak .num{font-size:46px;font-weight:800;line-height:1;letter-spacing:-.04em}
+.streak .sub{font-weight:600;color:var(--muted);font-size:14px;margin-top:4px}
+.flame.off{filter:grayscale(1);opacity:.35}
+@keyframes pop{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+.flame.pop{animation:pop .6s ease}
+.q{font-size:19px;font-weight:700;line-height:1.35;margin:0 0 4px}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.choice button{padding:18px 10px;border-radius:18px;font-weight:700;font-size:15px;display:flex;flex-direction:column;align-items:center;gap:6px;border:2px solid transparent;transition:transform .12s}
+.choice button:active{transform:scale(.97)}
+.choice .yes{background:var(--okbg);color:var(--ok)}
+.choice .no{background:var(--nobg);color:var(--no)}
+.choice .ic{font-size:26px}
+.done{display:flex;align-items:center;gap:14px}
+.done .badge{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:26px;flex:none}
+.done .badge.ok{background:var(--okbg)} .done .badge.no{background:var(--nobg)}
+.linkbtn{color:var(--muted);font-weight:600;font-size:14px;text-decoration:underline;text-underline-offset:3px;padding:8px 0 0}
+.minutes{display:flex;align-items:center;gap:10px;margin-top:14px;padding:12px 14px;background:var(--soft);border-radius:14px}
+.minutes label{flex:1;font-size:14px;font-weight:600;color:var(--muted)}
+.minutes input{width:72px;padding:9px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);text-align:center;font-weight:700;font-size:16px;outline:none}
+.impulse .tag{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.impulse h3{font-size:19px;margin:8px 0 6px}
+.impulse p{margin:0;line-height:1.55;color:var(--muted);font-size:15px}
+.impulse .todo{margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--soft);font-weight:600;font-size:14px;line-height:1.45}
+.grid40{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:14px}
+.grid40 div{aspect-ratio:1;border-radius:9px;background:var(--soft);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--muted)}
+.grid40 .ok{background:linear-gradient(135deg,var(--flame1),var(--flame2));color:#fff}
+.grid40 .no{background:var(--nobg);color:var(--no)}
+.grid40 .today{outline:2px solid var(--ink);outline-offset:1px}
+.grid40 .xmas{background:transparent;font-size:16px}
+.sectionhead{display:flex;align-items:center;justify-content:space-between}
+.sectionhead h3{font-size:17px}
+
+/* Group */
+.code-box{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-radius:16px;background:var(--soft);margin:14px 0 12px}
+.code-box b{font-size:26px;letter-spacing:.2em;font-weight:800}
+.lb{list-style:none;margin:0;padding:0}
+.lb li{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.lb li:last-child{border-bottom:0}
+.lb .rank{width:22px;font-weight:800;color:var(--muted);text-align:center}
+.lb .av{width:42px;height:42px;border-radius:14px;background:var(--soft);display:grid;place-items:center;font-size:22px;flex:none}
+.lb .who{flex:1;min-width:0}
+.lb .who b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb .who span{font-size:13px;color:var(--muted);font-weight:500}
+.lb .me{background:linear-gradient(90deg,rgba(255,138,31,.08),transparent);border-radius:14px;padding-left:8px;margin-left:-8px}
+.lb .st{display:flex;align-items:center;gap:4px;font-weight:800;font-size:18px}
+.lb .st svg{width:20px;height:20px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px}
+
+/* Info */
+.steps{margin:10px 0 0;padding-left:20px;line-height:1.7;font-size:15px}
+.steps li{margin-bottom:4px}
+details{border-top:1px solid var(--line);padding:14px 0}
+details:first-of-type{border-top:0}
+summary{font-weight:700;cursor:pointer;list-style:none;display:flex;justify-content:space-between}
+summary::after{content:"＋";color:var(--muted)}
+details[open] summary::after{content:"－"}
+details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
+
+/* Tabbar */
+.tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 14px);display:flex;gap:4px;padding:6px;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.12);z-index:20}
+.tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 20px;border-radius:16px;font-size:11px;font-weight:700;color:var(--muted)}
+.tabbar button svg{width:22px;height:22px}
+.tabbar button.on{background:var(--soft);color:var(--ink)}
+
+/* Toast + sheet */
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translate(-50%,-140%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:14px;font-weight:600;font-size:14px;transition:transform .35s ease;z-index:50;max-width:90vw;text-align:center}
+.toast.show{transform:translate(-50%,0)}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:520px;border-radius:26px 26px 0 0;padding:22px 20px calc(env(safe-area-inset-bottom) + 22px);animation:up .3s ease}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+.confetti i{position:absolute;top:-12px;width:9px;height:14px;border-radius:3px;animation:fall 1.6s ease-in forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg);opacity:.2}}
+.loader{width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--flame2);border-radius:50%;animation:spin .8s linear infinite;margin:20px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hint{display:flex;gap:10px;align-items:flex-start;padding:14px;border-radius:16px;background:var(--soft);font-size:14px;line-height:1.5;margin-bottom:14px}
+.countdown{display:flex;justify-content:center;gap:10px;margin:18px 0 4px}
+.countdown div{background:var(--soft);border-radius:16px;padding:12px 0;width:76px;text-align:center}
+.countdown b{display:block;font-size:28px;font-weight:800;letter-spacing:-.03em}
+.countdown span{font-size:12px;color:var(--muted);font-weight:600}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="fg" x1="0" y1="1" x2="0.6" y2="0"><stop offset="0" stop-color="#FF3D5A"/><stop offset="1" stop-color="#FF8A1F"/></linearGradient>
+    <symbol id="flame" viewBox="0 0 64 64"><path fill="url(#fg)" d="M33.6 3.5c1.6 9.4-3.4 14.6-8.4 20.1-4.6 5-9.2 10-9.2 18.4C16 51.9 23.2 60 32 60s16-7.6 16-17.5c0-7.1-3.2-11.8-6.3-15.5-.4 3.8-2.2 6.6-5.2 7.8 2.3-10.5-.4-20.6-2.9-31.3z"/><path fill="#FFD27A" opacity=".9" d="M32.2 33c-4.2 4.1-7.4 7.4-7.4 12.2 0 4.6 3.2 8.3 7.2 8.3s7.2-3.5 7.2-8c0-3.3-1.6-5.5-3.2-7.3-.3 1.8-1.2 3-2.6 3.6.6-3.2.1-5.9-1.2-8.8z"/></symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand"><svg><use href="#flame"/></svg>Freiraum</div>
+    <div class="pill" id="topPill">bis Weihnachten</div>
+  </div>
+
+  <!-- ONBOARDING -->
+  <section id="vOnboard" class="hidden">
+    <div class="hero">
+      <svg class="hero-icon"><use href="#flame"/></svg>
+      <div class="big">40 Tage.<br><span class="grad">Weniger Feed.</span><br>Mehr Leben.</div>
+      <p>Social-Media-Fasten bis Weihnachten. Wir bestimmen über unser Leben – nicht das Smartphone.</p>
+    </div>
+    <div class="rules">
+      <div class="rule"><b>30</b><span>Minuten/Tag max.</span></div>
+      <div class="rule"><b>40</b><span>Tage durchziehen</span></div>
+      <div class="rule"><b>🔥</b><span>Flammen sammeln</span></div>
+    </div>
+    <div class="hint hidden" id="iosHint"><span>📱</span><div><b>Tipp fürs iPhone:</b> Tippe zuerst unten auf <b>Teilen → Zum Home-Bildschirm</b>, öffne Freiraum von dort und tritt dann bei. So bleibst du angemeldet.</div></div>
+    <div class="card">
+      <div class="seg" id="segMode">
+        <button class="on" data-m="join">Beitreten</button>
+        <button data-m="create">Gruppe gründen</button>
+      </div>
+      <label class="field"><span>Dein Spitzname</span><input class="input" id="inName" maxlength="24" placeholder="z. B. Lena oder Sonnenschein" autocomplete="off"></label>
+      <p class="muted small" style="margin:-4px 4px 12px">🔒 Kein Konto, keine E-Mail, keine Telefonnummer. Nur deine Gruppe sieht deinen Spitznamen.</p>
+      <div class="field"><span>Dein Symbol</span><div class="emojis" id="emojiPick"></div></div>
+      <label class="field" id="fCode"><span>Gruppen-Code</span><input class="input code-input" id="inCode" maxlength="6" placeholder="ABC123" autocapitalize="characters" autocomplete="off"></label>
+      <label class="field hidden" id="fGroup"><span>Name der Gruppe</span><input class="input" id="inGroup" maxlength="40" placeholder="z. B. Die Freundesgruppe"></label>
+      <button class="btn btn-flame" id="btnStart" style="margin-top:6px">Los geht's</button>
+      <button class="linkbtn" id="btnRestore" style="display:block;margin:12px auto 0">Ich mache schon mit (Zugangscode)</button>
+    </div>
+  </section>
+
+  <!-- TODAY -->
+  <section id="vToday" class="hidden"></section>
+  <!-- GROUP -->
+  <section id="vGroup" class="hidden"></section>
+  <!-- INFO -->
+  <section id="vInfo" class="hidden"></section>
+</div>
+
+<nav class="tabbar hidden" id="tabbar">
+  <button data-t="today" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.8 4.3-1.6 6.7-3.6 9C6.9 13.8 6 15.4 6 17.5 6 20 8.7 22 12 22s6-2 6-5c0-2.3-1-4-2.4-5.3-.2 1.5-.9 2.4-2 2.9.9-4.1-.3-7.8-1.6-11.6z"/></svg>Heute</button>
+  <button data-t="group"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.7-3.4 3.3-5.5 6.5-5.5s5.8 2.1 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M17.5 14.5c2.2.3 3.6 1.9 4 4.5"/></svg>Gruppe</button>
+  <button data-t="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></svg>Infos</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- Konfiguration ---------- */
+const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
+const START = "2026-11-14", END = "2026-12-23", DAYS = 40, LIMIT = 30;
+const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
+
+/* 40 Impulse – je ein Gedanke + eine Offline-Mini-Challenge */
+const IMPULSES = [
+ ["Der erste Schritt","Heute beginnt dein Freiraum. Es geht nicht um Verzicht, sondern um Freiheit: Du entscheidest, wohin deine Zeit fließt.","Stell dein 30-Minuten-Limit ein (Anleitung unter „Infos“) und schieb die Social-Apps vom Home-Bildschirm in einen Ordner."],
+ ["Der erste Griff","Wie oft greifst du zum Handy, ohne es zu merken? Oft ist es nur Langeweile, die nach Futter sucht.","Leg dein Handy heute beim Essen außer Sichtweite – alle Mahlzeiten."],
+ ["Sonntagsruhe","Ruhe ist kein verlorener Tag. Schon im ersten Kapitel der Bibel gönnt sich sogar Gott einen Ruhetag.","Lies 1. Mose 2,1–3 und mach heute bewusst etwas, das dir guttut – ohne Bildschirm."],
+ ["Morgens zuerst du","Die ersten Minuten des Tages prägen die Stimmung. Wer mit dem Feed startet, lässt andere den Tag bestimmen.","Schau morgen in den ersten 30 Minuten nach dem Aufwachen nicht aufs Handy."],
+ ["Echte Stimmen","Ein Anruf sagt mehr als zehn Nachrichten. Stimmen verbinden anders als Herzchen.","Ruf heute jemanden an, statt zu schreiben – einfach so."],
+ ["Langeweile aushalten","Langeweile ist der Raum, in dem Ideen entstehen. Wir haben verlernt, sie auszuhalten.","Warte heute einmal ohne Handy – an der Bushaltestelle, in der Schlange, wo auch immer."],
+ ["Eine Woche geschafft","Sieben Tage! Merkst du schon einen Unterschied? Vielleicht mehr Zeit, vielleicht mehr Unruhe – beides ist normal.","Schreib dir drei Dinge auf, die du diese Woche mit der gewonnenen Zeit gemacht hast."],
+ ["Vergleichen macht klein","Feeds zeigen die Highlights der anderen – und wir vergleichen sie mit unserem Alltag. Das ist kein fairer Vergleich.","Lies Psalm 139,13–14 und notiere eine Sache, die du an dir magst."],
+ ["Handyfreie Zone","Räume ohne Bildschirm schaffen Raum für Gespräche und Schlaf.","Lass das Handy heute Nacht außerhalb deines Schlafzimmers laden."],
+ ["Draußen sein","Frische Luft, Licht, Bewegung – der einfachste Stimmungsheber, den es gibt.","Geh heute mindestens 20 Minuten raus – ohne Kopfhörer."],
+ ["Benachrichtigungen aus","Jede Push-Nachricht ist jemand, der deine Aufmerksamkeit will. Du darfst Nein sagen.","Schalte heute die Mitteilungen aller Social-Apps aus."],
+ ["Etwas mit den Händen","Kochen, zeichnen, basteln, schrauben: Wer etwas erschafft, statt zu scrollen, fühlt sich lebendiger.","Mach heute etwas mit deinen Händen – egal was."],
+ ["Gemeinsam stärker","Allein ist es schwer, zusammen geht es leichter. Darum macht ihr das als Gruppe.","Schreib jemandem aus deiner Gruppe eine ermutigende Nachricht."],
+ ["Halbzeit der ersten Hälfte","Zwei Wochen sind fast rum. Gewohnheiten brauchen Zeit – bleib dran, auch wenn mal ein Tag schiefgeht.","Schau auf deine Bildschirmzeit: Wie viel hast du im Vergleich zu vor dem Start gespart?"],
+ ["Stille","In der Stille hört man Dinge, die im Lärm untergehen – auch sich selbst.","Nimm dir heute 10 Minuten Stille. Kein Handy, keine Musik. Lies vorher Psalm 46,11."],
+ ["Ein echtes Buch","Lesen trainiert genau das, was Scrollen abtrainiert: Konzentration.","Lies heute 20 Seiten in einem Buch."],
+ ["Dankbarkeit","Wer dankbar ist, braucht weniger Bestätigung von außen.","Schreib heute drei Dinge auf, für die du dankbar bist."],
+ ["Advent beginnt","Advent heißt Ankunft. Eine Zeit des Wartens und Vorbereitens – nicht des Dauerkonsums.","Zünde heute eine Kerze an und verbring den Abend ohne Bildschirm."],
+ ["Spielabend","Brett- und Kartenspiele bringen Menschen an einen Tisch – mit Lachen, das nicht gepostet wird.","Spiel heute ein Spiel mit Familie oder Freunden."],
+ ["Halbzeit!","20 von 40 Tagen. Du hast schon bewiesen, dass du es kannst. Die zweite Hälfte wird leichter.","Feier die Halbzeit mit etwas Schönem – und erzähl jemandem davon."],
+ ["Ohne Beweisfoto","Nicht alles muss festgehalten werden. Manche Momente gehören nur dir.","Erlebe heute einen schönen Moment, ohne ihn zu fotografieren."],
+ ["Jemandem helfen","Zeit ist das wertvollste Geschenk, das wir haben. Du hast jetzt mehr davon.","Hilf heute jemandem – im Haushalt, in der Nachbarschaft, ungefragt."],
+ ["Der Nikolaus-Gedanke","Der heilige Nikolaus beschenkte Menschen heimlich. Gutes tun braucht kein Publikum.","Tu heute jemandem heimlich etwas Gutes."],
+ ["Bewegung","Dein Körper ist nicht nur zum Daumen-Bewegen da.","Mach heute 20 Minuten Sport oder einen langen Spaziergang."],
+ ["Ein handgeschriebener Gruß","Eine Karte von Hand ist selten geworden – genau deshalb freut sie so sehr.","Schreib heute eine Weihnachts- oder Dankeskarte von Hand."],
+ ["Wovor fliehe ich?","Manchmal ist das Handy eine Flucht vor Gefühlen oder Aufgaben. Ehrlich hinschauen hilft.","Frag dich heute: Wann greife ich am meisten zum Handy – und warum?"],
+ ["Kochen mit anderen","Gemeinsam kochen ist Zeit, die nach mehr schmeckt.","Koch oder back heute etwas mit jemandem zusammen."],
+ ["Vier Wochen","Vier Wochen Freiraum! Das ist eine echte Gewohnheit, die gerade entsteht.","Schreib auf: Was will ich nach Weihnachten beibehalten?"],
+ ["Gutes Wort","Worte können aufbauen. Im Netz liest man oft das Gegenteil.","Lies Philipper 4,8 und sag heute drei Leuten etwas Ermutigendes."],
+ ["Licht in der Dunkelheit","Die dunkelsten Wochen des Jahres sind auch die Wochen der Lichter.","Mach heute abends einen Spaziergang und schau dir die Lichter an."],
+ ["Erinnerungen","Fotos auf dem Handy schauen wir uns selten an. Echte Erinnerungen erzählt man sich.","Frag deine Eltern oder Großeltern nach einer Geschichte von früher."],
+ ["Weniger ist mehr","Wem folgst du eigentlich? Und warum? Manche Accounts tun dir nicht gut.","Entfolge heute mindestens fünf Accounts, die dich schlecht fühlen lassen."],
+ ["Ausgeschlafen","Bildschirmlicht am Abend klaut Schlaf. Wer ausgeschlafen ist, ist stärker.","Kein Bildschirm in der letzten Stunde vor dem Schlafen."],
+ ["Musik live","Selbst singen oder spielen ist etwas völlig anderes, als Musik nur zu konsumieren.","Sing oder spiel heute ein Weihnachtslied – allein oder mit anderen."],
+ ["Weihnachtsvorbereitung","Die Tage vor Weihnachten sind voll. Gut, dass du nicht noch Stunden im Feed verlierst.","Pack heute ein Geschenk liebevoll ein – oder bastle eines selbst."],
+ ["Der Kern von Weihnachten","Worum geht es eigentlich an Weihnachten? Nicht um die perfekten Fotos.","Lies Lukas 2,1–20 – die Weihnachtsgeschichte."],
+ ["Versöhnung","Weihnachten ist ein Fest des Friedens. Vielleicht gibt es jemanden, mit dem du etwas klären solltest.","Mach heute einen Schritt auf jemanden zu."],
+ ["Fast geschafft","Noch drei Tage! Du bist auf der Zielgeraden.","Danke heute jemandem aus deiner Gruppe fürs Mitmachen."],
+ ["Rückblick","Schau zurück: Was hat sich in diesen Wochen verändert – bei dir, bei euch?","Schreib dir eine Nachricht an dich selbst für nächstes Jahr."],
+ ["Tag 40","Du hast es geschafft! 40 Tage Freiraum. Morgen ist Heiligabend – genieß ihn ganz bewusst, mit den Menschen um dich herum.","Feier mit deiner Gruppe – und überlege, was du dir aus dieser Zeit mitnimmst."]
+];
+
+/* ---------- Helfer ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const params = new URLSearchParams(location.search);
+function berlinToday(){ // lokales Datum des Geräts – funktioniert in jeder Zeitzone weltweit
+  if (params.get("heute")) return params.get("heute"); // nur zum Testen
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+const toDate = s => new Date(s+"T12:00:00Z");
+const addDays = (s,n) => { const d = toDate(s); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); };
+const diffDays = (a,b) => Math.round((toDate(a)-toDate(b))/864e5);
+const dayIndex = s => diffDays(s, START) + 1;            // 1..40
+const inWindow = s => s >= START && s <= END;
+const fmtDate = s => toDate(s).toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long",timeZone:"UTC"});
+
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2600); }
+function load(){ try { return JSON.parse(localStorage.getItem("freiraum")||"null"); } catch { return null; } }
+function save(v){ try { localStorage.setItem("freiraum", JSON.stringify(v)); } catch {} }
+
+async function rpc(fn, args){
+  const r = await fetch(`${SB_URL}/rest/v1/rpc/${fn}`, {
+    method:"POST", headers:{ "apikey":SB_KEY, "Authorization":"Bearer "+SB_KEY, "Content-Type":"application/json" },
+    body: JSON.stringify(args)
+  });
+  const txt = await r.text();
+  let data = null; try { data = txt ? JSON.parse(txt) : null; } catch {}
+  if (!r.ok) throw new Error((data && data.message) || "Verbindung fehlgeschlagen");
+  return data;
+}
+
+function confetti(){
+  const c = document.createElement("div"); c.className="confetti";
+  const cols=["#FF8A1F","#FF3D5A","#FFD27A","#14A06B","#7C5CFF"];
+  for(let i=0;i<70;i++){ const p=document.createElement("i");
+    p.style.left=Math.random()*100+"vw"; p.style.background=cols[i%cols.length];
+    p.style.animationDelay=Math.random()*.4+"s"; p.style.animationDuration=1.2+Math.random()*1+"s"; c.appendChild(p); }
+  document.body.appendChild(c); setTimeout(()=>c.remove(),2800);
+}
+
+/* ---------- State ---------- */
+let me = load();
+let group = null;   // {name, code, members:[{id,name,emoji,checkins:[{day,success,minutes}]}]}
+let tab = "today";
+let mode = "join";
+let pickedEmoji = EMOJIS[0];
+
+function statsFor(m){
+  const map = {}; (m.checkins||[]).forEach(c => map[c.day] = c);
+  const today = berlinToday();
+  let streak = 0;
+  let d = map[today] ? today : addDays(today,-1);
+  while (inWindow(d) && map[d] && map[d].success) { streak++; d = addDays(d,-1); }
+  const total = (m.checkins||[]).filter(c=>c.success).length;
+  let best=0, run=0;
+  for (let i=0;i<DAYS;i++){ const dd=addDays(START,i); if(map[dd]&&map[dd].success){run++;best=Math.max(best,run);} else run=0; }
+  return { map, streak, total, best, todayEntry: map[today] };
+}
+const myMember = () => group?.members.find(m => m.id === me?.member_id);
+
+/* ---------- Render: Onboarding ---------- */
+function renderOnboard(){
+  $("#emojiPick").innerHTML = EMOJIS.map(e=>`<button type="button" class="${e===pickedEmoji?"on":""}" data-e="${e}">${e}</button>`).join("");
+  $("#fCode").classList.toggle("hidden", mode!=="join");
+  $("#fGroup").classList.toggle("hidden", mode!=="create");
+  document.querySelectorAll("#segMode button").forEach(b=>b.classList.toggle("on", b.dataset.m===mode));
+  $("#btnStart").textContent = mode==="join" ? "Beitreten" : "Gruppe gründen";
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  $("#iosHint").classList.toggle("hidden", !(isIOS && !standalone));
+}
+$("#emojiPick").addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return; pickedEmoji=b.dataset.e; renderOnboard(); });
+$("#segMode").addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return; mode=b.dataset.m; renderOnboard(); });
+$("#btnStart").addEventListener("click", async ()=>{
+  const name = $("#inName").value.trim();
+  if (!name) { toast("Bitte gib deinen Namen ein"); $("#inName").focus(); return; }
+  const btn = $("#btnStart"); btn.disabled = true;
+  try {
+    let res;
+    if (mode==="join"){
+      const code = $("#inCode").value.trim().toUpperCase();
+      if (code.length!==6) { toast("Der Code hat 6 Zeichen"); btn.disabled=false; return; }
+      res = await rpc("sf_join_group",{p_code:code,p_name:name,p_emoji:pickedEmoji});
+    } else {
+      const g = $("#inGroup").value.trim();
+      if (!g) { toast("Wie soll eure Gruppe heißen?"); btn.disabled=false; return; }
+      res = await rpc("sf_create_group",{p_group_name:g,p_name:name,p_emoji:pickedEmoji});
+    }
+    me = { code:res.code, member_id:res.member_id, secret:res.secret };
+    save(me);
+    history.replaceState(null,"",location.pathname);
+    await refresh(); tab = mode==="create" ? "group" : "today"; show();
+    toast(mode==="create" ? "Gruppe erstellt – lade jetzt deine Leute ein!" : "Willkommen in der Gruppe! 🔥");
+  } catch(err){ toast(err.message); }
+  btn.disabled = false;
+});
+$("#btnRestore").addEventListener("click", ()=>openRestore());
+
+function accessCode(){ return btoa(JSON.stringify([me.code, me.member_id, me.secret])).replace(/=+$/,""); }
+function openRestore(){
+  sheet(`<h3 style="margin-bottom:6px">Mit Zugangscode anmelden</h3>
+    <p class="muted small" style="margin:0 0 14px">Deinen Zugangscode findest du auf dem anderen Gerät unter „Infos“.</p>
+    <input class="input" id="inAccess" placeholder="Zugangscode einfügen" autocomplete="off">
+    <button class="btn btn-primary" id="btnAccess" style="margin-top:12px">Anmelden</button>`, root=>{
+    root.querySelector("#btnAccess").onclick = async ()=>{
+      try{
+        let raw = root.querySelector("#inAccess").value.trim();
+        const m = raw.match(/zugang=([A-Za-z0-9+/]+)/); if (m) raw = m[1];
+        const [code, member_id, secret] = JSON.parse(atob(raw));
+        me = {code, member_id, secret}; save(me); closeSheet(); await refresh(); show(); toast("Angemeldet 👍");
+      }catch{ toast("Dieser Code passt nicht"); }
+    };
+  });
+}
+
+/* ---------- Render: Today ---------- */
+function renderToday(){
+  const today = berlinToday();
+  const m = myMember();
+  const s = m ? statsFor(m) : {streak:0,total:0,best:0,map:{}};
+  const idx = dayIndex(today);
+  let html = "";
+
+  if (today < START){
+    const left = diffDays(START, today);
+    html += `<div class="card" style="text-align:center">
+      <div class="daystrip" style="justify-content:center"><div class="label">Start am Samstag, 14. November</div></div>
+      <svg class="flame off" style="width:64px;height:64px"><use href="#flame"/></svg>
+      <div class="countdown"><div><b>${left}</b><span>${left===1?"Tag":"Tage"}</span></div></div>
+      <p class="muted" style="margin:10px 0 0;line-height:1.5">Noch bis zum Start. Nutze die Zeit: Lade Freunde ein und stell dein 30-Minuten-Limit ein.</p>
+    </div>
+    <button class="btn btn-flame" id="goInvite" style="margin-bottom:14px">Freunde einladen</button>
+    <button class="btn btn-ghost" id="goSetup" style="margin-bottom:14px">Limit einrichten – so geht's</button>`;
+    html += impulseCard(0, "Vorgeschmack auf Tag 1");
+  } else if (today > END){
+    html += `<div class="card" style="text-align:center">
+      <div style="font-size:54px">🎄</div>
+      <h2 style="font-size:28px;margin:8px 0 6px">Ihr habt's geschafft!</h2>
+      <p class="muted" style="margin:0 0 16px;line-height:1.5">40 Tage Freiraum sind vorbei. Frohe Weihnachten!</p>
+      <div class="rules" style="margin:0">
+        <div class="rule"><b>${s.total}</b><span>Tage geschafft</span></div>
+        <div class="rule"><b>${s.best}</b><span>beste Serie</span></div>
+        <div class="rule"><b>${Math.round(s.total/DAYS*100)}%</b><span>Quote</span></div>
+      </div></div>`;
+    html += calendarCard(s, today);
+  } else {
+    const pct = Math.round(idx/DAYS*100);
+    html += `<div class="daystrip"><div><div class="label">${esc(fmtDate(today))}</div><div class="day">Tag ${idx} <span class="muted" style="font-weight:600">von ${DAYS}</span></div></div>
+      <div class="pill">🎄 noch ${DAYS-idx+1}</div></div>
+      <div class="progress"><i style="width:${pct}%"></i></div>`;
+    html += `<div class="card"><div class="streak">
+      <svg class="flame ${s.streak? "":"off"}" id="bigFlame"><use href="#flame"/></svg>
+      <div><div class="num">${s.streak}</div><div class="sub">${s.streak===1?"Tag in Folge":"Tage in Folge"} · ${s.total} gesamt</div></div>
+    </div></div>`;
+    html += checkinCard(s, today);
+    const y = addDays(today,-1);
+    if (inWindow(y) && !s.map[y]) html += `<div class="card" style="padding:16px 20px"><div class="sectionhead"><div><b>Gestern vergessen?</b><div class="muted small">${esc(fmtDate(y))}</div></div><button class="pill" id="btnYesterday">Nachtragen</button></div></div>`;
+    html += impulseCard(idx-1, `Impuls · Tag ${idx}`);
+    html += calendarCard(s, today);
+  }
+  $("#vToday").innerHTML = html;
+
+  $("#goInvite")?.addEventListener("click", ()=>{ tab="group"; show(); });
+  $("#goSetup")?.addEventListener("click", ()=>{ tab="info"; show(); setTimeout(()=>{ const d=$("#dSetup"); if(d){d.open=true;d.scrollIntoView({behavior:"smooth"});} },50); });
+  $("#btnYesterday")?.addEventListener("click", ()=>askCheckin(addDays(today,-1)));
+  document.querySelectorAll("[data-ci]").forEach(b=>b.addEventListener("click", ()=>doCheckin(today, b.dataset.ci==="1")));
+  $("#btnChange")?.addEventListener("click", ()=>askCheckin(today));
+}
+function checkinCard(s, today){
+  const e = s.todayEntry;
+  if (e){
+    return `<div class="card"><div class="done">
+      <div class="badge ${e.success?"ok":"no"}">${e.success?"✅":"💪"}</div>
+      <div style="flex:1"><b style="font-size:17px">${e.success?"Heute geschafft!":"Heute nicht geklappt"}</b>
+      <div class="muted small" style="margin-top:2px">${e.success? (e.minutes!=null? e.minutes+" Minuten Social Media – stark!":"Deine Flamme brennt weiter."):"Kein Problem – morgen ist ein neuer Tag."}</div></div>
+    </div><button class="linkbtn" id="btnChange">Ändern</button></div>`;
+  }
+  return `<div class="card">
+    <p class="q">Hast du heute max. ${LIMIT} Minuten Social Media genutzt?</p>
+    <div class="muted small">Am besten abends eintragen. Ehrlich bleiben – es geht um dich.</div>
+    <div class="minutes"><label for="inMin">Minuten laut Bildschirmzeit (optional)</label><input id="inMin" type="number" inputmode="numeric" min="0" max="1440" placeholder="–"></div>
+    <div class="choice">
+      <button class="yes" data-ci="1"><span class="ic">✓</span>Geschafft</button>
+      <button class="no" data-ci="0"><span class="ic">✕</span>Nicht geschafft</button>
+    </div></div>`;
+}
+function askCheckin(day){
+  sheet(`<h3 style="margin-bottom:4px">${esc(fmtDate(day))}</h3>
+    <p class="muted small" style="margin:0 0 6px">Max. ${LIMIT} Minuten Social Media eingehalten?</p>
+    <div class="minutes"><label for="inMin2">Minuten (optional)</label><input id="inMin2" type="number" inputmode="numeric" min="0" max="1440" placeholder="–"></div>
+    <div class="choice"><button class="yes" data-v="1"><span class="ic">✓</span>Geschafft</button><button class="no" data-v="0"><span class="ic">✕</span>Nicht geschafft</button></div>`,
+    root => root.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{ const v=root.querySelector("#inMin2").value; closeSheet(); doCheckin(day, b.dataset.v==="1", v); }));
+}
+async function doCheckin(day, success, minutesRaw){
+  const raw = minutesRaw ?? $("#inMin")?.value;
+  let minutes = raw==="" || raw==null ? null : Math.max(0, Math.min(1440, parseInt(raw,10)));
+  if (Number.isNaN(minutes)) minutes = null;
+  if (success && minutes!=null && minutes > LIMIT){ toast(`${minutes} Min. sind über dem Limit – dann zählt es leider nicht`); return; }
+  try{
+    await rpc("sf_checkin",{p_member:me.member_id,p_secret:me.secret,p_day:day,p_success:success,p_minutes:minutes});
+    await refresh(); show();
+    if (success){ confetti(); navigator.vibrate?.(30); $("#bigFlame")?.classList.add("pop"); toast("🔥 Stark! Deine Flamme wächst."); }
+    else toast("Danke für deine Ehrlichkeit. Morgen neu starten! 💪");
+  }catch(err){ toast(err.message); }
+}
+function impulseCard(i, tag){
+  const [t,x,a] = IMPULSES[Math.max(0,Math.min(DAYS-1,i))];
+  return `<div class="card impulse"><div class="tag grad">${esc(tag)}</div><h3>${esc(t)}</h3><p>${esc(x)}</p><div class="todo">🎯 ${esc(a)}</div></div>`;
+}
+function calendarCard(s, today){
+  let cells = "";
+  for (let i=0;i<DAYS;i++){
+    const d = addDays(START,i), e = s.map[d];
+    const cls = [e ? (e.success?"ok":"no") : "", d===today?"today":""].join(" ");
+    cells += `<div class="${cls}" title="${d}">${e? (e.success?"🔥":"✕") : i+1}</div>`;
+  }
+  return `<div class="card"><div class="sectionhead"><h3>Deine 40 Tage</h3><span class="muted small">${s.total}/${DAYS}</span></div><div class="grid40">${cells}</div></div>`;
+}
+
+/* ---------- Render: Group ---------- */
+function renderGroup(){
+  if (!group){ $("#vGroup").innerHTML = `<div class="loader"></div>`; return; }
+  const today = berlinToday();
+  const rows = group.members.map(m=>({m, s:statsFor(m)}))
+    .sort((a,b)=> b.s.streak-a.s.streak || b.s.total-a.s.total || a.m.name.localeCompare(b.m.name));
+  const doneToday = rows.filter(r=>r.s.todayEntry).length;
+  const succToday = rows.filter(r=>r.s.todayEntry?.success).length;
+  const active = inWindow(today);
+  const list = rows.map((r,i)=>{
+    const e = r.s.todayEntry;
+    const status = !active ? "" : e ? (e.success?`<span class="dot" style="background:var(--ok)"></span>heute geschafft`:`<span class="dot" style="background:var(--no)"></span>heute nicht geschafft`) : `<span class="dot" style="background:var(--line)"></span>noch nicht eingetragen`;
+    return `<li class="${r.m.id===me.member_id?"me":""}"><div class="rank">${i+1}</div><div class="av">${esc(r.m.emoji)}</div>
+      <div class="who"><b>${esc(r.m.name)}${r.m.id===me.member_id?" (du)":""}</b><span>${status || r.s.total+" Tage geschafft"}</span></div>
+      <div class="st"><svg class="${r.s.streak?"":"flame off"}"><use href="#flame"/></svg>${r.s.streak}</div></li>`;
+  }).join("");
+  $("#vGroup").innerHTML = `
+    <div class="card">
+      <div class="muted small" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em">Deine Gruppe</div>
+      <h2 style="font-size:26px;margin-top:4px">${esc(group.name)}</h2>
+      <div class="muted small" style="margin-top:4px">${group.members.length} ${group.members.length===1?"Person":"Personen"}${active?` · heute ${succToday}/${group.members.length} geschafft`:""}</div>
+      <div class="code-box"><div><div class="muted small" style="font-weight:600">Gruppen-Code</div><b>${esc(group.code)}</b></div><button class="pill" id="btnCopyCode">Kopieren</button></div>
+      <button class="btn btn-flame" id="btnInvite">Freunde einladen</button>
+    </div>
+    <div class="card"><div class="sectionhead" style="margin-bottom:4px"><h3>Rangliste</h3><span class="muted small">nach Flammen-Serie</span></div><ul class="lb">${list}</ul></div>
+    <p class="muted small" style="text-align:center">${active && doneToday<group.members.length ? "Erinnere die anderen ans Eintragen 😉" : ""}</p>`;
+  const link = `${location.origin}${location.pathname}?g=${group.code}`;
+  const text = `Mach mit bei „${group.name}“: 40 Tage Social-Media-Fasten bis Weihnachten – max. 30 Minuten am Tag. 🔥 Code: ${group.code}`;
+  $("#btnCopyCode").onclick = ()=>copy(group.code, "Code kopiert");
+  $("#btnInvite").onclick = async ()=>{
+    if (navigator.share){ try{ await navigator.share({title:"Freiraum",text,url:link}); return; }catch(e){ if(e.name==="AbortError") return; } }
+    copy(text+"\n"+link, "Einladung kopiert – jetzt in WhatsApp einfügen");
+  };
+}
+async function copy(t,msg){ try{ await navigator.clipboard.writeText(t); toast(msg); } catch { sheet(`<h3 style="margin-bottom:10px">Zum Kopieren</h3><textarea class="input" rows="4" readonly>${esc(t)}</textarea>`, r=>r.querySelector("textarea").select()); } }
+
+/* ---------- Render: Info ---------- */
+function renderInfo(){
+  const m = myMember();
+  $("#vInfo").innerHTML = `
+    <div class="card">
+      <h3 style="font-size:20px;margin-bottom:8px">So funktioniert's</h3>
+      <ol class="steps">
+        <li>Vom <b>14.11. bis 23.12.</b> – 40 Tage bis Heiligabend.</li>
+        <li>Pro Tag <b>max. ${LIMIT} Minuten</b> für alle Social-Media-Apps zusammen (YouTube, Insta, TikTok, Snapchat …).</li>
+        <li>Jeden Abend in Freiraum eintragen: geschafft oder nicht.</li>
+        <li>Jeder geschaffte Tag bringt eine 🔥. Tage in Folge = deine Flammen-Serie.</li>
+        <li>Ehrlich bleiben. Ein schlechter Tag ist kein Weltuntergang – einfach weitermachen.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <details id="dSetup"><summary>📱 Limit am iPhone einstellen</summary>
+        <ol class="steps"><li>Einstellungen → <b>Bildschirmzeit</b> öffnen (ggf. aktivieren).</li><li><b>App-Limits</b> → <b>Limit hinzufügen</b>.</li><li>Kategorie <b>Soziale Netze</b> anhaken, dazu YouTube und andere Apps einzeln auswählen.</li><li>Zeit auf <b>30 Min.</b> stellen, „Am Ende des Limits blockieren“ an.</li><li>Tipp: Einen Freund den Bildschirmzeit-Code festlegen lassen 😉</li></ol></details>
+      <details><summary>🤖 Limit bei Android einstellen</summary>
+        <ol class="steps"><li>Einstellungen → <b>Digital Wellbeing & Jugendschutz</b>.</li><li><b>Dashboard</b> bzw. „App-Timer“ öffnen.</li><li>Bei jeder Social-App ein Limit setzen – zusammen max. 30 Minuten (z. B. 10 Min. Insta, 10 Min. YouTube, 10 Min. TikTok).</li><li>Bei Samsung heißt es „Digital Wellbeing und Kindersicherung“.</li></ol></details>
+      <details><summary>📊 Wo sehe ich meine Minuten?</summary>
+        <p>iPhone: Einstellungen → Bildschirmzeit → „Alle Aktivitäten anzeigen“. Android: Digital Wellbeing → Dashboard. Dort siehst du genau, wie lange du heute in jeder App warst.</p></details>
+      <details><summary>➕ Freiraum als App installieren</summary>
+        <p><b>iPhone:</b> In Safari unten auf Teilen → „Zum Home-Bildschirm“.<br><b>Android:</b> In Chrome oben auf ⋮ → „App installieren“ bzw. „Zum Startbildschirm“.</p></details>
+    </div>
+    <div class="card">
+      <h3 style="font-size:17px;margin-bottom:8px">🔒 Datenschutz & Sicherheit</h3>
+      <ul class="steps" style="padding-left:18px">
+        <li>Kein Konto, keine E-Mail, keine Telefonnummer, kein Standort.</li>
+        <li>Gespeichert werden nur: Spitzname, Symbol, Gruppenname und deine Tages-Einträge.</li>
+        <li>Nur wer den Gruppen-Code kennt, sieht eure Gruppe. Es gibt keine öffentliche Liste.</li>
+        <li>Keine Werbung, kein Tracking, keine Cookies, keine Daten an Google & Co. (auch die Schrift liegt direkt in der App).</li>
+        <li>„Gruppe verlassen“ löscht deine Daten sofort. Am 31.01.2027 wird automatisch alles gelöscht.</li>
+        <li>Die App lädt nur eigenen Code und spricht nur mit ihrer eigenen Datenbank (verschlüsselt über HTTPS).</li>
+      </ul>
+      <p class="muted small" style="margin:8px 0 0">Tipp: Benutze einen Spitznamen statt deines vollen Namens.</p>
+    </div>
+    ${m ? `<div class="card">
+      <h3 style="font-size:17px;margin-bottom:12px">Dein Profil</h3>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div class="lb"><div class="av" style="width:48px;height:48px;border-radius:16px;background:var(--soft);display:grid;place-items:center;font-size:26px">${esc(m.emoji)}</div></div><b style="font-size:18px">${esc(m.name)}</b></div>
+      <button class="btn btn-ghost" id="btnEdit" style="margin-bottom:10px">Name & Symbol ändern</button>
+      <button class="btn btn-ghost" id="btnAccessShow" style="margin-bottom:10px">Zugangscode für anderes Gerät</button>
+      <button class="btn btn-ghost" id="btnLeave" style="color:var(--no)">Gruppe verlassen</button>
+    </div>`:""}
+    <p class="muted small" style="text-align:center;margin-top:20px">Freiraum · 40 Tage Social-Media-Fasten 🎄</p>`;
+  $("#btnEdit")?.addEventListener("click", ()=>editProfile(m));
+  $("#btnAccessShow")?.addEventListener("click", ()=>{
+    const link = `${location.origin}${location.pathname}?zugang=${accessCode()}`;
+    sheet(`<h3 style="margin-bottom:6px">Dein Zugangscode</h3>
+      <p class="muted small" style="margin:0 0 12px">Damit meldest du dich auf einem anderen Gerät (oder nach dem Installieren als App) wieder an. <b>Nicht weitergeben</b> – wer den Code hat, kann für dich eintragen.</p>
+      <textarea class="input" rows="3" readonly style="font-size:13px">${esc(accessCode())}</textarea>
+      <button class="btn btn-primary" id="cpAcc" style="margin-top:10px">Kopieren</button>`, r=>{ r.querySelector("#cpAcc").onclick=()=>copy(accessCode(),"Zugangscode kopiert"); });
+  });
+  $("#btnLeave")?.addEventListener("click", ()=>{
+    sheet(`<h3 style="margin-bottom:6px">Gruppe wirklich verlassen?</h3><p class="muted small" style="margin:0 0 14px">Deine Flammen und Einträge werden gelöscht.</p>
+      <button class="btn" id="yesLeave" style="background:var(--no);color:#fff;margin-bottom:10px">Ja, verlassen</button><button class="btn btn-ghost" id="noLeave">Abbrechen</button>`, r=>{
+      r.querySelector("#noLeave").onclick=closeSheet;
+      r.querySelector("#yesLeave").onclick=async ()=>{ try{ await rpc("sf_leave",{p_member:me.member_id,p_secret:me.secret}); }catch{} localStorage.removeItem("freiraum"); me=null; group=null; closeSheet(); show(); };
+    });
+  });
+}
+function editProfile(m){
+  let em = m.emoji;
+  sheet(`<h3 style="margin-bottom:14px">Profil bearbeiten</h3>
+    <label class="field"><span>Name</span><input class="input" id="eName" maxlength="24" value="${esc(m.name)}"></label>
+    <div class="field"><span>Symbol</span><div class="emojis" id="eEmo">${EMOJIS.map(e=>`<button type="button" class="${e===em?"on":""}" data-e="${e}">${e}</button>`).join("")}</div></div>
+    <button class="btn btn-primary" id="eSave">Speichern</button>`, r=>{
+    r.querySelector("#eEmo").onclick = e=>{ const b=e.target.closest("button"); if(!b) return; em=b.dataset.e; r.querySelectorAll("#eEmo button").forEach(x=>x.classList.toggle("on",x===b)); };
+    r.querySelector("#eSave").onclick = async ()=>{
+      const n = r.querySelector("#eName").value.trim(); if(!n) return;
+      try{ await rpc("sf_update_me",{p_member:me.member_id,p_secret:me.secret,p_name:n,p_emoji:em}); closeSheet(); await refresh(); show(); toast("Gespeichert"); }catch(err){ toast(err.message); }
+    };
+  });
+}
+
+/* ---------- Sheet ---------- */
+function sheet(html, init){
+  closeSheet();
+  const bg = document.createElement("div"); bg.className="sheet-bg"; bg.id="sheetBg";
+  bg.innerHTML = `<div class="sheet">${html}</div>`;
+  bg.addEventListener("click", e=>{ if(e.target===bg) closeSheet(); });
+  document.body.appendChild(bg); init && init(bg);
+}
+function closeSheet(){ $("#sheetBg")?.remove(); }
+
+/* ---------- Navigation ---------- */
+document.querySelectorAll("#tabbar button").forEach(b=>b.addEventListener("click", ()=>{ tab=b.dataset.t; show(); window.scrollTo({top:0}); }));
+function show(){
+  const logged = !!(me && me.member_id);
+  $("#vOnboard").classList.toggle("hidden", logged);
+  $("#tabbar").classList.toggle("hidden", !logged);
+  $("#topPill").textContent = logged && group ? group.name : "bis Weihnachten";
+  ["today","group","info"].forEach(t=>$("#v"+t[0].toUpperCase()+t.slice(1)).classList.toggle("hidden", !logged || tab!==t));
+  document.querySelectorAll("#tabbar button").forEach(b=>b.classList.toggle("on", b.dataset.t===tab));
+  if (!logged){ renderOnboard(); return; }
+  if (!group){ $("#vToday").innerHTML = `<div class="loader"></div>`; return; }
+  if (!myMember()){ // Mitglied gelöscht
+    localStorage.removeItem("freiraum"); me=null; group=null; show(); return;
+  }
+  if (tab==="today") renderToday(); else if (tab==="group") renderGroup(); else renderInfo();
+}
+async function refresh(){
+  if (!me) return;
+  try {
+    group = await rpc("sf_group_state",{p_code:me.code});
+    if (!group){ localStorage.removeItem("freiraum"); me=null; toast("Gruppe nicht gefunden"); }
+  }
+  catch(err){ toast("Keine Verbindung – bitte später nochmal"); }
+}
+
+/* ---------- Start ---------- */
+(async function init(){
+  if (params.get("g")){ $("#inCode").value = params.get("g").toUpperCase().slice(0,6); mode="join"; }
+  if (params.get("zugang") && !me){
+    try{ const [code,member_id,secret]=JSON.parse(atob(params.get("zugang"))); me={code,member_id,secret}; save(me); }catch{}
+    history.replaceState(null,"",location.pathname);
+  }
+  show();
+  if (me){ await refresh(); show(); }
+  document.addEventListener("visibilitychange", async ()=>{ if(!document.hidden && me){ await refresh(); show(); } });
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+})();
+</script>
+</body>
+</html>

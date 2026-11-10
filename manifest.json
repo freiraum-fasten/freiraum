@@ -1,0 +1,16 @@
+{
+  "name": "Freiraum – 40 Tage Social-Media-Fasten",
+  "short_name": "Freiraum",
+  "description": "40 Tage bis Weihnachten: max. 30 Minuten Social Media am Tag.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FAF7F2",
+  "theme_color": "#FAF7F2",
+  "lang": "de",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
