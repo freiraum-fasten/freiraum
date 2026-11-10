@@ -25,11 +25,24 @@
   --r:22px;
 }
 @media (prefers-color-scheme:dark){
-  :root{--bg:#121110;--card:#1C1B19;--ink:#F5F1EA;--muted:#9C968C;--line:#2B2926;--soft:#252320;
+  html:not([data-theme]), html[data-theme="auto"]{--bg:#121110;--card:#1C1B19;--ink:#F5F1EA;--muted:#9C968C;--line:#2B2926;--soft:#252320;
   --okbg:#12301F;--nobg:#3A1A1B;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25)}
 }
+/* Designs */
+html[data-theme="dunkel"]{--bg:#121110;--card:#1C1B19;--ink:#F5F1EA;--muted:#9C968C;--line:#2B2926;--soft:#252320;--okbg:#12301F;--nobg:#3A1A1B;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25)}
+html[data-theme="schwarz"]{--bg:#000;--card:#111;--ink:#fff;--muted:#8E8E93;--line:#222;--soft:#1A1A1A;--okbg:#0E2A1B;--nobg:#33151A;--shadow:none}
+html[data-theme="weihnachten"]{--bg:#FBF4EC;--card:#FFFDF9;--ink:#2B1B17;--muted:#86675C;--line:#EEDFD2;--soft:#F5E7DA;--flame1:#E63946;--flame2:#A4161A;--ok:#2A8C55;--okbg:#E2F3E8}
+html[data-theme="mitternacht"]{--bg:#0D1222;--card:#161D33;--ink:#EEF2FF;--muted:#94A0C4;--line:#232C47;--soft:#1D2540;--flame1:#7C9CFF;--flame2:#B26BFF;--okbg:#10301F;--nobg:#3A1A26;--shadow:0 1px 2px rgba(0,0,0,.35),0 8px 24px rgba(0,0,0,.3)}
+html[data-theme="ozean"]{--bg:#F1F7FA;--card:#FFFFFF;--ink:#0F2430;--muted:#5D7684;--line:#DCE9EF;--soft:#E6F0F5;--flame1:#00B4D8;--flame2:#2563EB}
+html[data-theme="rosa"]{--bg:#FCF4F8;--card:#FFFFFF;--ink:#2A1724;--muted:#8A6A7D;--line:#F1DCE7;--soft:#F8E8F0;--flame1:#FF6FB5;--flame2:#8B5CF6}
+html[data-font="system"]{--font:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif}
+html[data-font="rund"]{--font:ui-rounded,"SF Pro Rounded","Nunito","Varela Round",system-ui,sans-serif}
+html[data-font="klassisch"]{--font:ui-serif,Georgia,"Iowan Old Style","Times New Roman",serif}
+html[data-font="mono"]{--font:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+html[data-size="gross"] .wrap, html[data-size="gross"] .sheet{zoom:1.12}
+html[data-size="klein"] .wrap, html[data-size="klein"] .sheet{zoom:.92}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Plus Jakarta Sans",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font,"Plus Jakarta Sans",system-ui,-apple-system,sans-serif);-webkit-font-smoothing:antialiased}
 body{min-height:100dvh}
 button,input{font:inherit;color:inherit}
 button{cursor:pointer;border:0;background:none}
@@ -187,7 +200,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 .bigrank small{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:0}
 .av.big{width:52px;height:52px;border-radius:16px;background:var(--soft);display:grid;place-items:center;font-size:28px;flex:none}
 .mecard .who b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mecard .who span{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.mecard .who > span{display:block;font-size:13px;color:var(--muted);margin-top:2px}
 .mestats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
 .mestats div{background:var(--soft);border-radius:14px;padding:10px 4px;text-align:center;display:flex;flex-direction:column;align-items:center}
 .mestats svg{width:18px;height:18px;margin-bottom:2px}
@@ -199,12 +212,21 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 .strip i.no{background:var(--no);opacity:.55}
 .strip i.t{outline:1.5px solid var(--ink)}
 .status.bad{background:var(--nobg);color:var(--no)}
+.av img, .avimg{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{padding:9px 13px;border-radius:12px;background:var(--soft);font-weight:700;font-size:14px;border:2px solid transparent;display:flex;align-items:center;gap:6px}
+.chips button.on{border-color:var(--flame2);background:var(--card)}
+.swatch{width:16px;height:16px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.15)}
+.label2{font-size:13px;font-weight:700;color:var(--muted);margin:14px 2px 8px;text-transform:uppercase;letter-spacing:.05em}
+.newlist{margin:8px 0 0;padding-left:20px;line-height:1.6;font-size:15px}
+.newlist li{margin-bottom:4px}
 .countdown div{background:var(--soft);border-radius:16px;padding:12px 0;width:76px;text-align:center}
 .countdown b{display:block;font-size:28px;font-weight:800;letter-spacing:-.03em}
 .countdown span{font-size:12px;color:var(--muted);font-weight:600}
 </style>
 </head>
 <body>
+<script>try{const l=JSON.parse(localStorage.getItem("fr_look")||"{}");const h=document.documentElement;if(l.theme&&l.theme!=="auto")h.dataset.theme=l.theme;if(l.font&&l.font!=="modern")h.dataset.font=l.font;if(l.size&&l.size!=="normal")h.dataset.size=l.size;}catch(e){}</script>
 <svg width="0" height="0" style="position:absolute">
   <defs>
     <linearGradient id="fg" x1="0" y1="1" x2="0.6" y2="0"><stop offset="0" stop-color="#FF3D5A"/><stop offset="1" stop-color="#FF8A1F"/></linearGradient>
@@ -277,7 +299,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
   <button data-t="today" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.8 4.3-1.6 6.7-3.6 9C6.9 13.8 6 15.4 6 17.5 6 20 8.7 22 12 22s6-2 6-5c0-2.3-1-4-2.4-5.3-.2 1.5-.9 2.4-2 2.9.9-4.1-.3-7.8-1.6-11.6z"/></svg>Heute</button>
   <button data-t="group"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.7-3.4 3.3-5.5 6.5-5.5s5.8 2.1 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M17.5 14.5c2.2.3 3.6 1.9 4 4.5"/></svg>Rangliste</button>
   <button data-t="admin" id="tabAdmin" class="hidden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4 5.5v6c0 5 3.4 8.8 8 10 4.6-1.2 8-5 8-10v-6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Admin</button>
-  <button data-t="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></svg>Infos</button>
+  <button data-t="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Einstellungen</button>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -286,7 +308,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "8";
+const APP_VERSION = "9";
 const START = "2026-11-14", END = "2026-12-23", DAYS = 40, GRACE = 2;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -390,7 +412,9 @@ function statsFor(m){
   const map = {}; (m.checkins||[]).forEach(c => map[c.day] = c);
   const today = berlinToday();
   let streak = 0;
-  let d = map[today] ? today : addDays(today,-1);
+  // Tage, deren Frist noch läuft und die noch fehlen, unterbrechen die Serie nicht
+  let d = addDays(today,-1);
+  while (!map[d] && diffDays(today,d) <= GRACE && d >= START) d = addDays(d,-1);
   while (inWindow(d) && map[d] && map[d].success) { streak++; d = addDays(d,-1); }
   const total = (m.checkins||[]).filter(c=>c.success).length;
   const okList = (m.checkins||[]).filter(c=>c.success);   // nur geschaffte Tage (max. Limit & gültig)
@@ -467,10 +491,10 @@ $("#btnStart").addEventListener("click", async ()=>{
 
 /* ---------- Heute ---------- */
 function renderToday(){
-  const today = berlinToday();
+  const today = berlinToday(), y = addDays(today,-1);
   const m = myMember();
   const s = m ? statsFor(m) : {streak:0,total:0,best:0,map:{},minutes:0,validDays:0};
-  const idx = dayIndex(today);
+  const lastUpload = addDays(END, GRACE);          // bis hierhin kann man noch hochladen
   let html = "";
   if (today < START){
     const left = diffDays(START, today);
@@ -478,13 +502,13 @@ function renderToday(){
       <div class="daystrip" style="justify-content:center"><div class="label">Start am Samstag, 14. November</div></div>
       <svg class="flame off" style="width:64px;height:64px"><use href="#flame"/></svg>
       <div class="countdown"><div><b>${left}</b><span>${left===1?"Tag":"Tage"}</span></div></div>
-      <p class="muted" style="margin:10px 0 0;line-height:1.5">Noch bis zum Start. Nutze die Zeit: Lade Freunde ein und stell dein ${LIMIT}-Minuten-Limit ein.</p>
+      <p class="muted" style="margin:10px 0 0;line-height:1.5">Noch bis zum Start. Ab dem 15. lädst du jeden Tag den Screenshot vom Vortag hoch. Nutze die Zeit: Freunde einladen und dein ${LIMIT}-Minuten-Limit einstellen.</p>
     </div>
     ${acc?.admin ? `<button class="btn btn-primary" id="goAdmin" style="margin-bottom:14px">🧪 Screenshot-Erkennung testen (Admin)</button>` : ""}
     <button class="btn btn-flame" id="goInvite" style="margin-bottom:14px">Freunde einladen</button>
-    <button class="btn btn-ghost" id="goSetup" style="margin-bottom:14px">Limit einrichten – so geht's</button>`;
+    <button class="btn btn-ghost" id="goSetup" style="margin-bottom:14px">📸 So machst du den Screenshot</button>`;
     html += impulseCard(0, "Vorgeschmack auf Tag 1");
-  } else if (today > END){
+  } else if (today > lastUpload){
     html += `<div class="card" style="text-align:center">
       <div style="font-size:54px">🎄</div>
       <h2 style="font-size:28px;margin:8px 0 6px">Ihr habt's geschafft!</h2>
@@ -496,44 +520,49 @@ function renderToday(){
       </div></div>`;
     html += calendarCard(s, today);
   } else {
-    const pct = Math.round(idx/DAYS*100);
-    html += `<div class="daystrip"><div><div class="label">${esc(fmtDate(today))}</div><div class="day">Tag ${idx} <span class="muted" style="font-weight:600">von ${DAYS}</span></div></div>
-      <div class="pill">🎄 noch ${DAYS-idx+1}</div></div>
+    const idx = Math.min(dayIndex(today), DAYS), running = today <= END;
+    const pct = Math.round(Math.min(dayIndex(today), DAYS)/DAYS*100);
+    html += `<div class="daystrip"><div><div class="label">${esc(fmtDate(today))}</div><div class="day">${running?`Tag ${idx} <span class="muted" style="font-weight:600">von ${DAYS}</span>`:"Endspurt 🎄"}</div></div>
+      <div class="pill">🎄 ${running?`noch ${DAYS-idx+1}`:"geschafft"}</div></div>
       <div class="progress"><i style="width:${pct}%"></i></div>`;
     html += `<div class="card"><div class="streak">
       <svg class="flame ${s.streak? "":"off"}" id="bigFlame"><use href="#flame"/></svg>
-      <div><div class="num">${s.streak}</div><div class="sub">${s.streak===1?"Tag in Folge":"Tage in Folge"} · ${s.minutes} Min. gesamt</div></div>
+      <div><div class="num">${s.streak}</div><div class="sub">${s.streak===1?"Tag in Folge":"Tage in Folge"} · ${s.total} 🔥 geschafft</div></div>
     </div></div>`;
     if (acc.hidden) html += `<div class="hint" style="display:block;margin-bottom:14px"><b>🕶️ Unsichtbar-Modus aktiv</b><br><span class="muted small">Du machst nicht mit und beobachtest nur. Zum Mitmachen im Admin-Bereich ausschalten.</span></div>`;
-    else html += checkinCard(s, today);
-    if (!acc.hidden) [1,2].map(n=>addDays(today,-n)).filter(d=>inWindow(d) && !s.map[d]).forEach(d=>{
-      const left = GRACE - diffDays(today,d);
-      html += `<div class="card" style="padding:16px 20px"><div class="sectionhead"><div><b>${esc(fmtDate(d))} fehlt</b><div class="muted small">${left===0?"Heute letzte Chance!":"Noch bis morgen nachtragbar"}</div></div><button class="pill" data-up="${d}">Nachtragen</button></div></div>`;
-    });
-    html += impulseCard(idx-1, `Impuls · Tag ${idx}`);
+    else {
+      if (inWindow(y)) html += checkinCard(s, y, today);
+      else html += `<div class="card"><p class="q">Tag 1 läuft! 🔥</p><div class="muted small" style="line-height:1.5">Heute zählt's zum ersten Mal: max. ${LIMIT} Min. Social Media. <b>Morgen</b> lädst du dann den Screenshot von heute hoch.</div>
+        <button class="btn btn-ghost" id="goSetup" style="margin-top:14px">📸 So machst du den Screenshot</button></div>`;
+      const d2 = addDays(today,-2);
+      if (inWindow(d2) && !s.map[d2]) html += `<div class="card" style="padding:16px 20px;border:2px solid var(--no)"><div class="sectionhead"><div><b>${esc(fmtDate(d2))} fehlt</b><div class="muted small">Heute letzte Chance zum Nachtragen!</div></div><button class="pill" data-up="${d2}">Nachtragen</button></div></div>`;
+      if (running) html += `<div class="card" style="padding:16px 20px"><b>Heute läuft:</b> <span class="muted">max. ${LIMIT} Min. Social Media. Den Screenshot von heute lädst du morgen hoch.</span></div>`;
+    }
+    if (running) html += impulseCard(idx-1, `Impuls · Tag ${idx}`);
     html += calendarCard(s, today);
   }
   $("#vToday").innerHTML = html;
   $("#goInvite")?.addEventListener("click", invite);
   $("#goAdmin")?.addEventListener("click", ()=>{ tab="admin"; show(); });
-  $("#goSetup")?.addEventListener("click", ()=>{ tab="info"; show(); setTimeout(()=>{ const d=$("#dSetup"); if(d){d.open=true;d.scrollIntoView({behavior:"smooth"});} },50); });
+  $("#goSetup")?.addEventListener("click", ()=>{ tab="info"; show(); setTimeout(()=>{ const d=$("#cardGuide"); if(d) d.scrollIntoView({behavior:"smooth"}); },60); });
   document.querySelectorAll("#vToday [data-up]").forEach(b=>b.addEventListener("click", ()=>uploadFlow(b.dataset.up)));
 }
-function checkinCard(s, today){
-  const e = s.todayEntry;
+function checkinCard(s, day, today){
+  const e = s.map[day];
+  const label = day===addDays(today,-1) ? `gestern (${esc(fmtDate(day))})` : esc(fmtDate(day));
   if (e){
     const ok = e.success;
     return `<div class="card"><div class="done">
-      <div class="badge ${ok?"ok":"no"}">${ok?"✅":"⏱️"}</div>
-      <div style="flex:1"><b style="font-size:17px;${ok?"":"color:var(--no)"}">${ok?"Heute geschafft!":"Heute ungültig ❌"}</b>
-      <div class="muted small" style="margin-top:2px">${ok? e.minutes+" Min. Social Media – stark!" : (e.valid===false?"Ein Admin oder dein Gruppenleiter hat den Screenshot abgelehnt.":e.minutes+" Min. – über dem Limit von "+LIMIT+" Min. Keine Flamme, morgen neu angreifen! 💪")}</div></div>
-    </div><button class="linkbtn" data-up="${today}">Neuen Screenshot hochladen</button></div>`;
+      <div class="badge ${ok?"ok":"no"}">${ok?"✅":"❌"}</div>
+      <div style="flex:1"><b style="font-size:17px;${ok?"":"color:var(--no)"}">${ok?"Gestern geschafft! 🔥":"Gestern ungültig"}</b>
+      <div class="muted small" style="margin-top:2px">${ok? e.minutes+" Min. Social Media – stark!" : (e.valid===false?"Ein Admin hat den Screenshot abgelehnt.":e.minutes+" Min. – über dem Limit von "+LIMIT+" Min. Keine Flamme. Heute neu angreifen! 💪")}</div></div>
+    </div><button class="linkbtn" data-up="${day}">Screenshot nochmal hochladen</button></div>`;
   }
-  return `<div class="card">
-    <p class="q">Deine Social-Media-Zeit für heute</p>
-    <div class="muted small" style="line-height:1.5">Am besten abends: Screenshot von deiner Bildschirmzeit machen und hier hochladen. Die Minuten werden direkt auf deinem Handy ausgelesen.</div>
-    <button class="btn btn-flame" data-up="${today}" style="margin-top:16px">📷 Screenshot hochladen</button>
-    <div class="muted small" style="text-align:center;margin-top:10px">Max. ${LIMIT} Min. = 🔥 · Vergessen? Du hast 2 Tage Zeit zum Nachtragen.</div>
+  return `<div class="card" style="border:2px solid var(--flame2)">
+    <p class="q">📸 Lade den Screenshot von ${label} hoch</p>
+    <div class="muted small" style="line-height:1.5">Mach einen Screenshot deiner Bildschirmzeit <b>von gestern</b> – mit Datum und der Liste der Apps. Die Minuten werden direkt auf deinem Handy ausgelesen.</div>
+    <button class="btn btn-flame" data-up="${day}" style="margin-top:16px">📷 Screenshot hochladen</button>
+    <div class="muted small" style="text-align:center;margin-top:10px">Max. ${LIMIT} Min. = 🔥 · Vergessen? Morgen geht's noch – danach ist der Tag weg.</div>
   </div>`;
 }
 
@@ -563,18 +592,27 @@ function parseDur(str){
   if (!found && /\d{1,2}\s*(sek|sec|s)(?![a-z])/.test(s)) found=true;
   return found ? h*60+m : null;
 }
+function durNear(lines, i){
+  const d = parseDur(lines[i]); if (d != null) return d;
+  for (let k=1;k<=2;k++){
+    const nx = lines[i+k]; if (!nx) break;
+    const head = nx.split(/\d/)[0];
+    if (/[A-Za-zÄÖÜäöüß]{3,}/.test(head)) break;        // nächste Zeile ist schon eine andere App
+    const v = parseDur(nx); if (v != null) return v;
+  }
+  return null;
+}
 function parseScreenTime(text){
   const lines = text.split(/\n/).map(l=>l.trim()).filter(Boolean);
   const apps = [];
   lines.forEach((l,i)=>{
+    const namePart = l.split(/\d/)[0];                    // Text vor der ersten Zahl = App-Name
     for (const [name,re] of SOCIAL){
       if (apps.some(a=>a.name===name)) continue;
-      const cleaned = l.replace(/\d.*$/,"").trim(); // Name-Teil vor der Zeit
-      if (re.test((name==="X / Twitter"||name==="Kick") ? cleaned : l)){
-        let d = parseDur(l);
-        const nx = lines[i+1];
-        if (d==null && nx && /^\d/.test(nx) && nx.length < 24 && !SOCIAL.some(([,r])=>r.test(nx))) d = parseDur(nx);
-        if (d!=null) apps.push({name, min:d});
+      const cleaned = namePart.replace(/^[^A-Za-z]+/,"").trim();
+      if (re.test((name==="X / Twitter"||name==="Kick") ? cleaned : namePart)){
+        const d = durNear(lines, i);
+        if (d != null) apps.push({name, min:d});
       }
     }
   });
@@ -604,12 +642,12 @@ function ocrCanvas(im){
   g.putImageData(px,0,0); return c;
 }
 function compressShot(im){
-  let w = Math.min(720, im.width), q = 0.62;
+  let w = Math.min(640, im.width), q = 0.55;
   for (let i=0;i<6;i++){
     const c=document.createElement("canvas"); c.width=w; c.height=Math.round(im.height*w/im.width);
     c.getContext("2d").drawImage(im,0,0,c.width,c.height);
     const data = c.toDataURL("image/jpeg", q);
-    if (data.length < 380000) return data;
+    if (data.length < 170000) return data;
     w = Math.round(w*0.82); q = Math.max(0.35, q-0.07);
   }
   throw new Error("Bild ist zu groß");
@@ -700,7 +738,7 @@ function uploadFlow(day, test=false){
   });
 }
 function stitch(ims){
-  const w = Math.min(900, Math.max(...ims.map(i=>i.width)));
+  const w = Math.min(640, Math.max(...ims.map(i=>i.width)));
   const hs = ims.map(i=>Math.round(i.height*w/i.width));
   const c = document.createElement("canvas"); c.width = w; c.height = hs.reduce((a,b)=>a+b,0) + (ims.length-1)*12;
   const g = c.getContext("2d"); g.fillStyle = "#FF3D5A"; g.fillRect(0,0,c.width,c.height);
@@ -757,8 +795,8 @@ async function analyse(root, files, day, test){
       }
       await rpc("sf_upload",{p_token:T(),p_day:day,p_minutes:minutes,p_shot:shot,p_ocr_minutes:ocrMin,p_date_ok:dateOk});
       closeSheet(); done(); await refresh(); show();
-      if (minutes <= LIMIT){ confetti(); navigator.vibrate?.(30); $("#bigFlame")?.classList.add("pop"); toast("🔥 Stark! Deine Flamme wächst."); }
-      else toast(`❌ Ungültig: über ${LIMIT} Min. – keine Flamme heute.`);
+      if (minutes <= LIMIT){ confetti(); navigator.vibrate?.(30); $("#bigFlame")?.classList.add("pop"); toast("🔥 Gültig! Deine Flamme wächst."); }
+      else toast(`❌ Ungültig: über ${LIMIT} Min. – keine Flamme für diesen Tag.`);
     }catch(err){ toast(err.message); btn.disabled = false; }
   };
 }
@@ -774,20 +812,20 @@ function rankRows(){
 }
 function renderGroup(){
   if (!group){ $("#vGroup").innerHTML = `<div class="loader"></div>`; return; }
-  const today = berlinToday(), active = inWindow(today), canReview = !!acc?.admin;
+  const today = berlinToday(), yd = addDays(today,-1), active = inWindow(yd), canReview = !!acc?.admin;
   const rows = rankRows();
   const mine = rows.find(r=>r.m.id===acc.member_id);
   const n = rows.length;
-  const succToday = rows.filter(r=>r.s.todayEntry?.success).length;
+  const succToday = rows.filter(r=>r.s.map[yd]?.success).length;
   const flamesAll = rows.reduce((a,r)=>a+r.s.total,0);
-  const statusOf = r => { const e=r.s.todayEntry; return !active ? "" : e ? (e.success?`<span class="dot" style="background:var(--ok)"></span>heute geschafft`:`<span class="dot" style="background:var(--no)"></span>heute ungültig`) : `<span class="dot" style="background:var(--line)"></span>heute noch offen`; };
+  const statusOf = r => { const e=r.s.map[yd]; return !active ? "" : e ? (e.success?`<span class="dot" style="background:var(--ok)"></span>gestern geschafft`:`<span class="dot" style="background:var(--no)"></span>gestern ungültig`) : `<span class="dot" style="background:var(--line)"></span>gestern noch offen`; };
   const valueOf = r => rankMode==="streak"
     ? `<div class="st"><svg class="${r.s.streak?"":"flame off"}"><use href="#flame"/></svg>${r.s.streak}</div>`
     : `<div style="text-align:right"><b style="font-size:17px">${r.s.validDays}</b><div class="muted small">${r.s.minutes} Min.</div></div>`;
   const medal = k => k===1?"🥇":k===2?"🥈":k===3?"🥉":k;
   const list = rows.filter(r=>r!==mine).map(r=>{
     const flags = canReview ? (r.m.checkins||[]).filter(c=>!c.reviewed && (c.edited || c.date_ok===false)).length : 0;
-    return `<li class="${canReview?"tap":""}" data-mid="${r.m.id}"><div class="rank">${medal(r.rank)}</div><div class="av">${esc(r.m.emoji)}</div>
+    return `<li class="${canReview?"tap":""}" data-mid="${r.m.id}"><div class="rank">${medal(r.rank)}</div><div class="av">${avatarHtml(r.m)}</div>
       <div class="who"><b>${esc(r.m.name)}</b><span>${statusOf(r) || (r.s.total+" 🔥 gesamt")}${flags?` · <span class="flag">⚠️ ${flags}</span>`:""}</span></div>${valueOf(r)}</li>`;
   }).join("");
   // eigene 40-Tage-Leiste
@@ -796,7 +834,7 @@ function renderGroup(){
   $("#vGroup").innerHTML = `
     <div class="stats3">
       <div><b>${n}</b><span>dabei</span></div>
-      <div><b>${active?succToday:"–"}</b><span>heute 🔥</span></div>
+      <div><b>${active?succToday:"–"}</b><span>gestern 🔥</span></div>
       <div><b>${flamesAll}</b><span>🔥 gesamt</span></div>
     </div>
     ${acc.hidden ? `<div class="hint" style="display:block;margin-bottom:16px"><b>🕶️ Unsichtbar-Modus aktiv</b><br><span class="muted small">Du beobachtest nur – niemand sieht dich in der Rangliste. Ausschalten im Admin-Bereich.</span></div>` : ""}
@@ -804,8 +842,8 @@ function renderGroup(){
       <div class="mehead"><span class="youtag">DU</span><span class="muted small">${rankMode==="streak"?"Flammen-Rangliste":"Wettbewerb"}</span></div>
       <div class="merow">
         <div class="bigrank"><small>Platz</small>${mine.rank}<small>von ${n}</small></div>
-        <div class="av big">${esc(mine.m.emoji)}</div>
-        <div class="who" style="flex:1;min-width:0"><b style="font-size:19px">${esc(mine.m.name)}</b><span>${statusOf(mine) || "Start am 14. November"}</span></div>
+        <div class="av big">${avatarHtml(mine.m)}</div>
+        <div class="who" style="flex:1;min-width:0"><b style="font-size:19px">${esc(mine.m.name)}</b><span>${statusOf(mine) || (today < START ? "Start am 14. November" : "")}</span></div>
       </div>
       <div class="mestats">
         <div><svg class="${mine.s.streak?"":"flame off"}"><use href="#flame"/></svg><b>${mine.s.streak}</b><span>in Folge</span></div>
@@ -885,19 +923,19 @@ function renderAdmin(){
   const accs = d.accounts.filter(a=>!accSearch || (a.email+" "+a.name).toLowerCase().includes(accSearch.toLowerCase()));
   const accRows = accs.map(a=>`<div class="row" style="flex-wrap:wrap"><b style="min-width:0;flex:1 1 100%">${esc(a.emoji)} ${esc(a.name)}${a.admin?" 🛡️":""}${a.hidden?" 🕶️":""}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)}${a.group?" · "+esc(a.group):" · ohne Gruppe"}</div></b>
       <button class="pill" data-adm="${a.id}" data-v="${a.admin?0:1}">${a.admin?"Admin entziehen":"Zum Admin"}</button>
-      <button class="pill" data-pw="${a.id}">Passwort neu</button></div>`).join("");
+      <button class="pill" data-pw="${a.id}">Passwort neu</button>${a.has_avatar?`<button class="pill" data-rmav="${a.id}">Bild entfernen</button>`:""}</div>`).join("");
   v.innerHTML = `
-    <div class="card"><div class="sectionhead"><h3>🛡️ Admin-Bereich</h3><span class="muted small">${d.accounts.length} Konten · ${d.groups} Gruppen</span></div>
+    <div class="card"><div class="sectionhead"><h3>🛡️ Admin-Bereich</h3><span class="muted small">${d.accounts.length} Konten · ${d.stats?.uploads ?? 0} Uploads · ${d.stats?.db ?? ""}</span></div>
       <p class="muted small" style="margin:6px 0 0">Nur Admins sehen diesen Bereich.</p></div>
     <div class="card" style="${acc.hidden?"border:2px solid var(--ink)":""}"><div class="sectionhead"><h3 style="font-size:17px">🕶️ Unsichtbar-Modus</h3>
         <input type="checkbox" id="hidToggle" style="width:26px;height:26px" ${acc.hidden?"checked":""}></div>
       <p class="muted small" style="margin:6px 0 0;line-height:1.5">${acc.hidden ? "<b>Aktiv:</b> Du tauchst nirgends in der Rangliste auf und zählst bei „dabei“ nicht mit. Du kannst trotzdem alles beobachten und als Admin prüfen." : "Schalte ihn ein, wenn du nicht mitmachen, sondern nur still beobachten willst. Niemand sieht dich dann in der Rangliste."}</p></div>
     <div class="card"><h3 style="font-size:17px">🧪 KI-Test</h3>
-      <p class="muted small" style="margin:6px 0 12px;line-height:1.5">Lade einen echten Bildschirmzeit-Screenshot hoch. Die App liest die Minuten aus – danach kannst du sagen, ob die KI richtig lag. Tests zählen nirgends.</p>
+      <p class="muted small" style="margin:6px 0 12px;line-height:1.5">Lade einen echten Bildschirmzeit-Screenshot <b>von gestern</b> hoch (wie später alle). Die App liest die Minuten aus – danach kannst du sagen, ob die KI richtig lag. Tests zählen nirgends.</p>
       <button class="btn btn-flame" id="btnTest">📷 Test-Screenshot hochladen</button>
       <div class="daylist" style="margin-top:10px">${tests}</div></div>
     <div class="card"><div class="sectionhead"><h3 style="font-size:17px">📋 Zu prüfen</h3><span class="muted small">${d.queue.length} offen</span></div>
-      <p class="muted small" style="margin:6px 0 8px">Alle noch nicht geprüften Screenshots aus allen Gruppen. ✏️ = Minuten geändert · 📅? = Datum nicht erkannt.</p>
+      <p class="muted small" style="margin:6px 0 8px">Nur auffällige Uploads: ✏️ = Minuten von Hand geändert · 📅? = Datum nicht erkannt. Alle anderen kannst du über die Rangliste prüfen (Person antippen).</p>
       <div class="daylist">${queue}</div></div>
     <div class="card"><h3 style="font-size:17px;margin-bottom:6px">🛡️ Admins</h3>
       <p class="muted small" style="margin:0 0 10px">Admins sehen alle Screenshots, können prüfen, Konten verwalten und Einstellungen ändern. Die Person muss sich vorher in der App registriert haben.</p>
@@ -911,7 +949,7 @@ function renderAdmin(){
       <div class="minutes"><label for="setReg">Neue Registrierungen erlauben</label><input id="setReg" type="checkbox" style="width:24px;height:24px" ${st.registration_open==="true"?"checked":""}></div>
       <button class="btn btn-primary" id="btnSaveSet" style="margin-top:12px">Einstellungen speichern</button>
       <button class="btn btn-ghost" id="btnClearTests" style="margin-top:10px;color:var(--no)">Alle Tests löschen</button></div>`;
-  $("#btnTest").onclick = ()=>uploadFlow(berlinToday(), true);
+  $("#btnTest").onclick = ()=>uploadFlow(addDays(berlinToday(),-1), true);
   $("#hidToggle").onchange = async e=>{
     try{ await rpc("sf_set_hidden",{p_token:T(),p_hidden:e.target.checked}); await refresh(); await loadAdmin(); show(); toast(e.target.checked?"🕶️ Du bist jetzt unsichtbar":"Du bist wieder in der Rangliste sichtbar"); }
     catch(err){ toast(err.message); e.target.checked = !e.target.checked; }
@@ -935,6 +973,8 @@ function renderAdmin(){
       try{ await rpc("sf_admin_set_admin",{p_token:T(),p_account:a.id,p_admin:true}); await loadAdmin(); show(); toast("Ist jetzt Admin 🛡️"); }catch(err){ toast(err.message); }
     });
   };
+  v.querySelectorAll("[data-rmav]").forEach(b=>b.onclick=()=>{ const a=d.accounts.find(x=>x.id===b.dataset.rmav);
+    confirmSheet(`Profilbild von ${a.name} entfernen?`, async ()=>{ try{ await rpc("sf_admin_remove_avatar",{p_token:T(),p_account:a.id}); await refresh(); await loadAdmin(); show(); toast("Bild entfernt"); }catch(err){ toast(err.message); } }); });
   v.querySelectorAll("[data-pw]").forEach(b=>b.onclick=()=>{
     const a = d.accounts.find(x=>x.id===b.dataset.pw);
     confirmSheet(`Neues Passwort für ${a.name} (${a.email}) erzeugen? Das alte gilt dann nicht mehr.`, async ()=>{
@@ -979,16 +1019,124 @@ function confirmSheet(text, onYes){
   });
 }
 
+/* ---------- Profilbilder (nur geänderte werden nachgeladen – auch bei 100+ Leuten schnell) ---------- */
+const AV = {};   // memberId -> dataURL
+function avKey(id){ return "fr_av_"+id; }
+function avatarOf(m){
+  if (!m) return null;
+  if (m.id === acc?.member_id && acc?.avatar) return acc.avatar;
+  if (!m.av) return null;
+  if (AV[m.id] && AV[m.id].v === m.av) return AV[m.id].d;
+  try { const c = JSON.parse(localStorage.getItem(avKey(m.id))||"null"); if (c && c.v === m.av){ AV[m.id]=c; return c.d; } } catch {}
+  return null;
+}
+function avatarHtml(m, emoji){
+  const a = avatarOf(m);
+  return a ? `<img src="${a}" alt="">` : esc(emoji ?? m?.emoji ?? "🙂");
+}
+async function loadAvatars(){
+  if (!group) return;
+  const need = group.members.filter(m=>m.av && m.id!==acc?.member_id && !avatarOf(m)).map(m=>m.id);
+  for (let i=0;i<need.length;i+=150){
+    try{
+      const res = await rpc("sf_avatars",{p_token:T(),p_members:need.slice(i,i+150)});
+      for (const [id,d] of Object.entries(res||{})){
+        const m = group.members.find(x=>x.id===id); if (!m || !d) continue;
+        AV[id] = {v:m.av, d}; try { localStorage.setItem(avKey(id), JSON.stringify(AV[id])); } catch {}
+      }
+    }catch{}
+  }
+}
+function makeAvatar(file){
+  return new Promise((res,rej)=>{
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = ()=>{ const s = Math.min(im.width, im.height), c = document.createElement("canvas"); c.width = c.height = 192;
+      c.getContext("2d").drawImage(im, (im.width-s)/2, (im.height-s)/2, s, s, 0, 0, 192, 192);
+      URL.revokeObjectURL(url); let q=.82, d=c.toDataURL("image/jpeg",q); while (d.length>38000 && q>.3){ q-=.1; d=c.toDataURL("image/jpeg",q); } res(d); };
+    im.onerror = rej; im.src = url;
+  });
+}
+
+/* ---------- Aussehen: Design, Schrift, Größe (pro Gerät gespeichert) ---------- */
+const THEMES = [["auto","Automatisch","linear-gradient(135deg,#FAF7F2 50%,#121110 50%)"],["hell","Hell","#FAF7F2"],["dunkel","Dunkel","#1C1B19"],["schwarz","Schwarz (OLED)","#000"],
+  ["weihnachten","Weihnachten","linear-gradient(135deg,#E63946,#2A8C55)"],["mitternacht","Mitternacht","linear-gradient(135deg,#0D1222,#B26BFF)"],["ozean","Ozean","linear-gradient(135deg,#00B4D8,#2563EB)"],["rosa","Rosa","linear-gradient(135deg,#FF6FB5,#8B5CF6)"]];
+const FONTS = [["modern","Modern",'"Plus Jakarta Sans"'],["system","System","-apple-system,system-ui,Roboto,sans-serif"],["rund","Rund","ui-rounded,\"SF Pro Rounded\",Nunito,system-ui"],["klassisch","Klassisch","ui-serif,Georgia,serif"],["mono","Schreibmaschine","ui-monospace,Menlo,monospace"]];
+const SIZES = [["klein","Klein"],["normal","Normal"],["gross","Groß"]];
+function getLook(){ try { return Object.assign({theme:"auto",font:"modern",size:"normal"}, JSON.parse(localStorage.getItem("fr_look")||"{}")); } catch { return {theme:"auto",font:"modern",size:"normal"}; } }
+function applyLook(l){
+  const h = document.documentElement;
+  if (l.theme==="auto") delete h.dataset.theme; else h.dataset.theme = l.theme;
+  if (l.font==="modern") delete h.dataset.font; else h.dataset.font = l.font;
+  if (l.size==="normal") delete h.dataset.size; else h.dataset.size = l.size;
+  const bg = getComputedStyle(h).getPropertyValue("--bg").trim();
+  document.querySelectorAll('meta[name="theme-color"]').forEach(mt=>mt.setAttribute("content", bg || "#FAF7F2"));
+}
+function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("fr_look", JSON.stringify(l)); } catch {} applyLook(l); renderInfo(); }
+
+/* ---------- Was ist neu ---------- */
+const CHANGELOG = [
+  { v:"9", date:"11. November", items:[
+    "📸 Neu: Du lädst jetzt immer den Screenshot vom <b>Vortag</b> hoch – am Sonntag den vom Samstag. Spätestens 2 Tage danach.",
+    "🖼️ <b>Profilbilder</b>: Eigenes Foto in den Einstellungen hochladen, Name jederzeit ändern.",
+    "🎨 <b>8 Designs</b> (Hell, Dunkel, Schwarz, Weihnachten, Mitternacht, Ozean, Rosa, Automatisch), 5 Schriftarten und 3 Schriftgrößen.",
+    "🤖 KI erkennt Android-Screenshots (Pixel, Samsung …) jetzt deutlich besser.",
+    "⚙️ Der Reiter „Infos“ heißt jetzt „Einstellungen“ – hier findest du auch immer, was neu ist."]},
+  { v:"8", date:"10. November", items:[
+    "🏆 Eine gemeinsame Rangliste für alle – du stehst bei dir immer ganz oben (markiert mit „DU“).",
+    "❌ Über ${LIMIT} Min. zeigt die KI groß „UNGÜLTIG“ – keine Flamme.",
+    "🕶️ Admins können sich unsichtbar schalten."]},
+  { v:"7", date:"10. November", items:[
+    "🔐 Anmeldung mit E-Mail und Passwort, Admin-Bereich mit KI-Test und Prüfliste.",
+    "🔄 Updates werden jetzt automatisch geladen."]}
+];
+function changelogHtml(all){
+  const list = all ? CHANGELOG : CHANGELOG.slice(0,1);
+  return list.map((c,i)=>`<div style="${i?"margin-top:14px;padding-top:12px;border-top:1px solid var(--line)":""}"><b>Version ${c.v}</b> <span class="muted small">· ${c.date}</span>
+    <ul class="newlist">${c.items.map(x=>`<li>${x.replace("${LIMIT}",LIMIT)}</li>`).join("")}</ul></div>`).join("");
+}
+function maybeShowWhatsNew(){
+  let seen = null; try { seen = localStorage.getItem("fr_seen_v"); } catch {}
+  try { localStorage.setItem("fr_seen_v", APP_VERSION); } catch {}
+  if (!seen || seen === APP_VERSION || !CHANGELOG.length || CHANGELOG[0].v !== APP_VERSION) return;
+  sheet(`<div style="text-align:center;font-size:40px">✨</div><h3 style="text-align:center;margin:4px 0 6px">Neu in Freiraum</h3>
+    ${changelogHtml(false)}
+    <button class="btn btn-flame" id="wnOk" style="margin-top:16px">Alles klar!</button>`, r=>{ r.querySelector("#wnOk").onclick = closeSheet; });
+}
+
 /* ---------- Infos ---------- */
 function renderInfo(){
+  const look = getLook();
   $("#vInfo").innerHTML = `
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div class="av big" style="width:72px;height:72px;border-radius:22px;font-size:38px;cursor:pointer" id="avBig">${acc.avatar?`<img src="${acc.avatar}" alt="">`:esc(acc.emoji)}</div>
+        <div style="min-width:0;flex:1"><b style="font-size:21px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(acc.name)}${acc.admin?" 🛡️":""}</b><div class="muted small" style="word-break:break-all">${esc(acc.email)}</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
+        <button class="btn btn-ghost" id="btnAv" style="padding:13px">🖼️ Profilbild</button>
+        <button class="btn btn-ghost" id="btnEdit" style="padding:13px">✏️ Name</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="font-size:17px">🎨 Aussehen</h3>
+      <div class="label2">Design</div>
+      <div class="chips" id="chTheme">${THEMES.map(([k,n,c])=>`<button data-v="${k}" class="${look.theme===k?"on":""}"><span class="swatch" style="background:${c}"></span>${n}</button>`).join("")}</div>
+      <div class="label2">Schriftart</div>
+      <div class="chips" id="chFont">${FONTS.map(([k,n,f])=>`<button data-v="${k}" class="${look.font===k?"on":""}" style="font-family:${f.replace(/"/g,"&quot;")}">${n}</button>`).join("")}</div>
+      <div class="label2">Schriftgröße</div>
+      <div class="chips" id="chSize">${SIZES.map(([k,n])=>`<button data-v="${k}" class="${look.size===k?"on":""}">${n}</button>`).join("")}</div>
+      <p class="muted small" style="margin:12px 2px 0">Wird auf diesem Gerät gespeichert.</p>
+    </div>
+    <div class="card"><div class="sectionhead"><h3 style="font-size:17px">✨ Was ist neu</h3><span class="muted small">Version ${APP_VERSION}</span></div>
+      <div id="clBox">${changelogHtml(false)}</div>
+      <button class="linkbtn" id="clAll">Ältere Updates anzeigen</button></div>
     <div class="card">
       <h3 style="font-size:20px;margin-bottom:8px">So funktioniert's</h3>
       <ol class="steps">
         <li>Vom <b>14.11. bis 23.12.</b> – 40 Tage bis Heiligabend.</li>
         <li>Pro Tag <b>max. ${LIMIT} Minuten</b> für alle Social-Media-Apps zusammen.</li>
-        <li>Jeden Tag einen <b>Screenshot deiner Bildschirmzeit</b> hochladen. Die Minuten werden direkt auf deinem Handy ausgelesen.</li>
-        <li>Vergessen? Du kannst einen Tag noch <b>bis zu 2 Tage später</b> nachtragen – danach ist er weg.</li>
+        <li>Jeden Tag lädst du den <b>Screenshot deiner Bildschirmzeit vom Vortag</b> hoch (z. B. am Sonntag den vom Samstag). Die Minuten werden direkt auf deinem Handy ausgelesen.</li>
+        <li>Vergessen? Spätestens <b>2 Tage danach</b> muss er drin sein – sonst zählt der Tag als nicht geschafft.</li>
         <li>Max. ${LIMIT} Min. = <b>geschafft 🔥</b>. Mehr als ${LIMIT} Min. = <b>nicht geschafft</b> – du kannst trotzdem hochladen, bekommst aber keine Flamme. Tage in Folge = deine Flammen-Serie.</li>
         <li><b>🏆 Wettbewerb:</b> Wer die meisten geschafften Tage hat, liegt vorn. Bei Gleichstand gewinnt, wer an diesen Tagen insgesamt weniger Minuten hatte.</li>
         <li>Alle, die sich registrieren, sind in <b>einer gemeinsamen Rangliste</b>. Am Anfang ist jeder auf Platz 1. Du siehst dich immer ganz oben.</li>
@@ -1010,7 +1158,8 @@ function renderInfo(){
     <div class="card">
       <h3 style="font-size:17px;margin-bottom:8px">🔒 Datenschutz & Sicherheit</h3>
       <ul class="steps" style="padding-left:18px">
-        <li>Gespeichert werden: E-Mail, Passwort (nur verschlüsselt, niemand kann es lesen), Spitzname, Symbol, Gruppe, deine Minuten und Screenshots (verkleinert).</li>
+        <li>Gespeichert werden: E-Mail, Passwort (nur verschlüsselt, niemand kann es lesen), Spitzname, Symbol, Profilbild (freiwillig), deine Minuten und Screenshots (verkleinert).</li>
+        <li>Screenshots werden nach 10 Tagen automatisch gelöscht, sobald sie geprüft oder unauffällig sind – die Minuten bleiben.</li>
         <li>Deine E-Mail sehen nur Admins. Die anderen sehen nur Spitzname, Symbol, Flammen und Minuten.</li>
         <li>Deine Screenshots sehen nur die Admins – nicht die anderen Teilnehmer.</li>
         <li>Die Texterkennung läuft komplett auf deinem Handy. Kein Bild geht an eine KI-Firma.</li>
@@ -1021,17 +1170,19 @@ function renderInfo(){
       <p class="muted small" style="margin:8px 0 0">Tipp: Schneide Mitteilungen oder Privates vor dem Hochladen weg, wenn welche auf dem Screenshot sind.</p>
     </div>
     <div class="card">
-      <h3 style="font-size:17px;margin-bottom:12px">Dein Konto</h3>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div style="width:48px;height:48px;border-radius:16px;background:var(--soft);display:grid;place-items:center;font-size:26px">${esc(acc.emoji)}</div>
-        <div style="min-width:0"><b style="font-size:18px">${esc(acc.name)}${acc.admin?" 🛡️":""}</b><div class="muted small" style="word-break:break-all">${esc(acc.email)}</div></div></div>
-      <button class="btn btn-ghost" id="btnEdit" style="margin-bottom:10px">Name & Symbol ändern</button>
-      <button class="btn btn-ghost" id="btnPw" style="margin-bottom:10px">Passwort ändern</button>
+      <h3 style="font-size:17px;margin-bottom:12px">Konto</h3>
+      <button class="btn btn-ghost" id="btnPw" style="margin-bottom:10px">🔒 Passwort ändern</button>
       
       <button class="btn btn-ghost" id="btnLogout" style="margin-bottom:10px">Abmelden</button>
       <button class="btn btn-ghost" id="btnDel" style="color:var(--no)">Konto löschen</button>
     </div>
     <p class="muted small" style="text-align:center;margin-top:20px">Freiraum · 40 Tage Social-Media-Fasten 🎄</p>`;
   $("#btnEdit").onclick = editProfile;
+  $("#btnAv").onclick = $("#avBig").onclick = avatarSheet;
+  $("#chTheme").onclick = e=>{ const b=e.target.closest("button"); if(b) setLook("theme", b.dataset.v); };
+  $("#chFont").onclick = e=>{ const b=e.target.closest("button"); if(b) setLook("font", b.dataset.v); };
+  $("#chSize").onclick = e=>{ const b=e.target.closest("button"); if(b) setLook("size", b.dataset.v); };
+  $("#clAll").onclick = ()=>{ $("#clBox").innerHTML = changelogHtml(true); $("#clAll").remove(); };
   $("#btnPw").onclick = changePw;
   $("#btnLogout").onclick = async ()=>{ try{ await rpc("sf_logout",{p_token:T()}); }catch{} logoutLocal(); };
   $("#btnDel").onclick = ()=>sheet(`<h3 style="margin-bottom:6px">Konto löschen?</h3><p class="muted small" style="margin:0 0 12px">Alle deine Daten, Screenshots und Flammen werden sofort gelöscht. Das geht nicht rückgängig.</p>
@@ -1041,11 +1192,27 @@ function renderInfo(){
       r.querySelector("#delYes").onclick = async ()=>{ try{ await rpc("sf_delete_account",{p_token:T(),p_password:r.querySelector("#delPw").value}); closeSheet(); logoutLocal(); toast("Konto gelöscht"); }catch(err){ toast(err.message); } };
     });
 }
+function avatarSheet(){
+  let pending = undefined;
+  sheet(`<h3 style="margin-bottom:12px">Profilbild</h3>
+    <div style="display:flex;justify-content:center;margin-bottom:14px"><div class="av big" id="avPrev" style="width:128px;height:128px;border-radius:36px;font-size:64px">${acc.avatar?`<img src="${acc.avatar}" alt="">`:esc(acc.emoji)}</div></div>
+    <label class="btn btn-flame" style="cursor:pointer;margin-bottom:10px">📷 Bild auswählen<input type="file" accept="image/*" id="avIn" hidden></label>
+    ${acc.avatar?`<button class="btn btn-ghost" id="avDel" style="margin-bottom:10px;color:var(--no)">Bild entfernen</button>`:""}
+    <button class="btn btn-primary hidden" id="avSave">Speichern</button>
+    <p class="muted small" style="margin:10px 2px 0">Alle in der Rangliste sehen dein Bild. Bitte nichts Unpassendes – Admins können Bilder entfernen.</p>`, r=>{
+    r.querySelector("#avIn").onchange = async e=>{
+      const f = e.target.files[0]; if (!f) return;
+      try{ pending = await makeAvatar(f); r.querySelector("#avPrev").innerHTML = `<img src="${pending}" alt="">`; r.querySelector("#avSave").classList.remove("hidden"); }catch{ toast("Bild konnte nicht geöffnet werden"); }
+    };
+    r.querySelector("#avSave").onclick = async ()=>{ try{ await rpc("sf_set_avatar",{p_token:T(),p_avatar:pending}); closeSheet(); await refresh(); show(); toast("Profilbild gespeichert"); }catch(err){ toast(err.message); } };
+    r.querySelector("#avDel")?.addEventListener("click", async ()=>{ try{ await rpc("sf_set_avatar",{p_token:T(),p_avatar:null}); closeSheet(); await refresh(); show(); toast("Profilbild entfernt"); }catch(err){ toast(err.message); } });
+  });
+}
 function editProfile(){
   let em = acc.emoji;
-  sheet(`<h3 style="margin-bottom:14px">Profil bearbeiten</h3>
+  sheet(`<h3 style="margin-bottom:14px">Name & Symbol</h3>
     <label class="field"><span>Spitzname</span><input class="input" id="eName" maxlength="24" value="${esc(acc.name)}"></label>
-    <div class="field"><span>Symbol</span><div class="emojis" id="eEmo">${EMOJIS.map(e=>`<button type="button" class="${e===em?"on":""}" data-e="${e}">${e}</button>`).join("")}</div></div>
+    <div class="field"><span>Symbol (wird gezeigt, wenn du kein Profilbild hast)</span><div class="emojis" id="eEmo">${EMOJIS.map(e=>`<button type="button" class="${e===em?"on":""}" data-e="${e}">${e}</button>`).join("")}</div></div>
     <button class="btn btn-primary" id="eSave">Speichern</button>`, r=>{
     r.querySelector("#eEmo").onclick = e=>{ const b=e.target.closest("button"); if(!b) return; em=b.dataset.e; r.querySelectorAll("#eEmo button").forEach(x=>x.classList.toggle("on",x===b)); };
     r.querySelector("#eSave").onclick = async ()=>{
@@ -1098,13 +1265,20 @@ function show(){
   if (!group){ $("#v"+tab[0].toUpperCase()+tab.slice(1)).innerHTML = `<div class="loader"></div>`; return; }
   if (tab==="today") renderToday(); else renderGroup();
 }
+function decodeState(st){
+  if (!st) return null;
+  return { name: st.name, members: st.members.map(([id,name,emoji,av,cs])=>({ id, name, emoji, av,
+    checkins: cs.map(([d,min,f,ocr])=>({ day:addDays(START,d), minutes:min, success:!!(f&1), valid:!!(f&2), edited:!!(f&4),
+      date_ok: f&8 ? true : f&32 ? false : null, reviewed:!!(f&16), ocr })) })) };
+}
 async function refresh(){
   if (!auth?.token) return;
   try {
     acc = await rpc("sf_me",{p_token:T()});
     if (!acc){ logoutLocal(); toast("Bitte neu anmelden"); return; }
     LIMIT = acc.limit || 30;
-    group = acc.member_id ? await rpc("sf_state",{p_token:T()}) : null;
+    group = acc.member_id ? decodeState(await rpc("sf_state2",{p_token:T()})) : null;
+    loadAvatars().then(()=>{ if (tab==="group") renderGroup(); });
   } catch(err){
     if (/anmelden/i.test(err.message)) { logoutLocal(); toast("Bitte neu anmelden"); }
     else toast("Keine Verbindung – bitte später nochmal");
@@ -1116,7 +1290,8 @@ async function refresh(){
   if (params.get("g")){ $("#inCode").value = params.get("g").toUpperCase().slice(0,6); mode="join"; authMode = auth ? "login" : "register"; }
   if (params.get("g") || params.get("zugang")) history.replaceState(null,"",location.pathname + (params.get("heute")?`?heute=${params.get("heute")}`:""));
   show();
-  if (auth?.token){ await refresh(); show(); }
+  applyLook(getLook());
+  if (auth?.token){ await refresh(); show(); maybeShowWhatsNew(); }
   document.addEventListener("visibilitychange", async ()=>{ if(!document.hidden && auth?.token){ await refresh(); show(); } });
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").then(r=>r.update()).catch(()=>{});
   checkUpdate(); setInterval(checkUpdate, 5*60*1000);
