@@ -286,7 +286,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "7";
+const APP_VERSION = "8";
 const START = "2026-11-14", END = "2026-12-23", DAYS = 40, GRACE = 2;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -504,8 +504,9 @@ function renderToday(){
       <svg class="flame ${s.streak? "":"off"}" id="bigFlame"><use href="#flame"/></svg>
       <div><div class="num">${s.streak}</div><div class="sub">${s.streak===1?"Tag in Folge":"Tage in Folge"} · ${s.minutes} Min. gesamt</div></div>
     </div></div>`;
-    html += checkinCard(s, today);
-    [1,2].map(n=>addDays(today,-n)).filter(d=>inWindow(d) && !s.map[d]).forEach(d=>{
+    if (acc.hidden) html += `<div class="hint" style="display:block;margin-bottom:14px"><b>🕶️ Unsichtbar-Modus aktiv</b><br><span class="muted small">Du machst nicht mit und beobachtest nur. Zum Mitmachen im Admin-Bereich ausschalten.</span></div>`;
+    else html += checkinCard(s, today);
+    if (!acc.hidden) [1,2].map(n=>addDays(today,-n)).filter(d=>inWindow(d) && !s.map[d]).forEach(d=>{
       const left = GRACE - diffDays(today,d);
       html += `<div class="card" style="padding:16px 20px"><div class="sectionhead"><div><b>${esc(fmtDate(d))} fehlt</b><div class="muted small">${left===0?"Heute letzte Chance!":"Noch bis morgen nachtragbar"}</div></div><button class="pill" data-up="${d}">Nachtragen</button></div></div>`;
     });
@@ -798,6 +799,7 @@ function renderGroup(){
       <div><b>${active?succToday:"–"}</b><span>heute 🔥</span></div>
       <div><b>${flamesAll}</b><span>🔥 gesamt</span></div>
     </div>
+    ${acc.hidden ? `<div class="hint" style="display:block;margin-bottom:16px"><b>🕶️ Unsichtbar-Modus aktiv</b><br><span class="muted small">Du beobachtest nur – niemand sieht dich in der Rangliste. Ausschalten im Admin-Bereich.</span></div>` : ""}
     ${mine ? `<div class="mecard">
       <div class="mehead"><span class="youtag">DU</span><span class="muted small">${rankMode==="streak"?"Flammen-Rangliste":"Wettbewerb"}</span></div>
       <div class="merow">
@@ -881,12 +883,15 @@ function renderAdmin(){
       <span>${q.minutes}</span>${q.edited?`<span class="flag">✏️</span>`:""}${q.date_ok===false?`<span class="flag">📅?</span>`:""}
       <button class="pill" data-q="${i}">Prüfen</button></div>`).join("") || `<p class="muted small">Alles geprüft 👍</p>`;
   const accs = d.accounts.filter(a=>!accSearch || (a.email+" "+a.name).toLowerCase().includes(accSearch.toLowerCase()));
-  const accRows = accs.map(a=>`<div class="row" style="flex-wrap:wrap"><b style="min-width:0;flex:1 1 100%">${esc(a.emoji)} ${esc(a.name)}${a.admin?" 🛡️":""}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)}${a.group?" · "+esc(a.group):" · ohne Gruppe"}</div></b>
+  const accRows = accs.map(a=>`<div class="row" style="flex-wrap:wrap"><b style="min-width:0;flex:1 1 100%">${esc(a.emoji)} ${esc(a.name)}${a.admin?" 🛡️":""}${a.hidden?" 🕶️":""}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)}${a.group?" · "+esc(a.group):" · ohne Gruppe"}</div></b>
       <button class="pill" data-adm="${a.id}" data-v="${a.admin?0:1}">${a.admin?"Admin entziehen":"Zum Admin"}</button>
       <button class="pill" data-pw="${a.id}">Passwort neu</button></div>`).join("");
   v.innerHTML = `
     <div class="card"><div class="sectionhead"><h3>🛡️ Admin-Bereich</h3><span class="muted small">${d.accounts.length} Konten · ${d.groups} Gruppen</span></div>
       <p class="muted small" style="margin:6px 0 0">Nur Admins sehen diesen Bereich.</p></div>
+    <div class="card" style="${acc.hidden?"border:2px solid var(--ink)":""}"><div class="sectionhead"><h3 style="font-size:17px">🕶️ Unsichtbar-Modus</h3>
+        <input type="checkbox" id="hidToggle" style="width:26px;height:26px" ${acc.hidden?"checked":""}></div>
+      <p class="muted small" style="margin:6px 0 0;line-height:1.5">${acc.hidden ? "<b>Aktiv:</b> Du tauchst nirgends in der Rangliste auf und zählst bei „dabei“ nicht mit. Du kannst trotzdem alles beobachten und als Admin prüfen." : "Schalte ihn ein, wenn du nicht mitmachen, sondern nur still beobachten willst. Niemand sieht dich dann in der Rangliste."}</p></div>
     <div class="card"><h3 style="font-size:17px">🧪 KI-Test</h3>
       <p class="muted small" style="margin:6px 0 12px;line-height:1.5">Lade einen echten Bildschirmzeit-Screenshot hoch. Die App liest die Minuten aus – danach kannst du sagen, ob die KI richtig lag. Tests zählen nirgends.</p>
       <button class="btn btn-flame" id="btnTest">📷 Test-Screenshot hochladen</button>
@@ -907,6 +912,10 @@ function renderAdmin(){
       <button class="btn btn-primary" id="btnSaveSet" style="margin-top:12px">Einstellungen speichern</button>
       <button class="btn btn-ghost" id="btnClearTests" style="margin-top:10px;color:var(--no)">Alle Tests löschen</button></div>`;
   $("#btnTest").onclick = ()=>uploadFlow(berlinToday(), true);
+  $("#hidToggle").onchange = async e=>{
+    try{ await rpc("sf_set_hidden",{p_token:T(),p_hidden:e.target.checked}); await refresh(); await loadAdmin(); show(); toast(e.target.checked?"🕶️ Du bist jetzt unsichtbar":"Du bist wieder in der Rangliste sichtbar"); }
+    catch(err){ toast(err.message); e.target.checked = !e.target.checked; }
+  };
   v.querySelectorAll("[data-test]").forEach(b=>b.onclick=()=>testSheet(d.tests.find(t=>t.id===b.dataset.test)));
   v.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>reviewSheet(d.queue[+b.dataset.q], null));
   const si = $("#accSearch"); si.oninput = ()=>{ accSearch = si.value; const pos=si.selectionStart; renderAdmin(); const n=$("#accSearch"); n.focus(); n.setSelectionRange(pos,pos); };
