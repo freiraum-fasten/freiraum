@@ -1155,7 +1155,7 @@ async function loadAdmin(){
   if (!acc?.admin) { adminData = null; return; }
   try { adminData = await rpc("sf_admin_overview",{p_token:T()}); } catch(err){ toast(err.message); }
 }
-let accSearch = "";
+let accSearch = ""; const accOpen = new Set();
 function renderAdmin(){
   const v = $("#vAdmin");
   if (!adminData){ v.innerHTML = `<div class="loader"></div>`; loadAdmin().then(()=>{ if(tab==="admin") renderAdmin(); }); return; }
@@ -1170,12 +1170,14 @@ function renderAdmin(){
       ${q.dispute?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">💬 „${esc(q.dispute)}“</div>`:""}
       <button class="pill" data-q="${i}">Prüfen</button></div>`).join("") || `<p class="muted small">Alles geprüft 👍</p>`;
   const accs = d.accounts.filter(a=>!accSearch || (a.email+" "+a.name).toLowerCase().includes(accSearch.toLowerCase()));
-  const accRows = accs.map(a=>`<div class="row" style="flex-wrap:wrap"><b style="min-width:0;flex:1 1 100%">${esc(a.emoji)} ${esc(a.name)}${a.admin?" 🛡️":""}${a.hidden?" 🕶️":""}${a.status==="paused"?" ⏸️":a.status==="banned"?" ⛔":""}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)} · vorher ${a.baseline!=null?fmtHM(a.baseline)+"/Tag":"–"}</div></b>
+  const accRows = accs.map(a=>`<details class="accd" data-acc="${a.id}" ${accOpen.has(a.id)?"open":""} style="padding:10px 0">
+      <summary style="align-items:center;gap:10px"><b style="min-width:0;flex:1">${esc(a.emoji)} ${esc(a.name)}${a.admin?" 🛡️":""}${a.hidden?" 🕶️":""}${a.status==="paused"?" ⏸️":a.status==="banned"?" ⛔":""}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)} · vorher ${a.baseline!=null?fmtHM(a.baseline)+"/Tag":"–"}</div></b></summary>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
       <button class="pill" data-bl="${a.id}">Ausgangswert</button>
       <button class="pill" data-adm="${a.id}" data-v="${a.admin?0:1}">${a.admin?"Admin entziehen":"Zum Admin"}</button>
       <button class="pill" data-pw="${a.id}">Passwort neu</button>${acc.owner && a.id!==acc.id ? (a.status==="paused"||a.status==="banned"
         ? `<button class="pill" data-st="${a.id}" data-v="active">▶️ ${a.status==="banned"?"Wieder zulassen":"Fortsetzen"}</button>`
-        : `<button class="pill" data-st="${a.id}" data-v="paused">⏸️ Pausieren</button><button class="pill" style="color:var(--no)" data-st="${a.id}" data-v="banned">⛔ Ausschließen</button>`) : ""}${a.has_avatar?`<button class="pill" data-rmav="${a.id}">Bild entfernen</button>`:""}</div>`).join("");
+        : `<button class="pill" data-st="${a.id}" data-v="paused">⏸️ Pausieren</button><button class="pill" style="color:var(--no)" data-st="${a.id}" data-v="banned">⛔ Ausschließen</button>`) : ""}${a.has_avatar?`<button class="pill" data-rmav="${a.id}">Bild entfernen</button>`:""}</div></details>`).join("");
   v.innerHTML = `
     <div class="card"><div class="sectionhead"><h3>🛡️ Admin-Bereich</h3><span class="muted small">${d.accounts.length} Konten · ${d.stats?.uploads ?? 0} Uploads</span></div>
       <p class="muted small" style="margin:6px 0 0">Nur Admins sehen diesen Bereich.</p></div>
@@ -1223,6 +1225,7 @@ function renderAdmin(){
       try{ await rpc("sf_admin_set_admin",{p_token:T(),p_account:a.id,p_admin:make}); await refresh(); await loadAdmin(); show(); toast(make?"Ist jetzt Admin 🛡️":"Admin-Rechte entzogen"); }catch(err){ toast(err.message); }
     });
   });
+  v.querySelectorAll("details.accd").forEach(el=>el.addEventListener("toggle", ()=>{ el.open ? accOpen.add(el.dataset.acc) : accOpen.delete(el.dataset.acc); }));
   v.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{
     const a = d.accounts.find(x=>x.id===b.dataset.st), to = b.dataset.v;
     const q = to==="paused" ? `${a.name} pausieren? Die Person verschwindet vorübergehend aus der Rangliste und kann nichts hochladen, bis du sie fortsetzt.`
@@ -1361,7 +1364,8 @@ const CHANGELOG = [
   { v:"18", date:"11. November", items:[
     "🗑️ Neu: Du kannst deine <b>Screenshots selbst löschen</b> – beim Tag auf „Löschen“ tippen. Deine Probe-Uploads siehst und löschst du auf der Startseite.",
     "🛡️ Admins können hochgeladene Screenshots und Tests jetzt ebenfalls löschen.",
-    "✨ „Was ist neu“ zeigt jetzt alle Neuerungen, die du verpasst hast."]},
+    "✨ „Was ist neu“ zeigt jetzt alle Neuerungen, die du verpasst hast.",
+    "🛡️ Admin-Bereich: Die Kontenliste ist jetzt kompakt – mit ＋ klappst du die Aktionen einer Person auf."]},
   { v:"17", date:"11. November", items:[
     "📱 Android: Die KI merkt jetzt, wenn du aus Versehen die Ansicht <b>„Benachrichtigungen“</b> statt „Bildschirmzeit“ fotografiert hast – und sagt dir, wie du umschaltest.",
     "📅 Datum wird auch in Kurzform erkannt (z. B. „Mi., 11. Nov.“)."]},
