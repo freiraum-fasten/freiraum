@@ -97,6 +97,32 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .streak .num{font-size:46px;font-weight:800;line-height:1;letter-spacing:-.04em}
 .streak .sub{font-weight:600;color:var(--muted);font-size:14px;margin-top:4px}
 .flame.off{filter:grayscale(1);opacity:.35}
+.jokercard{position:relative;flex:none;width:54px;height:76px;border-radius:10px;background:linear-gradient(145deg,#2b1055 0%,#7b2ff7 55%,#f107a3 100%);box-shadow:0 6px 18px rgba(123,47,247,.45),inset 0 0 0 2px rgba(255,255,255,.55);display:grid;place-items:center;color:#fff;overflow:hidden}
+.jokercard::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%);transform:translateX(-120%);animation:shine 2.6s ease-in-out infinite}
+.jokercard .jc-face{font-size:26px;line-height:1}.jokercard .jc-title{position:absolute;bottom:6px;font-size:8px;font-weight:800;letter-spacing:.18em}
+.jokercard .jc-corner{position:absolute;top:4px;left:6px;font-size:10px;font-weight:800}.jokercard .jc-corner.br{top:auto;left:auto;bottom:4px;right:6px;transform:rotate(180deg);opacity:0}
+.jokercard.big{width:150px;height:210px;border-radius:20px;margin:0 auto}.jokercard.big .jc-face{font-size:76px}.jokercard.big .jc-title{font-size:16px;bottom:16px}
+.jokercard.big .jc-corner{font-size:22px;top:10px;left:14px}.jokercard.big .jc-corner.br{opacity:1;bottom:10px;right:14px}
+.jokerbtn{background:none;border:0;padding:0;cursor:pointer;animation:float 2.4s ease-in-out infinite;-webkit-tap-highlight-color:transparent}
+.jokerbtn.flip .jokercard{animation:flip .6s ease-in forwards}
+.jokerinline{display:flex;gap:12px;align-items:center;margin:12px 0 4px;padding:12px;border-radius:16px;background:linear-gradient(135deg,rgba(123,47,247,.12),rgba(241,7,163,.12));cursor:pointer}
+.jokeroffer{border:2px solid #7b2ff7}
+@keyframes shine{0%,60%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
+@keyframes flip{to{transform:rotateY(90deg) scale(1.2);opacity:0}}
+.flamefx{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:fxin .25s ease-out;text-align:center;padding:24px}
+.flamefx.out{animation:fxout .5s ease-in forwards}
+.ffx-glow{position:absolute;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(255,138,31,.75),rgba(255,61,90,.25) 55%,transparent 70%);animation:glow 1.2s ease-out infinite alternate}
+.ffx-flame{position:relative;width:150px;height:150px;animation:flameup .9s cubic-bezier(.2,1.6,.4,1) both, flicker 1.1s .9s ease-in-out infinite alternate;filter:drop-shadow(0 0 24px rgba(255,120,40,.9))}
+.ffx-title{position:relative;color:#fff;font-size:26px;font-weight:800;margin-top:18px;animation:fxtext .5s .35s both}
+.ffx-sub{position:relative;color:rgba(255,255,255,.85);font-size:15px;margin-top:6px;animation:fxtext .5s .5s both}
+.ffx-spark{position:absolute;left:50%;top:calc(50% - 40px);width:8px;height:8px;border-radius:50%;background:#FFB347;box-shadow:0 0 10px #FF8A1F;opacity:0;animation:spark .9s ease-out forwards}
+@keyframes fxin{from{opacity:0}}@keyframes fxout{to{opacity:0}}
+@keyframes flameup{0%{transform:scale(.2) translateY(60px);opacity:0}100%{transform:none;opacity:1}}
+@keyframes flicker{0%{transform:scale(1) rotate(-1.5deg)}100%{transform:scale(1.06) rotate(1.5deg)}}
+@keyframes glow{from{transform:scale(.85);opacity:.7}to{transform:scale(1.1);opacity:1}}
+@keyframes fxtext{from{opacity:0;transform:translateY(12px)}}
+@keyframes spark{0%{opacity:1;transform:rotate(var(--a)) translateY(0)}100%{opacity:0;transform:rotate(var(--a)) translateY(calc(-1 * var(--d)))}}
 @keyframes pop{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
 .flame.pop{animation:pop .6s ease}
 .q{font-size:19px;font-weight:700;line-height:1.35;margin:0 0 4px}
@@ -308,8 +334,8 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "18";
-const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 2;
+const APP_VERSION = "19";
+const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
 
@@ -555,8 +581,12 @@ function renderToday(){
       if (inWindow(y)) html += checkinCard(s, y, today);
       else html += `<div class="card"><p class="q">Tag 1 läuft! 🔥</p><div class="muted small" style="line-height:1.5">Heute zählt's zum ersten Mal: max. ${LIMIT} Min. ${TRACKS[trackOf()].word}. <b>Morgen</b> lädst du dann den Screenshot von heute hoch.</div>
         <button class="btn btn-ghost" id="goSetup" style="margin-top:14px">📸 So machst du den Screenshot</button></div>`;
-      const d2 = addDays(today,-2);
-      if (inWindow(d2) && !s.map[d2]) html += `<div class="card" style="padding:16px 20px;border:2px solid var(--no)"><div class="sectionhead"><div><b>${esc(fmtDate(d2))} fehlt</b><div class="muted small">Heute letzte Chance zum Nachtragen!</div></div><button class="pill" data-up="${d2}">Nachtragen</button></div></div>`;
+      for (let k=2; k<=GRACE; k++){
+        const dk = addDays(today,-k), ek = s.map[dk]; if (!inWindow(dk)) continue;
+        const left = GRACE - k;
+        if (!ek) html += `<div class="card" style="padding:16px 20px;border:2px solid var(--no)"><div class="sectionhead"><div><b>${esc(fmtDate(dk))} fehlt</b><div class="muted small">${left===0?"Heute letzte Chance zum Nachtragen!":`Noch ${left===1?"bis morgen":left+" Tage"} Zeit zum Nachtragen.`}</div></div><button class="pill" data-up="${dk}">Nachtragen</button></div></div>`;
+        else if (canJoker(ek)) html += jokerOffer(dk, ek);
+      }
       if (running) html += `<div class="card" style="padding:16px 20px"><b>Heute läuft:</b> <span class="muted">max. ${LIMIT} Min. ${TRACKS[trackOf()].word}. Den Screenshot von heute lädst du morgen hoch.</span></div>`;
     }
     if (running) html += impulseCard(idx-1, `Impuls · Tag ${idx}`);
@@ -571,6 +601,7 @@ function renderToday(){
   $("#goSetup")?.addEventListener("click", ()=>{ tab="info"; show(); setTimeout(()=>{ const d=$("#cardGuide"); if(d) d.scrollIntoView({behavior:"smooth"}); },60); });
   document.querySelectorAll("#vToday [data-up]").forEach(b=>b.addEventListener("click", ()=>uploadFlow(b.dataset.up)));
   document.querySelectorAll("#vToday [data-dispute]").forEach(b=>b.addEventListener("click", ()=>disputeSheet(b.dataset.dispute)));
+  document.querySelectorAll("#vToday [data-joker]").forEach(b=>b.addEventListener("click", ev=>{ ev.stopPropagation(); jokerSheet(b.dataset.joker); }));
   document.querySelectorAll("#vToday [data-delday]").forEach(b=>b.addEventListener("click", ()=>confirmSheet(`Deinen Screenshot für ${fmtDate(b.dataset.delday)} löschen? Der Tag zählt dann nicht mehr – du kannst innerhalb der Frist einen neuen hochladen.`, async ()=>{
     try{ await rpc("sf_delete_checkin",{p_token:T(),p_day:b.dataset.delday}); await refresh(); show(); toast("🗑️ Screenshot gelöscht"); }catch(err){ toast(err.message); }
   })));
@@ -590,9 +621,52 @@ async function loadMyTests(){
     try{ await rpc("sf_delete_test",{p_token:T(),p_id:b.dataset.deltest}); toast("🗑️ Probe-Upload gelöscht"); loadMyTests(); }catch(err){ toast(err.message); }
   }));
 }
+/* ---------- Joker ---------- */
+function jokersLeft(){ const m = myMember(); return Math.max(0, JOKERS - (m?.checkins||[]).filter(c=>c.joker).length); }
+function canJoker(e){ return e && !e.success && e.valid!==false && !e.joker && jokersLeft() > 0; }
+function jokerCardHtml(big){
+  return `<div class="jokercard${big?" big":""}"><div class="jc-corner">J</div><div class="jc-face">🃏</div><div class="jc-title">JOKER</div><div class="jc-corner br">J</div></div>`;
+}
+function jokerOffer(day, e){
+  const n = jokersLeft();
+  return `<div class="card jokeroffer" data-joker="${day}"><div style="display:flex;gap:14px;align-items:center">${jokerCardHtml(false)}
+    <div style="flex:1;min-width:0"><b style="font-size:16px">${esc(fmtDate(day))}: nicht geschafft</b>
+    <div class="muted small" style="margin-top:2px;line-height:1.4">${e.minutes} Min. – über dem Limit. Willst du einen <b>Joker</b> einlösen? Du hast noch <b>${n} von ${JOKERS}</b>.</div></div></div>
+    <button class="btn btn-flame" data-joker="${day}" style="margin-top:12px">🃏 Joker einlösen</button></div>`;
+}
+function jokerSheet(day){
+  const m = myMember(), e = m && statsFor(m).map[day]; if (!canJoker(e)) return;
+  const n = jokersLeft();
+  sheet(`<div style="text-align:center"><h3 style="margin-bottom:6px">Limit nicht geschafft 😕</h3>
+      <p class="muted small" style="margin:0 0 16px;line-height:1.5">${esc(fmtDate(day))}: ${e.minutes} Min. – erlaubt sind ${LIMIT}. Willst du einen Joker einlösen? Dann bekommst du die Flamme trotzdem.</p>
+      <button id="jkUse" class="jokerbtn" aria-label="Joker einlösen">${jokerCardHtml(true)}</button>
+      <p class="small" style="margin:12px 0 4px"><b>Tippe auf den Joker</b> · noch ${n} von ${JOKERS}</p>
+      <div style="display:flex;justify-content:center;gap:6px;margin:4px 0 14px">${Array.from({length:JOKERS},(_,i)=>`<span style="font-size:22px;${i<n?"":"opacity:.25;filter:grayscale(1)"}">🃏</span>`).join("")}</div>
+      <button class="btn btn-ghost" id="jkNo">Nein, lieber nicht</button></div>`, r=>{
+    r.querySelector("#jkNo").onclick = closeSheet;
+    r.querySelector("#jkUse").onclick = async ()=>{
+      const btn = r.querySelector("#jkUse"); if (btn.disabled) return; btn.disabled = true; btn.classList.add("flip");
+      try{ await rpc("sf_use_joker",{p_token:T(),p_day:day}); await refresh(); closeSheet(); show();
+        flameCelebrate("Joker eingelöst!", `Deine Flamme ist gerettet · noch ${jokersLeft()} von ${JOKERS} Jokern`); }
+      catch(err){ btn.disabled = false; btn.classList.remove("flip"); toast(err.message); }
+    };
+  });
+}
+/* Großer Flammen-Effekt – kommt bei jeder neuen Flamme */
+function flameCelebrate(title="Du hast eine Flamme bekommen!", sub=""){
+  document.querySelector(".flamefx")?.remove();
+  const fx = document.createElement("div"); fx.className = "flamefx";
+  fx.innerHTML = `<div class="ffx-glow"></div><svg class="ffx-flame"><use href="#flame"/></svg><div class="ffx-title">${esc(title)}</div>${sub?`<div class="ffx-sub">${esc(sub)}</div>`:""}`;
+  for (let i=0;i<14;i++){ const sp=document.createElement("i"); sp.className="ffx-spark"; sp.style.setProperty("--a",(i*360/14)+"deg"); sp.style.setProperty("--d",(90+Math.random()*80)+"px"); sp.style.animationDelay=(0.25+Math.random()*0.2)+"s"; fx.appendChild(sp); }
+  fx.onclick = ()=>fx.remove();
+  document.body.appendChild(fx); navigator.vibrate?.([30,40,60]);
+  try{ confetti(); }catch{}
+  setTimeout(()=>fx.classList.add("out"), 2300); setTimeout(()=>fx.remove(), 2800);
+}
 function reviewLine(e){
   if (e.disputed) return `<div class="status warn" style="margin-top:12px">💬 Dein Einspruch wird von einem Admin geprüft.</div>`;
   if (e.reviewed) return `<div class="status ${e.valid?"ok":"bad"}" style="margin-top:12px">${e.valid?"✅ Von einem Admin bestätigt":"❌ Von einem Admin abgelehnt"}</div>`;
+  if (e.joker && e.success) return `<div class="status ok" style="margin-top:12px">🃏 Mit Joker gerettet – die Flamme zählt.</div>`;
   if (e.suspect) return `<div class="status warn" style="margin-top:12px">⏳ Zählt schon – ein Admin schaut sich deinen Screenshot noch genauer an.</div>`;
   if (e.edited || e.date_ok !== true) return `<div class="status warn" style="margin-top:12px">⏳ Zählt schon – ein Admin schaut noch kurz drüber${e.edited?" (Minuten von Hand geändert)":" (Datum nicht erkannt)"}.</div>`;
   return e.success ? `<div class="status ok" style="margin-top:12px">🤖 Von der KI geprüft und automatisch freigegeben</div>`
@@ -618,17 +692,17 @@ function checkinCard(s, day, today){
   if (e){
     const ok = e.success;
     return `<div class="card"><div class="done">
-      <div class="badge ${ok?"ok":"no"}">${ok?"✅":"❌"}</div>
-      <div style="flex:1"><b style="font-size:17px;${ok?"":"color:var(--no)"}">${ok?"Gestern geschafft! 🔥":"Gestern ungültig"}</b>
+      <div class="badge ${ok?"ok":"no"}">${ok?(e.joker?"🃏":"✅"):"❌"}</div>
+      <div style="flex:1"><b style="font-size:17px;${ok?"":"color:var(--no)"}">${ok?(e.joker?"Mit Joker geschafft! 🔥":"Gestern geschafft! 🔥"):(e.valid===false?"Gestern ungültig":"Gestern nicht geschafft")}</b>
       <div class="muted small" style="margin-top:2px">${ok? e.minutes+" Min. "+TRACKS[trackOf()].word+" – stark!" : (e.valid===false?"Ein Admin hat den Screenshot abgelehnt.":e.minutes+" Min. – über dem Limit von "+LIMIT+" Min. Keine Flamme. Heute neu angreifen! 💪")}</div></div>
-    </div>${reviewLine(e)}
+    </div>${reviewLine(e)}${canJoker(e) ? `<div class="jokerinline" data-joker="${day}">${jokerCardHtml(false)}<div style="flex:1"><b>Nicht erreicht – willst du einen Joker einlösen?</b><div class="muted small">Noch ${jokersLeft()} von ${JOKERS} · dann bekommst du die Flamme trotzdem</div></div><span class="pill">Einlösen</span></div>` : ""}
     <div style="display:flex;gap:16px;flex-wrap:wrap"><button class="linkbtn" data-up="${day}">Screenshot nochmal hochladen</button>${e.disputed?"":`<button class="linkbtn" data-dispute="${day}">Stimmt nicht? Einspruch</button>`}<button class="linkbtn" data-delday="${day}" style="color:var(--no)">Löschen</button></div></div>`;
   }
   return `<div class="card" style="border:2px solid var(--flame2)">
     <p class="q">📸 Lade den Screenshot von ${label} hoch</p>
     <div class="muted small" style="line-height:1.5">Mach einen Screenshot deiner Bildschirmzeit <b>von gestern</b> – mit Datum und der Liste der Apps. Die Minuten werden direkt auf deinem Handy ausgelesen.</div>
     <button class="btn btn-flame" data-up="${day}" style="margin-top:16px">📷 Screenshot hochladen</button>
-    <div class="muted small" style="text-align:center;margin-top:10px">Max. ${LIMIT} Min. = 🔥 · Vergessen? Morgen geht's noch – danach ist der Tag weg.</div>
+    <div class="muted small" style="text-align:center;margin-top:10px">Max. ${LIMIT} Min. = 🔥 · Vergessen? Du hast bis zu ${GRACE} Tage Zeit zum Nachtragen.</div>
   </div>`;
 }
 
@@ -1010,7 +1084,7 @@ async function analyse(root, files, day, test){
     autoNote.innerHTML = (!test && sus.length) ? "⏳ Zählt sofort – ein Admin schaut sich den Screenshot noch kurz an." : (v === ocrMin && dateOk) ? "🤖 Passt alles – die KI gibt den Tag <b>automatisch frei</b>." : "⏳ Zählt sofort – weil " + (v !== ocrMin ? "du die Minuten geändert hast" : "das Datum nicht erkannt wurde") + ", schaut ein Admin noch kurz drüber.";
     if (Number.isNaN(v)){ li.textContent=""; li.className="status"; return; }
     if (v <= LIMIT){ li.className="status ok"; li.textContent=`✅ GÜLTIG – ${v} Min. ${TR.word}, max. ${LIMIT} erlaubt. Das gibt eine Flamme! 🔥`; }
-    else { li.className="status bad"; li.textContent=`❌ UNGÜLTIG – ${v} Min. ${TR.word}, erlaubt sind max. ${LIMIT}. Keine Flamme, der Tag zählt als nicht geschafft.`; } };
+    else { li.className="status bad"; li.textContent=`❌ NICHT GESCHAFFT – ${v} Min. ${TR.word}, erlaubt sind max. ${LIMIT}.` + (!test && jokersLeft()>0 ? ` Du kannst gleich einen Joker einlösen (noch ${jokersLeft()} von ${JOKERS}).` : " Keine Flamme für diesen Tag."); } };
   root.querySelector("#minIn").oninput = upd; upd();
   root.querySelector("#sendShot").onclick = async ()=>{
     const btn = root.querySelector("#sendShot"); btn.disabled = true;
@@ -1028,8 +1102,9 @@ async function analyse(root, files, day, test){
       }
       await rpc("sf_upload",{p_token:T(),p_day:day,p_minutes:minutes,p_shot:shot,p_ocr_minutes:ocrMin,p_date_ok:dateOk,p_suspect:sus.length ? sus.join(" · ") : null});
       closeSheet(); done(); await refresh(); show();
-      if (minutes <= LIMIT){ confetti(); navigator.vibrate?.(30); $("#bigFlame")?.classList.add("pop"); toast("🔥 Gültig! Deine Flamme wächst."); }
-      else toast(`❌ Ungültig: über ${LIMIT} Min. – keine Flamme für diesen Tag.`);
+      if (minutes <= LIMIT){ $("#bigFlame")?.classList.add("pop"); flameCelebrate("Du hast eine Flamme bekommen!", `${minutes} Min. – stark! 🔥`); }
+      else if (jokersLeft() > 0) jokerSheet(day);
+      else toast(`❌ Über ${LIMIT} Min. – keine Flamme für diesen Tag. Deine Joker sind aufgebraucht.`);
     }catch(err){ toast(err.message); btn.disabled = false; }
   };
 }
@@ -1111,10 +1186,10 @@ function memberSheet(mid){
   const s = statsFor(m);
   const rows = [...(m.checkins||[])].sort((a,b)=>a.day<b.day?1:-1).map(c=>`<div class="row"><b>${esc(toDate(c.day).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"}))}</b>
       <span>${c.minutes} Min.</span>
-      ${c.valid===false?`<span class="flag bad">ungültig</span>`:""}${c.edited?`<span class="flag">✏️ ${c.ocr ?? "–"}→${c.minutes}</span>`:""}${c.date_ok===false?`<span class="flag">📅?</span>`:""}${c.disputed?`<span class="flag bad">💬</span>`:""}${c.suspect?`<span class="flag bad">🕵️</span>`:""}${c.reviewed?`<span class="flag">✓</span>`:""}
+      ${c.valid===false?`<span class="flag bad">ungültig</span>`:""}${c.edited?`<span class="flag">✏️ ${c.ocr ?? "–"}→${c.minutes}</span>`:""}${c.date_ok===false?`<span class="flag">📅?</span>`:""}${c.disputed?`<span class="flag bad">💬</span>`:""}${c.suspect?`<span class="flag bad">🕵️</span>`:""}${c.joker?`<span class="flag">🃏</span>`:""}${c.reviewed?`<span class="flag">✓</span>`:""}
       <button class="pill" data-day="${c.day}">Ansehen</button></div>`).join("") || `<p class="muted">Noch keine Screenshots.</p>`;
   sheet(`<h3 style="margin-bottom:2px">${esc(m.emoji)} ${esc(m.name)}</h3>
-    <p class="muted small" style="margin:0 0 10px">${s.validDays} Tage · ${s.minutes} Min. · ✏️ = Minuten von Hand geändert · 📅? = Datum nicht erkannt · 🕵️ = KI-Verdacht · ✓ = geprüft</p>
+    <p class="muted small" style="margin:0 0 10px">${s.validDays} Tage · ${s.minutes} Min. · ✏️ = Minuten von Hand geändert · 📅? = Datum nicht erkannt · 🕵️ = KI-Verdacht · 🃏 = Joker · ✓ = geprüft</p>
     <div class="daylist">${rows}</div>`, root=>{
     root.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>{ const c=m.checkins.find(x=>x.day===b.dataset.day); reviewSheet({member:m.id,name:m.name,day:c.day,minutes:c.minutes,ocr:c.ocr,edited:c.edited,date_ok:c.date_ok,suspect:c.suspect}, ()=>memberSheet(m.id)); });
   });
@@ -1361,6 +1436,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"19", date:"11. November", items:[
+    "🃏 Neu: <b>3 Joker</b>! Warst du über dem Limit, kannst du einen Joker einlösen – und bekommst die Flamme trotzdem.",
+    "🔥 Jede neue Flamme gibt's jetzt mit <b>großem Flammen-Effekt</b>.",
+    "📅 Mehr Zeit: Screenshots kannst du jetzt bis zu <b>3 Tage danach</b> nachtragen."]},
   { v:"18", date:"11. November", items:[
     "🗑️ Neu: Du kannst deine <b>Screenshots selbst löschen</b> – beim Tag auf „Löschen“ tippen. Deine Probe-Uploads siehst und löschst du auf der Startseite.",
     "🛡️ Admins können hochgeladene Screenshots und Tests jetzt ebenfalls löschen.",
@@ -1469,7 +1548,8 @@ function renderInfo(){
         <li>Pro Tag <b>max. ${LIMIT} Minuten Social Media</b> (Insta, TikTok, YouTube & Co. zusammen). Messenger wie WhatsApp sind erlaubt.</li>
         <li>Beim Start gibst du an, wie viel Social Media du <b>vorher</b> pro Tag hattest. So sehen wir, wie viel Zeit du – und wir alle gemeinsam – einsparen. 🎯</li>
         <li>Jeden Tag lädst du den <b>Screenshot deiner Bildschirmzeit vom Vortag</b> hoch (z. B. am Sonntag den vom Samstag). Die Minuten werden direkt auf deinem Handy ausgelesen.</li>
-        <li>Vergessen? Spätestens <b>2 Tage danach</b> muss er drin sein – sonst zählt der Tag als nicht geschafft.</li>
+        <li>🃏 Du hast <b>3 Joker</b>: Warst du mal über dem Limit, kannst du einen einlösen und bekommst die Flamme trotzdem.</li>
+        <li>Vergessen? Spätestens <b>3 Tage danach</b> muss er drin sein – sonst zählt der Tag als nicht geschafft.</li>
         <li>Max. ${LIMIT} Min. = <b>geschafft 🔥</b>. Mehr als ${LIMIT} Min. = <b>nicht geschafft</b> – du kannst trotzdem hochladen, bekommst aber keine Flamme. Tage in Folge = deine Flammen-Serie.</li>
         <li><b>🏆 Wettbewerb:</b> Wer die meisten geschafften Tage hat, liegt vorn. Bei Gleichstand gewinnt, wer an diesen Tagen insgesamt weniger Minuten hatte.</li>
         <li>Alle, die sich registrieren, sind in <b>einer gemeinsamen Rangliste</b>. Am Anfang ist jeder auf Platz 1. Du siehst dich immer ganz oben.</li>
@@ -1772,7 +1852,7 @@ function decodeState(st){
   if (!st) return null;
   return { name: st.name, members: st.members.map(([id,name,emoji,av,cs,bl])=>({ id, name, emoji, av, track:"social", baseline: bl,
     checkins: cs.map(([d,min,f,ocr])=>({ day:addDays(START,d), minutes:min, success:!!(f&1), valid:!!(f&2), edited:!!(f&4),
-      date_ok: f&8 ? true : f&32 ? false : null, reviewed:!!(f&16), disputed:!!(f&64), suspect:!!(f&128), ocr })) })) };
+      date_ok: f&8 ? true : f&32 ? false : null, reviewed:!!(f&16), disputed:!!(f&64), suspect:!!(f&128), joker:!!(f&256), ocr })) })) };
 }
 async function refresh(){
   if (!auth?.token) return;
