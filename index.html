@@ -308,7 +308,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "13";
+const APP_VERSION = "14";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 2;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -491,37 +491,16 @@ function renderNoGroup(){
     <div class="card">
       <p class="q" style="font-size:17px">Wie lange warst du <b>letzte Woche</b> im Schnitt <b>pro Tag</b> auf Social Media?</p>
       <p class="muted small" style="line-height:1.5;margin:4px 0 12px">Instagram, TikTok, YouTube, Snapchat & Co. zusammen – ohne WhatsApp & andere Messenger.</p>
-      <label class="btn btn-flame" style="cursor:pointer;margin-bottom:8px">📷 Wochen-Screenshot hochladen<input type="file" accept="image/*" multiple id="blShot" hidden></label>
-      <p class="muted small" style="margin:0 0 14px;line-height:1.5"><b>iPhone:</b> Bildschirmzeit → Alle Aktivitäten → oben <b>„Woche“</b> → letzte Woche. <b>Android:</b> Digital Wellbeing → Dashboard → Wochenansicht. Die KI rechnet die Social-Media-Apps zusammen und teilt durch 7.</p>
-      <div id="blRes"></div>
-      <div class="label2">Oder schätzen</div>
-      <div class="chips" id="blChips">${[[30,"30 Min."],[60,"1 Std."],[90,"1,5 Std."],[120,"2 Std."],[180,"3 Std."],[240,"4 Std."],[300,"5+ Std."]].map(([v,l])=>`<button data-v="${v}">${l}</button>`).join("")}</div>
-      <div class="minutes"><label for="blMin">Minuten pro Tag</label><input id="blMin" type="number" inputmode="numeric" min="0" max="1440" value="${cur ?? ""}" placeholder="–"></div>
+      <div class="label2">Schätz einfach</div>
+      <div class="chips" id="blChips">${[[10,"10 Min."],[30,"30 Min."],[60,"1 Std."],[90,"1,5 Std."],[120,"2 Std."],[180,"3 Std."],[240,"4 Std."],[300,"5+ Std."]].map(([v,l])=>`<button data-v="${v}"${v===cur?' class="on"':""}>${l}</button>`).join("")}</div>
       <button class="btn btn-primary" id="blSave" style="margin-top:14px">Weiter</button>
       <p class="muted small" style="text-align:center;margin:10px 0 0">Ehrlich sein lohnt sich – sonst stimmt deine Ersparnis nicht. Bis zum Start kannst du den Wert noch ändern.</p>
     </div>`;
-  $("#blChips").onclick = e=>{ const b=e.target.closest("button"); if(!b) return; $("#blMin").value = b.dataset.v; document.querySelectorAll("#blChips button").forEach(x=>x.classList.toggle("on",x===b)); };
-  $("#blShot").onchange = async e=>{
-    const files = [...e.target.files].slice(0,5); if (!files.length) return;
-    $("#blRes").innerHTML = `<div class="muted small" style="margin-bottom:10px">Lese Wochen-Screenshot … <div class="bar"><i id="blBar"></i></div></div>`;
-    try{
-      const w = await getOcr(); const found = {};
-      for (let i=0;i<files.length;i++){
-        const {im,url} = await loadImage(files[i]);
-        ocrProgress = m => { const b=$("#blBar"); if (b && m.progress!=null && m.status==="recognizing text") b.style.width = Math.round((i+m.progress)/files.length*100)+"%"; };
-        const { data } = await w.recognize(ocrCanvas(im)); URL.revokeObjectURL(url);
-        parseScreenTime(data.text||"").forEach(a=>{ found[a.name] = Math.max(found[a.name] ?? 0, a.min); });
-      }
-      ocrProgress = null;
-      const week = Object.values(found).reduce((a,b)=>a+b,0), perDay = Math.round(week/7);
-      $("#blRes").innerHTML = Object.keys(found).length ? `<div class="status ok" style="margin:0 0 10px;display:block">🤖 Erkannt: ${Object.entries(found).map(([n,v])=>`${esc(n)} ${fmtHM(v)}`).join(" · ")} in der Woche → <b>${fmtHM(perDay)} pro Tag</b></div>`
-        : `<div class="status warn" style="margin:0 0 10px">Keine Social-Media-Apps erkannt – trag den Wert bitte unten selbst ein.</div>`;
-      if (Object.keys(found).length) $("#blMin").value = perDay;
-    }catch(err){ ocrProgress = null; $("#blRes").innerHTML = `<div class="status warn" style="margin:0 0 10px">Auslesen hat nicht geklappt – trag den Wert bitte selbst ein.</div>`; }
-  };
+  let blPick = cur ?? null;
+  $("#blChips").onclick = e=>{ const b=e.target.closest("button"); if(!b) return; blPick = parseInt(b.dataset.v,10); document.querySelectorAll("#blChips button").forEach(x=>x.classList.toggle("on",x===b)); };
   $("#blSave").onclick = async ()=>{
-    const v = parseInt($("#blMin").value,10);
-    if (Number.isNaN(v)) return toast("Bitte einen Wert eingeben oder auswählen");
+    const v = blPick;
+    if (v == null) return toast("Bitte einen Wert auswählen");
     try{ await rpc("sf_set_baseline",{p_token:T(),p_minutes:v}); await refresh(); tab="today"; show(); toast("Gespeichert – los geht's! 🔥"); }
     catch(err){ toast(err.message); }
   };
@@ -1264,6 +1243,8 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"14", date:"11. November", items:[
+    "⏱️ Deine Social-Media-Zeit von <b>vorher</b> gibst du jetzt ganz einfach per Schätzung an: 10 Min., 30 Min., 1 Std. …"]},
   { v:"13", date:"11. November", items:[
     "📅 Start ist jetzt <b>Sonntag, 15.11.</b> – bis <b>Heiligabend, 24.12.</b>",
     "🎯 Neu: <b>Gemeinsames Ziel</b> – wie viele Stunden Social Media sparen wir alle zusammen?",
