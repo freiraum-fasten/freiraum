@@ -1031,7 +1031,7 @@ function renderGroup(){
     <div class="card" style="padding:8px 20px"><ul class="lb">${list || `<li><div class="who"><span>Noch niemand ${mine?"sonst ":""}in dieser Gruppe – lade Freunde ein!</span></div></li>`}</ul></div>
     <button class="btn btn-flame" id="btnInvite" style="margin-bottom:14px">Freunde einladen</button>`;
   $("#btnInvite").onclick = invite;
-  $("#vGroup").insertAdjacentHTML("beforeend", allStatsHtml());
+  $("#vGroup").insertAdjacentHTML("beforeend", appTimeHtml() + allStatsHtml());
   $("#segRank").onclick = e => { const b=e.target.closest("button"); if(!b) return; rankMode=b.dataset.r; renderGroup(); };
 
   if (canReview) document.querySelectorAll("#vGroup .lb li[data-mid]").forEach(li=>li.onclick=()=>memberSheet(li.dataset.mid));
@@ -1135,7 +1135,10 @@ function renderAdmin(){
       <div class="minutes"><label for="setGoal">🎯 Ziel: gesparte Stunden pro Person</label><input id="setGoal" type="number" inputmode="numeric" min="1" max="900" value="${esc(st.goal_hours_per_person||30)}"></div>
       <div class="minutes"><label for="setReg">Neue Registrierungen erlauben</label><input id="setReg" type="checkbox" style="width:24px;height:24px" ${st.registration_open==="true"?"checked":""}></div>
       <button class="btn btn-primary" id="btnSaveSet" style="margin-top:12px">Einstellungen speichern</button>
-      <button class="btn btn-ghost" id="btnClearTests" style="margin-top:10px;color:var(--no)">Alle Tests löschen</button></div>`;
+      <button class="btn btn-ghost" id="btnClearTests" style="margin-top:10px;color:var(--no)">Alle Tests löschen</button></div>
+    ${acc.owner ? `<div class="card"><h3 style="font-size:17px;margin-bottom:6px">⏱️ Zeit in Freiraum</h3>
+      <p class="muted small" style="margin:0 0 10px">Live-Zähler, wie lange alle zusammen in der App waren. Nur du kannst ihn zurücksetzen.</p>
+      <button class="btn btn-ghost" id="btnResetApp" style="color:var(--no)">Zähler auf 0 zurücksetzen</button></div>` : ""}`;
   $("#btnTest").onclick = ()=>uploadFlow(addDays(berlinToday(),-1), true);
   $("#hidToggle").onchange = async e=>{
     try{ await rpc("sf_set_hidden",{p_token:T(),p_hidden:e.target.checked}); await refresh(); await loadAdmin(); show(); toast(e.target.checked?"🕶️ Du bist jetzt unsichtbar":"Du bist wieder in der Rangliste sichtbar"); }
@@ -1193,6 +1196,9 @@ function renderAdmin(){
       await refresh(); await loadAdmin(); show(); toast("Gespeichert");
     }catch(err){ toast(err.message); }
   };
+  $("#btnResetApp")?.addEventListener("click", ()=>confirmSheet("Den Zähler „Zeit in Freiraum“ für alle auf 0 zurücksetzen?", async ()=>{
+    try{ const r = await rpc("sf_admin_reset_app_time",{p_token:T()}); appTime = r; appTimeAt = Date.now(); appShown = 0; toast("⏱️ Zähler zurückgesetzt"); }catch(err){ toast(err.message); }
+  }));
   $("#btnClearTests").onclick = ()=>confirmSheet("Alle Test-Uploads löschen?", async ()=>{
     try{ await rpc("sf_admin_clear_tests",{p_token:T()}); await loadAdmin(); show(); toast("Tests gelöscht"); }catch(err){ toast(err.message); }
   });
@@ -1282,6 +1288,7 @@ const CHANGELOG = [
     "🕵️ Die KI erkennt jetzt <b>verdächtige Screenshots</b> (z. B. doppelt hochgeladen oder vor Tagesende gemacht) – ein Admin schaut sie sich dann genauer an.",
     "📊 Neu: <b>Deine Statistik</b> unter Einstellungen – mit Vergleich zur Vorwoche.",
     "👥 In der Rangliste: <b>Alle im Vergleich</b> – komplett anonym, ohne Namen.",
+    "⏱️ Live in der Rangliste: <b>wie lange alle zusammen in Freiraum</b> sind – und wie viele gerade online.",
     "⏸️ Konten können pausiert werden – pausierte Personen tauchen vorübergehend nicht in der Rangliste auf."]},
   { v:"14", date:"11. November", items:[
     "⏱️ Deine Social-Media-Zeit von <b>vorher</b> gibst du jetzt ganz einfach per Schätzung an: 10 Min., 30 Min., 1 Std. …"]},
@@ -1577,6 +1584,32 @@ function allStatsHtml(){
   </div>`;
 }
 
+/* ---------- Live: Zeit in der App, alle zusammen ---------- */
+let appTime = null, appTimeAt = 0, appShown = 0, pingTimer = null;
+async function ping(sec){
+  if (!auth?.token || !acc) return;
+  try{ const r = await rpc("sf_ping",{p_token:T(),p_seconds:sec});
+    if (r){ if (appTime && r.seconds < appTime.seconds) appShown = 0;   // wurde zurückgesetzt
+      appTime = r; appTimeAt = Date.now(); paintAppTime(); } }catch{}
+}
+function startPing(){ if (pingTimer) return; ping(0); pingTimer = setInterval(()=>{ if (!document.hidden) ping(30); }, 30000); }
+document.addEventListener("visibilitychange", ()=>{ if (!document.hidden && pingTimer) ping(0); });
+function appTimeNow(){ if (!appTime) return 0; appShown = Math.max(appShown, appTime.seconds + (Date.now()-appTimeAt)/1000 * Math.max(1, appTime.online||0)); return appShown; }
+function fmtHMS(sec){ sec = Math.max(0, Math.floor(sec)); const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), x = sec%60;
+  return `${h.toLocaleString("de-DE")}<small> Std. </small>${String(m).padStart(2,"0")}<small> Min. </small>${String(x).padStart(2,"0")}<small> Sek.</small>`; }
+function appTimeHtml(){
+  return `<div class="card" style="text-align:center"><div class="muted small" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em">⏱️ Zeit in Freiraum – alle zusammen</div>
+    <b id="appTimeVal" style="font-size:28px;display:block;margin:6px 0 2px;font-variant-numeric:tabular-nums">${appTime ? fmtHMS(appTimeNow()) : "…"}</b>
+    <div class="muted small" id="appTimeSub">${appTimeSub()}</div></div>`;
+}
+function appTimeSub(){
+  if (!appTime) return "wird geladen …";
+  const since = new Date(appTime.since).toLocaleDateString("de-DE",{day:"numeric",month:"long"});
+  return `<span class="dot" style="background:var(--ok)"></span>${appTime.online} gerade online · gezählt seit ${esc(since)}`;
+}
+function paintAppTime(){ const v = $("#appTimeVal"), s = $("#appTimeSub"); if (v) v.innerHTML = fmtHMS(appTimeNow()); if (s) s.innerHTML = appTimeSub(); }
+setInterval(()=>{ if (appTime && $("#appTimeVal")) $("#appTimeVal").innerHTML = fmtHMS(appTimeNow()); }, 1000);
+
 /* ---------- Installieren (PWA) ---------- */
 let installEvt = null;
 const isStandalone = ()=> matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
@@ -1657,6 +1690,7 @@ async function refresh(){
     LIMIT = acc.limit || 30;
     group = acc.member_id ? decodeState(await rpc("sf_state2",{p_token:T()})) : null;
     loadAvatars().then(()=>{ if (tab==="group") renderGroup(); });
+    startPing();
   } catch(err){
     if (/anmelden/i.test(err.message)) { logoutLocal(); toast("Bitte neu anmelden"); }
     else toast("Keine Verbindung – bitte später nochmal");
