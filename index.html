@@ -308,7 +308,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "16";
+const APP_VERSION = "17";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 2;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -696,9 +696,17 @@ function shownDate(text){
   const t = text.toLowerCase(), today = berlinToday();
   for (let i=0;i<=21;i++){
     const day = addDays(today,-i), dt = toDate(day), d = dt.getUTCDate();
-    const mDe = dt.toLocaleDateString("de-DE",{month:"long",timeZone:"UTC"}).toLowerCase(), mEn = dt.toLocaleDateString("en-US",{month:"long",timeZone:"UTC"}).toLowerCase();
-    if ([`${d}. ${mDe}`, `${d} ${mDe}`, `${mEn} ${d}`, `${d} ${mEn}`].some(p=>new RegExp("(^|[^0-9])"+p.replace(".","\\.")).test(t))) return day;
+    const mDe = dt.toLocaleDateString("de-DE",{month:"long",timeZone:"UTC"}).toLowerCase().slice(0,3), mEn = dt.toLocaleDateString("en-US",{month:"long",timeZone:"UTC"}).toLowerCase().slice(0,3);
+    if ([`${d}. ${mDe}`, `${d} ${mDe}`, `${d}.${mDe}`, `${mEn} ${d}`, `${d} ${mEn}`, `${d}.${dt.getUTCMonth()+1}.`].some(p=>new RegExp("(^|[^0-9])"+p.replace(".","\\.")).test(t))) return day;
   }
+  return null;
+}
+/* Falsche Ansicht? (Android „Benachrichtigungen“/„Entsperrungen“ statt Bildschirmzeit) */
+function wrongView(text, apps){
+  if (apps.length) return null;
+  const n = (text.match(/benachrichtigung|notification/gi)||[]).length, u = (text.match(/entsperr|unlock|aktivierung|pickup/gi)||[]).length;
+  if (n >= 3) return "Benachrichtigungen";
+  if (u >= 3) return "Entsperrungen";
   return null;
 }
 function loadImage(file){ return new Promise((res,rej)=>{ const url=URL.createObjectURL(file); const im=new Image(); im.onload=()=>res({im,url}); im.onerror=rej; im.src=url; }); }
@@ -957,14 +965,17 @@ async function analyse(root, files, day, test){
   if (isTotal){ const r = parseTotalTime(text); total = r.total ?? 0; totalMissing = r.missing || r.total == null; }
   const dateOk = ocrOk ? dateMatches(text, day) : false;
   const shown = ocrOk && !dateOk ? shownDate(text) : null;
+  const wv = ocrOk ? wrongView(text, apps) : null;
   const ocrMin = ocrOk ? total : null;
   const sus = fakeSignals(files, loaded, text, ocrOk, apps, day);
+  if (wv) sus.unshift(`Falsche Ansicht: „${wv}“ statt Bildschirmzeit`);
   res.innerHTML = `<div class="shotwrap"><div style="display:flex;flex-direction:column;gap:6px">${thumbs}</div><div style="flex:1">
       ${isTotal ? `<div class="approw"><span>📱 Handyzeit gesamt</span><span>${total} Min.</span></div>${apps.map(a=>`<div class="approw muted" style="font-weight:500"><span>davon ${esc(a.name)}</span><span>${a.min} Min.</span></div>`).join("")}
           ${totalMissing?`<div class="status warn" style="margin-top:8px">⚠️ Die Gesamtzeit ist evtl. nicht auf dem Screenshot. Nimm den Bildschirm mit der großen Gesamtzahl – oder trag sie unten selbst ein.</div>`:""}`
       : apps.length ? apps.map(a=>`<div class="approw"><span>${esc(a.name)}</span><span>${a.min} Min.</span></div>`).join("")
         : `<div class="muted small" style="line-height:1.5">${ocrOk ? "Keine Social-Media-Apps erkannt. Wenn du wirklich nichts genutzt hast: super! Sonst trag die Minuten unten selbst ein." : "Automatisches Auslesen hat nicht geklappt. Trag die Minuten bitte selbst ein."}</div>`}
     </div></div>
+    ${wv ? `<div class="status bad" style="display:block;line-height:1.5">❌ Das ist die Ansicht <b>„${esc(wv)}“</b> – da stehen keine Minuten. Tippe oben auf „${esc(wv)}“, wähle <b>„Bildschirmzeit“</b> und mach dann einen neuen Screenshot.</div>` : ""}
     <div class="status ${dateOk?"ok":"warn"}">${dateOk ? "✅ Datum passt" : shown && shown!==day
       ? `⚠️ Auf dem Screenshot steht <b>${esc(fmtDate(shown))}</b> – gebraucht wird der Screenshot von <b>${esc(fmtDate(day))}</b>. Bitte in der Bildschirmzeit den richtigen Tag auswählen.`
       : "⚠️ Datum im Screenshot nicht erkannt – wird von einem Admin geprüft."}</div>
@@ -1317,6 +1328,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"17", date:"11. November", items:[
+    "📱 Android: Die KI merkt jetzt, wenn du aus Versehen die Ansicht <b>„Benachrichtigungen“</b> statt „Bildschirmzeit“ fotografiert hast – und sagt dir, wie du umschaltest.",
+    "📅 Datum wird auch in Kurzform erkannt (z. B. „Mi., 11. Nov.“)."]},
   { v:"16", date:"11. November", items:[
     "📅 Passt das Datum nicht, sagt dir die KI jetzt, <b>welcher Tag auf deinem Screenshot steht</b> – und welcher gebraucht wird.",
     "🖼️ Bei mehreren Screenshots reicht es, wenn das Datum auf <b>einem</b> davon zu sehen ist."]},
