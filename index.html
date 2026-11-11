@@ -334,7 +334,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "20";
+const APP_VERSION = "21";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -505,24 +505,44 @@ function goalCard(rows){
 /* ---------- Challenge & Ausgangswert ---------- */
 const TRACKS = {
   social: { icon:"📵", name:"Social Media", desc:l=>`Max. <b>${l} Min.</b> am Tag für Instagram, TikTok, YouTube, Snapchat & Co. Messenger wie WhatsApp sind erlaubt.`, word:"Social Media", unit:"Social-Media-Minuten" },
-  total:  { icon:"📱", name:"Handyzeit",    desc:l=>`Max. <b>${l} Min.</b> Bildschirmzeit am Tag – <b>für alles</b> auf dem Handy zusammen. Die harte Variante! 💪`, word:"Handyzeit", unit:"Handyzeit gesamt" }
+  total:  { icon:"📱", name:"Handyzeit",    desc:()=>`<b>Kein Limit</b> – du lädst jeden Tag deine <b>gesamte Bildschirmzeit</b> hoch. Wer im Schnitt am wenigsten am Handy ist, steht in der Rangliste vorn.`, word:"Handyzeit", unit:"Handyzeit gesamt" }
 };
-const trackOf = () => "social";
+const trackOf = () => acc?.track === "total" ? "total" : "social";
+const isTotal = () => trackOf() === "total";
+const goalText = () => isTotal() ? "so wenig Handyzeit wie möglich" : `max. ${LIMIT} Min. Social Media`;
+const avgOfStats = s => s.validDays ? s.minutes / s.validDays : null;
 const limitOf = t => acc?.limit_social || 30;
-function renderNoGroup(){
-  const cur = acc?.baseline;
+function renderTrackChoice(){
   $("#vNoGroup").innerHTML = `
-    <div class="hero" style="padding-top:6px"><div class="big" style="font-size:30px">Wie viel Social Media<br><span class="grad">hattest du bisher?</span></div>
+    <div class="hero" style="padding-top:6px"><div class="big" style="font-size:30px">Welche Challenge<br><span class="grad">machst du?</span></div>
+      <p>Du kannst bis zum Start am 15. November noch wechseln.</p></div>
+    ${["social","total"].map(t=>`<button class="card trackpick" data-track="${t}" style="display:block;width:100%;text-align:left;cursor:pointer;border:2px solid ${acc.track===t&&acc.track_chosen?"var(--flame2)":"transparent"}">
+      <div style="display:flex;gap:14px;align-items:flex-start"><div style="font-size:38px;line-height:1">${TRACKS[t].icon}</div>
+      <div style="flex:1"><b style="font-size:19px">${t==="social"?"Social-Media-Challenge":"Handyzeit-Challenge"}</b>
+        <div class="muted small" style="line-height:1.5;margin-top:4px">${t==="social" ? `Max. <b>${LIMIT} Min. Social Media</b> am Tag (Insta, TikTok, YouTube & Co.). Geschaffte Tage = Flammen 🔥, dazu 3 Joker.` : TRACKS.total.desc()}</div></div></div></button>`).join("")}`;
+  document.querySelectorAll("#vNoGroup .trackpick").forEach(b=>b.onclick = async ()=>{
+    try{ await rpc("sf_set_track",{p_token:T(),p_track:b.dataset.track}); await refresh(); show(); window.scrollTo({top:0});
+      toast(`${TRACKS[b.dataset.track].icon} Du machst die ${b.dataset.track==="social"?"Social-Media":"Handyzeit"}-Challenge`); }
+    catch(err){ toast(err.message); }
+  });
+}
+function renderNoGroup(){
+  if (acc && acc.track_chosen === false && acc.can_switch) return renderTrackChoice();
+  const cur = acc?.baseline, TT = isTotal();
+  $("#vNoGroup").innerHTML = `
+    <div class="hero" style="padding-top:6px"><div class="big" style="font-size:30px">${TT?"Wie viel Handyzeit":"Wie viel Social Media"}<br><span class="grad">hattest du bisher?</span></div>
       <p>Damit wir am Ende sehen, wie viel Zeit du – und wir alle zusammen – eingespart haben.</p></div>
     <div class="card">
-      <p class="q" style="font-size:17px">Wie lange warst du <b>letzte Woche</b> im Schnitt <b>pro Tag</b> auf Social Media?</p>
-      <p class="muted small" style="line-height:1.5;margin:4px 0 12px">Instagram, TikTok, YouTube, Snapchat & Co. zusammen – ohne WhatsApp & andere Messenger.</p>
+      <p class="q" style="font-size:17px">Wie lange warst du <b>letzte Woche</b> im Schnitt <b>pro Tag</b> ${TT?"<b>insgesamt</b> am Handy":"auf Social Media"}?</p>
+      <p class="muted small" style="line-height:1.5;margin:4px 0 12px">${TT?"Die komplette Bildschirmzeit – alle Apps zusammen.":"Instagram, TikTok, YouTube, Snapchat & Co. zusammen – ohne WhatsApp & andere Messenger."}</p>
       <div class="label2">Schätz einfach</div>
-      <div class="chips" id="blChips">${[[10,"10 Min."],[30,"30 Min."],[60,"1 Std."],[90,"1,5 Std."],[120,"2 Std."],[180,"3 Std."],[240,"4 Std."],[300,"5+ Std."]].map(([v,l])=>`<button data-v="${v}"${v===cur?' class="on"':""}>${l}</button>`).join("")}</div>
+      <div class="chips" id="blChips">${(TT ? [[60,"1 Std."],[120,"2 Std."],[180,"3 Std."],[240,"4 Std."],[300,"5 Std."],[360,"6 Std."],[480,"8+ Std."]] : [[10,"10 Min."],[30,"30 Min."],[60,"1 Std."],[90,"1,5 Std."],[120,"2 Std."],[180,"3 Std."],[240,"4 Std."],[300,"5+ Std."]]).map(([v,l])=>`<button data-v="${v}"${v===cur?' class="on"':""}>${l}</button>`).join("")}</div>
       <button class="btn btn-primary" id="blSave" style="margin-top:14px">Weiter</button>
+      ${acc?.can_switch ? `<button class="linkbtn" id="blBack" style="display:block;margin:12px auto 0">← Andere Challenge wählen</button>` : ""}
       <p class="muted small" style="text-align:center;margin:10px 0 0">Ehrlich sein lohnt sich – sonst stimmt deine Ersparnis nicht. Bis zum Start kannst du den Wert noch ändern.</p>
     </div>`;
   let blPick = cur ?? null;
+  $("#blBack")?.addEventListener("click", ()=>{ acc.track_chosen = false; renderNoGroup(); });
   $("#blChips").onclick = e=>{ const b=e.target.closest("button"); if(!b) return; blPick = parseInt(b.dataset.v,10); document.querySelectorAll("#blChips button").forEach(x=>x.classList.toggle("on",x===b)); };
   $("#blSave").onclick = async ()=>{
     const v = blPick;
@@ -579,7 +599,7 @@ function renderToday(){
     if (acc.hidden) html += `<div class="hint" style="display:block;margin-bottom:14px"><b>🕶️ Unsichtbar-Modus aktiv</b><br><span class="muted small">Du machst nicht mit und beobachtest nur. Zum Mitmachen im Admin-Bereich ausschalten.</span></div>`;
     else {
       if (inWindow(y)) html += checkinCard(s, y, today);
-      else html += `<div class="card"><p class="q">Tag 1 läuft! 🔥</p><div class="muted small" style="line-height:1.5">Heute zählt's zum ersten Mal: max. ${LIMIT} Min. ${TRACKS[trackOf()].word}. <b>Morgen</b> lädst du dann den Screenshot von heute hoch.</div>
+      else html += `<div class="card"><p class="q">Tag 1 läuft! 🔥</p><div class="muted small" style="line-height:1.5">Heute zählt's zum ersten Mal: ${goalText()}. <b>Morgen</b> lädst du dann den Screenshot von heute hoch.</div>
         <button class="btn btn-ghost" id="goSetup" style="margin-top:14px">📸 So machst du den Screenshot</button></div>`;
       for (let k=2; k<=GRACE; k++){
         const dk = addDays(today,-k), ek = s.map[dk]; if (!inWindow(dk)) continue;
@@ -587,7 +607,7 @@ function renderToday(){
         if (!ek) html += `<div class="card" style="padding:16px 20px;border:2px solid var(--no)"><div class="sectionhead"><div><b>${esc(fmtDate(dk))} fehlt</b><div class="muted small">${left===0?"Heute letzte Chance zum Nachtragen!":`Noch ${left===1?"bis morgen":left+" Tage"} Zeit zum Nachtragen.`}</div></div><button class="pill" data-up="${dk}">Nachtragen</button></div></div>`;
         else if (canJoker(ek)) html += jokerOffer(dk, ek);
       }
-      if (running) html += `<div class="card" style="padding:16px 20px"><b>Heute läuft:</b> <span class="muted">max. ${LIMIT} Min. ${TRACKS[trackOf()].word}. Den Screenshot von heute lädst du morgen hoch.</span></div>`;
+      if (running) html += `<div class="card" style="padding:16px 20px"><b>Heute läuft:</b> <span class="muted">${goalText()}. Den Screenshot von heute lädst du morgen hoch.</span></div>`;
     }
     if (running) html += impulseCard(idx-1, `Impuls · Tag ${idx}`);
     html += calendarCard(s, today);
@@ -623,7 +643,7 @@ async function loadMyTests(){
 }
 /* ---------- Joker ---------- */
 function jokersLeft(){ const m = myMember(); return Math.max(0, JOKERS - (m?.checkins||[]).filter(c=>c.joker).length); }
-function canJoker(e){ return e && !e.success && e.valid!==false && !e.joker && jokersLeft() > 0; }
+function canJoker(e){ return !isTotal() && e && !e.success && e.valid!==false && !e.joker && jokersLeft() > 0; }
 function jokerCardHtml(big){
   return `<div class="jokercard${big?" big":""}"><div class="jc-corner">J</div><div class="jc-face">🃏</div><div class="jc-title">JOKER</div><div class="jc-corner br">J</div></div>`;
 }
@@ -692,9 +712,9 @@ function checkinCard(s, day, today){
   if (e){
     const ok = e.success;
     return `<div class="card"><div class="done">
-      <div class="badge ${ok?"ok":"no"}">${ok?(e.joker?"🃏":"✅"):"❌"}</div>
-      <div style="flex:1"><b style="font-size:17px;${ok?"":"color:var(--no)"}">${ok?(e.joker?"Mit Joker geschafft! 🔥":"Gestern geschafft! 🔥"):(e.valid===false?"Gestern ungültig":"Gestern nicht geschafft")}</b>
-      <div class="muted small" style="margin-top:2px">${ok? e.minutes+" Min. "+TRACKS[trackOf()].word+" – stark!" : (e.valid===false?"Ein Admin hat den Screenshot abgelehnt.":e.minutes+" Min. – über dem Limit von "+LIMIT+" Min. Keine Flamme. Heute neu angreifen! 💪")}</div></div>
+      <div class="badge ${ok?"ok":"no"}">${ok?(e.joker?"🃏":isTotal()?"📱":"✅"):"❌"}</div>
+      <div style="flex:1"><b style="font-size:17px;${ok?"":"color:var(--no)"}">${ok?(e.joker?"Mit Joker geschafft! 🔥":isTotal()?"Gestern eingetragen":"Gestern geschafft! 🔥"):(e.valid===false?"Gestern ungültig":"Gestern nicht geschafft")}</b>
+      <div class="muted small" style="margin-top:2px">${ok? (isTotal() ? fmtHM(e.minutes)+" Handyzeit – steht in der Rangliste." : e.minutes+" Min. "+TRACKS[trackOf()].word+" – stark!") : (e.valid===false?"Ein Admin hat den Screenshot abgelehnt.":e.minutes+" Min. – über dem Limit von "+LIMIT+" Min. Keine Flamme. Heute neu angreifen! 💪")}</div></div>
     </div>${reviewLine(e)}${canJoker(e) ? `<div class="jokerinline" data-joker="${day}">${jokerCardHtml(false)}<div style="flex:1"><b>Nicht erreicht – willst du einen Joker einlösen?</b><div class="muted small">Noch ${jokersLeft()} von ${JOKERS} · dann bekommst du die Flamme trotzdem</div></div><span class="pill">Einlösen</span></div>` : ""}
     <div style="display:flex;gap:16px;flex-wrap:wrap"><button class="linkbtn" data-up="${day}">Screenshot nochmal hochladen</button>${e.disputed?"":`<button class="linkbtn" data-dispute="${day}">Stimmt nicht? Einspruch</button>`}<button class="linkbtn" data-delday="${day}" style="color:var(--no)">Löschen</button></div></div>`;
   }
@@ -702,7 +722,7 @@ function checkinCard(s, day, today){
     <p class="q">📸 Lade den Screenshot von ${label} hoch</p>
     <div class="muted small" style="line-height:1.5">Mach einen Screenshot deiner Bildschirmzeit <b>von gestern</b> – mit Datum und der Liste der Apps. Die Minuten werden direkt auf deinem Handy ausgelesen.</div>
     <button class="btn btn-flame" data-up="${day}" style="margin-top:16px">📷 Screenshot hochladen</button>
-    <div class="muted small" style="text-align:center;margin-top:10px">Max. ${LIMIT} Min. = 🔥 · Vergessen? Du hast bis zu ${GRACE} Tage Zeit zum Nachtragen.</div>
+    <div class="muted small" style="text-align:center;margin-top:10px">${isTotal()?"Zählt die gesamte Bildschirmzeit":`Max. ${LIMIT} Min. = 🔥`} · Vergessen? Du hast bis zu ${GRACE} Tage Zeit zum Nachtragen.</div>
   </div>`;
 }
 
@@ -745,14 +765,17 @@ function durNear(lines, i){
 /* Handyzeit-Gruppe: Gesamtzeit = größte Zeitangabe auf dem Screenshot (die große Zahl oben/in der Mitte) */
 function parseTotalTime(text){
   const lines = text.split(/\n/).map(l=>l.trim()).filter(Boolean);
-  let best = null, sum = 0, n = 0;
+  let best = null, sum = 0, n = 0, bestHM = null;
   for (const l of lines){
     if (/^\D{0,3}(0|30|60)\s*(min|m)\.?\s*$/i.test(l)) continue;     // Achsenbeschriftung im Diagramm
+    if (/^\D{0,3}\d{1,2}\s*(h|std)\.?\s*$/i.test(l)) continue;        // Achsenbeschriftung „8h“ / „4 Std.“
     if (/durchschnitt|average|woche|week/i.test(l)) continue;           // Wochenschnitt nicht zählen
     const d = parseDur(l); if (d == null) continue;
     n++; sum += d; if (best == null || d > best) best = d;
+    if (/\d\s*(h|std)\.?\s*\d{1,2}\s*(m|min)/i.test(l) && (bestHM == null || d > bestHM)) bestHM = d;   // „4h 59min“ = echte Gesamtzeit
   }
   // Wenn die Summe der übrigen Zeiten deutlich größer ist, fehlt die Gesamtzeit vermutlich auf dem Bild
+  if (bestHM != null) best = bestHM;
   const missing = best != null && n > 2 && (sum - best) > best * 1.15;
   return { total: best, missing };
 }
@@ -1053,17 +1076,17 @@ async function analyse(root, files, day, test){
   }catch(err){ ocrOk = false; console.warn(err); }
   ocrProgress = null;
   const apps = Object.entries(found).map(([name,min])=>({name,min}));
-  const isTotal = trackOf()==="total", TR = TRACKS[trackOf()];
+  const trk = (test && testTrack) || trackOf(), isT = trk==="total", TR = TRACKS[trk];
   let total = apps.reduce((a,x)=>a+x.min,0), totalMissing = false;
-  if (isTotal){ const r = parseTotalTime(text); total = r.total ?? 0; totalMissing = r.missing || r.total == null; }
+  if (isT){ const r = parseTotalTime(text); total = r.total ?? 0; totalMissing = r.missing || r.total == null; }
   const dateOk = ocrOk ? dateMatches(text, day) : false;
   const shown = ocrOk && !dateOk ? shownDate(text) : null;
-  const wv = ocrOk ? wrongView(text, apps) : null;
+  const wv = ocrOk && !(isT && total>0) ? wrongView(text, apps) : null;
   const ocrMin = ocrOk ? total : null;
   const sus = fakeSignals(files, loaded, text, ocrOk, apps, day);
   if (wv) sus.unshift(`Falsche Ansicht: „${wv}“ statt Bildschirmzeit`);
   res.innerHTML = `<div class="shotwrap"><div style="display:flex;flex-direction:column;gap:6px">${thumbs}</div><div style="flex:1">
-      ${isTotal ? `<div class="approw"><span>📱 Handyzeit gesamt</span><span>${total} Min.</span></div>${apps.map(a=>`<div class="approw muted" style="font-weight:500"><span>davon ${esc(a.name)}</span><span>${a.min} Min.</span></div>`).join("")}
+      ${isT ? `<div class="approw"><span>📱 Handyzeit gesamt</span><span>${total} Min.</span></div>${apps.map(a=>`<div class="approw muted" style="font-weight:500"><span>davon ${esc(a.name)}</span><span>${a.min} Min.</span></div>`).join("")}
           ${totalMissing?`<div class="status warn" style="margin-top:8px">⚠️ Die Gesamtzeit ist evtl. nicht auf dem Screenshot. Nimm den Bildschirm mit der großen Gesamtzahl – oder trag sie unten selbst ein.</div>`:""}`
       : apps.length ? apps.map(a=>`<div class="approw"><span>${esc(a.name)}</span><span>${a.min} Min.</span></div>`).join("")
         : `<div class="muted small" style="line-height:1.5">${ocrOk ? "Keine Social-Media-Apps erkannt. Wenn du wirklich nichts genutzt hast: super! Sonst trag die Minuten unten selbst ein." : "Automatisches Auslesen hat nicht geklappt. Trag die Minuten bitte selbst ein."}</div>`}
@@ -1073,9 +1096,9 @@ async function analyse(root, files, day, test){
       ? `⚠️ Auf dem Screenshot steht <b>${esc(fmtDate(shown))}</b> – gebraucht wird der Screenshot von <b>${esc(fmtDate(day))}</b>. Bitte in der Bildschirmzeit den richtigen Tag auswählen.`
       : "⚠️ Datum im Screenshot nicht erkannt – wird von einem Admin geprüft."}</div>
     ${test && acc?.admin ? `<div class="status ${sus.length?"bad":"ok"}" style="display:block">${sus.length ? "🕵️ <b>KI-Verdacht:</b> "+sus.map(esc).join(" · ") : "🕵️ Kein Fake-Verdacht"}</div>` : ""}
-    <div class="minutes"><label for="minIn">${TR.unit}<div class="muted small" style="font-weight:500;margin-top:2px">${ocrOk && (apps.length || isTotal) ? "🤖 Von der KI ausgefüllt – nur ändern, wenn's nicht stimmt" : "Nichts erkannt – bitte selbst eintragen"}</div></label><input id="minIn" type="number" inputmode="numeric" min="0" max="1440" value="${ocrOk && (apps.length || isTotal) ? total : ""}" placeholder="Min."></div>
+    <div class="minutes"><label for="minIn">${TR.unit}<div class="muted small" style="font-weight:500;margin-top:2px">${ocrOk && (apps.length || (isT && total>0)) ? "🤖 Von der KI ausgefüllt – nur ändern, wenn's nicht stimmt" : "Nichts erkannt – bitte selbst eintragen"}</div></label><input id="minIn" type="number" inputmode="numeric" min="0" max="1440" value="${ocrOk && (apps.length || (isT && total>0)) ? total : ""}" placeholder="Min."></div>
     <div class="status" id="limitInfo" style="font-size:15px"></div>
-    <div class="muted small" style="margin:8px 4px 0">${isTotal ? "In deiner Gruppe zählt die gesamte Bildschirmzeit des Tages – alle Apps." : "Messenger wie WhatsApp oder Telegram zählen nicht."} Änderst du die Zahl, sehen das die Prüfer.</div>
+    <div class="muted small" style="margin:8px 4px 0">${isT ? "In deiner Gruppe zählt die gesamte Bildschirmzeit des Tages – alle Apps." : "Messenger wie WhatsApp oder Telegram zählen nicht."} Änderst du die Zahl, sehen das die Prüfer.</div>
     ${test && acc?.admin ? `<details style="margin-top:8px"><summary class="small">Erkannter Text (für Admins)</summary><pre style="white-space:pre-wrap;font-size:11px;max-height:180px;overflow:auto">${esc(text)}</pre></details>` : ""}
     <div style="margin-top:14px"><label for="noteIn" class="small" style="font-weight:700;display:block;margin:0 4px 6px">💬 Kommentar für die Admins <span class="muted" style="font-weight:500">(freiwillig)</span></label>
       <textarea id="noteIn" class="input" rows="2" maxlength="300" style="font:inherit;resize:vertical" placeholder="z. B. „KI hat TikTok nicht erkannt – waren 12 Min.“"></textarea></div>
@@ -1085,7 +1108,8 @@ async function analyse(root, files, day, test){
   const upd = ()=>{ const v = parseInt(root.querySelector("#minIn").value,10); const li = root.querySelector("#limitInfo");
     autoNote.innerHTML = (!test && (root.querySelector("#noteIn")?.value||"").trim()) ? "💬 Mit Kommentar – ein Admin schaut sich das an." : (!test && sus.length) ? "⏳ Zählt sofort – ein Admin schaut sich den Screenshot noch kurz an." : (v === ocrMin && dateOk) ? "🤖 Passt alles – die KI gibt den Tag <b>automatisch frei</b>." : "⏳ Zählt sofort – weil " + (v !== ocrMin ? "du die Minuten geändert hast" : "das Datum nicht erkannt wurde") + ", schaut ein Admin noch kurz drüber.";
     if (Number.isNaN(v)){ li.textContent=""; li.className="status"; return; }
-    if (v <= LIMIT){ li.className="status ok"; li.textContent=`✅ GÜLTIG – ${v} Min. ${TR.word}, max. ${LIMIT} erlaubt. Das gibt eine Flamme! 🔥`; }
+    if (isT){ li.className="status ok"; li.textContent=`📱 ${fmtHM(v)} Handyzeit – wird so in die Rangliste eingetragen.`; }
+    else if (v <= LIMIT){ li.className="status ok"; li.textContent=`✅ GÜLTIG – ${v} Min. ${TR.word}, max. ${LIMIT} erlaubt. Das gibt eine Flamme! 🔥`; }
     else { li.className="status bad"; li.textContent=`❌ NICHT GESCHAFFT – ${v} Min. ${TR.word}, erlaubt sind max. ${LIMIT}.` + (!test && jokersLeft()>0 ? ` Du kannst gleich einen Joker einlösen (noch ${jokersLeft()} von ${JOKERS}).` : " Keine Flamme für diesen Tag."); } };
   root.querySelector("#minIn").oninput = upd; root.querySelector("#noteIn").oninput = upd; upd();
   root.querySelector("#sendShot").onclick = async ()=>{
@@ -1105,7 +1129,8 @@ async function analyse(root, files, day, test){
       }
       await rpc("sf_upload",{p_token:T(),p_day:day,p_minutes:minutes,p_shot:shot,p_ocr_minutes:ocrMin,p_date_ok:dateOk,p_suspect:sus.length ? sus.join(" · ") : null,p_note:note});
       closeSheet(); done(); await refresh(); show();
-      if (minutes <= LIMIT){ $("#bigFlame")?.classList.add("pop"); flameCelebrate("Du hast eine Flamme bekommen!", `${minutes} Min. – stark! 🔥`); }
+      if (isT) flameCelebrate("Eingetragen!", `${fmtHM(minutes)} Handyzeit – ab in die Rangliste 📱`);
+      else if (minutes <= LIMIT){ $("#bigFlame")?.classList.add("pop"); flameCelebrate("Du hast eine Flamme bekommen!", `${minutes} Min. – stark! 🔥`); }
       else if (jokersLeft() > 0) jokerSheet(day);
       else toast(`❌ Über ${LIMIT} Min. – keine Flamme für diesen Tag. Deine Joker sind aufgebraucht.`);
     }catch(err){ toast(err.message); btn.disabled = false; }
@@ -1113,10 +1138,12 @@ async function analyse(root, files, day, test){
 }
 
 /* ---------- Rangliste (eine gemeinsame Gruppe für alle) ---------- */
-let viewTrack = "social";
+let viewTrack = null, testTrack = null;
 function rankRows(){
-  let rows = group.members.map(m=>({m, s:statsFor(m)}));
-  const key = rankMode==="streak" ? (r=>[r.s.streak, r.s.total]) : (r=>[r.s.validDays, -r.s.minutes]);
+  let rows = group.members.filter(m=>(m.track||"social")===(viewTrack||"social")).map(m=>({m, s:statsFor(m)}));
+  // Handyzeit: wer im Schnitt am wenigsten am Handy ist, steht vorn (ohne Uploads ganz hinten)
+  const key = viewTrack==="total" ? (r=>{ const a = avgOfStats(r.s); return [a==null ? -1e9 : -a, r.s.validDays]; })
+    : rankMode==="streak" ? (r=>[r.s.streak, r.s.total]) : (r=>[r.s.validDays, -r.s.minutes]);
   const better = (a,b)=>{ const ka=key(a), kb=key(b); return ka[0]>kb[0] || (ka[0]===kb[0] && ka[1]>kb[1]); };
   rows.forEach(r=>{ r.rank = 1 + rows.filter(o=>better(o,r)).length; });   // Gleichstand = gleicher Platz
   rows.sort((a,b)=> a.rank-b.rank || a.m.name.localeCompare(b.m.name));
@@ -1126,14 +1153,16 @@ function renderGroup(){
   if (!group){ $("#vGroup").innerHTML = `<div class="loader"></div>`; return; }
   const today = berlinToday(), yd = addDays(today,-1), active = inWindow(yd), canReview = !!acc?.admin;
   if (!viewTrack) viewTrack = acc.hidden ? "social" : trackOf();
+  const VT = viewTrack==="total";
   const vLimit = limitOf(viewTrack), cnt = t => group.members.filter(m=>(m.track||"social")===t).length;
   const rows = rankRows();
   const mine = rows.find(r=>r.m.id===acc.member_id);
   const n = rows.length;
   const succToday = rows.filter(r=>r.s.map[yd]?.success).length;
   const flamesAll = rows.reduce((a,r)=>a+r.s.total,0);
-  const statusOf = r => { const e=r.s.map[yd]; return !active ? "" : e ? (e.success?`<span class="dot" style="background:var(--ok)"></span>gestern geschafft`:`<span class="dot" style="background:var(--no)"></span>gestern ungültig`) : `<span class="dot" style="background:var(--line)"></span>gestern noch offen`; };
-  const valueOf = r => rankMode==="streak"
+  const statusOf = r => { const e=r.s.map[yd]; return !active ? "" : VT ? (e ? `<span class="dot" style="background:var(--ok)"></span>gestern ${fmtHM(e.minutes)}` : `<span class="dot" style="background:var(--line)"></span>gestern noch offen`) : e ? (e.success?`<span class="dot" style="background:var(--ok)"></span>gestern geschafft`:`<span class="dot" style="background:var(--no)"></span>gestern ungültig`) : `<span class="dot" style="background:var(--line)"></span>gestern noch offen`; };
+  const valueOf = r => VT ? `<div style="text-align:right"><b style="font-size:17px">${avgOfStats(r.s)!=null?fmtHM(avgOfStats(r.s)):"–"}</b><div class="muted small">Ø pro Tag</div></div>`
+    : rankMode==="streak"
     ? `<div class="st"><svg class="${r.s.streak?"":"flame off"}"><use href="#flame"/></svg>${r.s.streak}</div>`
     : `<div style="text-align:right"><b style="font-size:17px">${r.s.validDays}</b><div class="muted small">${r.s.minutes} Min.</div></div>`;
   const medal = k => k===1?"🥇":k===2?"🥈":k===3?"🥉":k;
@@ -1146,34 +1175,37 @@ function renderGroup(){
   let strip = "";
   for (let i=0;i<DAYS;i++){ const d=addDays(START,i), e=mine?.s.map[d]; strip += `<i class="${e?(e.success?"ok":"no"):""} ${d===today?"t":""}"></i>`; }
   $("#vGroup").innerHTML = `
+    ${(cnt("social") && cnt("total")) || acc.admin ? `<div class="seg" id="segTrack"><button data-t="social" class="${!VT?"on":""}">📵 Social Media · ${cnt("social")}</button><button data-t="total" class="${VT?"on":""}">📱 Handyzeit · ${cnt("total")}</button></div>` : ""}
     ${goalCard(rows)}
     <div class="stats3">
       <div><b>${n}</b><span>dabei</span></div>
-      <div><b>${active?succToday:"–"}</b><span>gestern 🔥</span></div>
-      <div><b>${flamesAll}</b><span>🔥 gesamt</span></div>
+      <div><b>${active?succToday:"–"}</b><span>${VT?"gestern hochgeladen":"gestern 🔥"}</span></div>
+      <div><b>${flamesAll}</b><span>${VT?"Uploads gesamt":"🔥 gesamt"}</span></div>
     </div>
     ${acc.hidden ? `<div class="hint" style="display:block;margin-bottom:16px"><b>🕶️ Unsichtbar-Modus aktiv</b><br><span class="muted small">Du beobachtest nur – niemand sieht dich in der Rangliste. Ausschalten im Admin-Bereich.</span></div>` : ""}
     ${mine ? `<div class="mecard">
-      <div class="mehead"><span class="youtag">DU</span><span class="muted small">${rankMode==="streak"?"🔥 Flammen":"🏆 Wettbewerb"}</span></div>
+      <div class="mehead"><span class="youtag">DU</span><span class="muted small">${VT?"📱 Handyzeit":rankMode==="streak"?"🔥 Flammen":"🏆 Wettbewerb"}</span></div>
       <div class="merow">
         <div class="bigrank"><small>Platz</small>${mine.rank}<small>von ${n}</small></div>
         <div class="av big">${avatarHtml(mine.m)}</div>
         <div class="who" style="flex:1;min-width:0"><b style="font-size:19px">${esc(mine.m.name)}</b><span>${statusOf(mine) || (today < START ? "Start am 15. November" : "")}</span></div>
       </div>
       <div class="mestats">
-        <div><svg class="${mine.s.streak?"":"flame off"}"><use href="#flame"/></svg><b>${mine.s.streak}</b><span>in Folge</span></div>
-        <div><b>${mine.s.total}</b><span>🔥 geschafft</span></div>
+        ${VT ? `<div><b>${avgOfStats(mine.s)!=null?fmtHM(avgOfStats(mine.s)):"–"}</b><span>Ø pro Tag</span></div>
+        <div><b>${mine.s.validDays}</b><span>Tage hochgeladen</span></div>` : `<div><svg class="${mine.s.streak?"":"flame off"}"><use href="#flame"/></svg><b>${mine.s.streak}</b><span>in Folge</span></div>
+        <div><b>${mine.s.total}</b><span>🔥 geschafft</span></div>`}
         <div><b>${fmtHM(mine.s.saved)}</b><span>gespart</span></div>
       </div>
       <div class="strip">${strip}</div>
     </div>` : ""}
-    <div class="seg" id="segRank"><button data-r="streak" class="${rankMode==="streak"?"on":""}">🔥 Flammen</button><button data-r="comp" class="${rankMode==="comp"?"on":""}">🏆 Wettbewerb</button></div>
-    <p class="muted small" style="margin:-6px 4px 12px;line-height:1.5">${rankMode==="streak" ? `Sortiert nach Flammen in Folge (Tage mit max. ${vLimit} Min. ${TRACKS[viewTrack].word}). Gleichstand = gleicher Platz.` : `Wer die meisten geschafften Tage hat, liegt vorn. Bei Gleichstand gewinnt, wer weniger Minuten hatte. Ungültige Tage zählen nicht.`}${canReview?" <b>Admin:</b> Tippe auf eine Person, um Screenshots zu prüfen.":""}</p>
+    ${VT ? `<p class="muted small" style="margin:0 4px 12px;line-height:1.5">📱 <b>Handyzeit-Challenge:</b> Wer im Schnitt am wenigsten Handyzeit pro Tag hat, steht vorn. Gezählt werden alle hochgeladenen Tage.${canReview?" <b>Admin:</b> Tippe auf eine Person, um Screenshots zu prüfen.":""}</p>` : `<div class="seg" id="segRank"><button data-r="streak" class="${rankMode==="streak"?"on":""}">🔥 Flammen</button><button data-r="comp" class="${rankMode==="comp"?"on":""}">🏆 Wettbewerb</button></div>
+    <p class="muted small" style="margin:-6px 4px 12px;line-height:1.5">${rankMode==="streak" ? `Sortiert nach Flammen in Folge (Tage mit max. ${vLimit} Min. ${TRACKS[viewTrack].word}). Gleichstand = gleicher Platz.` : `Wer die meisten geschafften Tage hat, liegt vorn. Bei Gleichstand gewinnt, wer weniger Minuten hatte. Ungültige Tage zählen nicht.`}${canReview?" <b>Admin:</b> Tippe auf eine Person, um Screenshots zu prüfen.":""}</p>`}
     <div class="card" style="padding:8px 20px"><ul class="lb">${list || `<li><div class="who"><span>Noch niemand ${mine?"sonst ":""}in dieser Gruppe – lade Freunde ein!</span></div></li>`}</ul></div>
     <button class="btn btn-flame" id="btnInvite" style="margin-bottom:14px">Freunde einladen</button>`;
   $("#btnInvite").onclick = invite;
   $("#vGroup").insertAdjacentHTML("beforeend", appTimeHtml() + allStatsHtml());
-  $("#segRank").onclick = e => { const b=e.target.closest("button"); if(!b) return; rankMode=b.dataset.r; renderGroup(); };
+  $("#segTrack")?.addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return; viewTrack=b.dataset.t; renderGroup(); });
+  if ($("#segRank")) $("#segRank").onclick = e => { const b=e.target.closest("button"); if(!b) return; rankMode=b.dataset.r; renderGroup(); };
 
   if (canReview) document.querySelectorAll("#vGroup .lb li[data-mid]").forEach(li=>li.onclick=()=>memberSheet(li.dataset.mid));
   if (canReview && mine) $("#vGroup .mecard").onclick = ()=>memberSheet(mine.m.id);
@@ -1267,7 +1299,8 @@ function renderAdmin(){
       <p class="muted small" style="margin:6px 0 0;line-height:1.5">${acc.hidden ? "<b>Aktiv:</b> Du tauchst nirgends in der Rangliste auf und zählst bei „dabei“ nicht mit. Du kannst trotzdem alles beobachten und als Admin prüfen." : "Schalte ihn ein, wenn du nicht mitmachen, sondern nur still beobachten willst. Niemand sieht dich dann in der Rangliste."}</p></div>
     <div class="card"><h3 style="font-size:17px">🧪 KI-Test</h3>
       <p class="muted small" style="margin:6px 0 12px;line-height:1.5">Lade einen echten Bildschirmzeit-Screenshot <b>von gestern</b> hoch (wie später alle). Die App liest die Minuten aus – danach kannst du sagen, ob die KI richtig lag. Tests zählen nirgends.</p>
-      <button class="btn btn-flame" id="btnTest">📷 Test-Screenshot hochladen</button>
+      <button class="btn btn-flame" id="btnTest">📵 Test: Social-Media-Screenshot</button>
+      <button class="btn btn-primary" id="btnTestT" style="margin-top:8px">📱 Test: Handyzeit-Screenshot (gesamt)</button>
       <div class="daylist" style="margin-top:10px">${tests}</div></div>
     <div class="card"><div class="sectionhead"><h3 style="font-size:17px">📋 Zu prüfen</h3><span class="muted small">${d.queue.length} offen</span></div>
       <p class="muted small" style="margin:6px 0 8px">🤖 Die KI hat ${d.stats?.auto ?? 0} Uploads automatisch freigegeben. Hier landen nur Einsprüche 💬 und auffällige Uploads: ✏️ = Minuten von Hand geändert · 📅? = Datum nicht erkannt · 🕵️ = KI vermutet einen Fake. Alle anderen kannst du über die Rangliste prüfen (Person antippen).</p>
@@ -1289,7 +1322,8 @@ function renderAdmin(){
     ${acc.owner ? `<div class="card"><h3 style="font-size:17px;margin-bottom:6px">⏱️ Zeit in Freiraum</h3>
       <p class="muted small" style="margin:0 0 10px">Live-Zähler, wie lange alle zusammen in der App waren. Nur du kannst ihn zurücksetzen.</p>
       <button class="btn btn-ghost" id="btnResetApp" style="color:var(--no)">Zähler auf 0 zurücksetzen</button></div>` : ""}`;
-  $("#btnTest").onclick = ()=>uploadFlow(addDays(berlinToday(),-1), true);
+  $("#btnTest").onclick = ()=>{ testTrack = "social"; uploadFlow(addDays(berlinToday(),-1), true); };
+  $("#btnTestT")?.addEventListener("click", ()=>{ testTrack = "total"; uploadFlow(addDays(berlinToday(),-1), true); });
   $("#hidToggle").onchange = async e=>{
     try{ await rpc("sf_set_hidden",{p_token:T(),p_hidden:e.target.checked}); await refresh(); await loadAdmin(); show(); toast(e.target.checked?"🕶️ Du bist jetzt unsichtbar":"Du bist wieder in der Rangliste sichtbar"); }
     catch(err){ toast(err.message); e.target.checked = !e.target.checked; }
@@ -1443,6 +1477,11 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"21", date:"11. November", items:[
+    "📱 Neu: Die <b>Handyzeit-Challenge</b>! Ohne Limit – du lädst jeden Tag deine gesamte Bildschirmzeit hoch. Wer im Schnitt am wenigsten am Handy ist, steht in der Rangliste vorn.",
+    "🔀 Bis zum Start am 15.11. kannst du wählen: <b>Social-Media-Challenge</b> (max. 30 Min.) oder <b>Handyzeit-Challenge</b>. Wechseln geht unter Einstellungen.",
+    "🏆 Die Rangliste hat oben einen Umschalter zwischen beiden Challenges.",
+    "🛡️ Admins können jederzeit zwischen beiden Challenges umschalten, Screenshots beider Gruppen prüfen und beide Varianten im KI-Test ausprobieren."]},
   { v:"20", date:"11. November", items:[
     "🤖 Die Minuten trägt die KI selbst ein – du musst nur etwas ändern, wenn sie falsch liegt oder nichts erkannt hat.",
     "💬 Neu: Beim Hochladen kannst du einen <b>Kommentar für die Admins</b> schreiben, z. B. wenn die KI etwas falsch erkannt hat."]},
@@ -1536,7 +1575,7 @@ function renderInfo(){
     </div>
     ${myStatsHtml()}
     <div class="card"><div class="sectionhead"><div><div class="muted small" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em">Dein Ausgangswert</div>
-        <b style="font-size:18px">${fmtHM(acc.baseline)} Social Media pro Tag</b><div class="muted small">vor der Fastenzeit · max. ${LIMIT} Min. pro Tag erlaubt</div></div>
+        <b style="font-size:18px">${fmtHM(acc.baseline)} ${TRACKS[trackOf()].word} pro Tag</b><div class="muted small">vor der Fastenzeit · ${TRACKS[trackOf()].icon} ${isTotal()?"Handyzeit-Challenge (ohne Limit)":`Social-Media-Challenge (max. ${LIMIT} Min.)`}</div></div>
         ${acc.can_switch?`<button class="pill" id="btnTrack">Ändern</button>`:""}</div></div>
     <div class="card">
       <h3 style="font-size:17px">🎨 Aussehen</h3>
@@ -1603,7 +1642,7 @@ function renderInfo(){
     </div>
     <p class="muted small" style="text-align:center;margin-top:20px">Freiraum · 40 Tage Social-Media-Fasten 🎄</p>`;
   $("#btnEdit").onclick = editProfile;
-  $("#btnTrack")?.addEventListener("click", ()=>{ tab="today"; acc.baseline = null; show(); window.scrollTo({top:0}); });
+  $("#btnTrack")?.addEventListener("click", ()=>{ tab="today"; acc.track_chosen = false; show(); window.scrollTo({top:0}); });
   $("#btnAv").onclick = $("#avBig").onclick = avatarSheet;
   $("#chTheme").onclick = e=>{ const b=e.target.closest("button"); if(b) setLook("theme", b.dataset.v); };
   $("#chFont").onclick = e=>{ const b=e.target.closest("button"); if(b) setLook("font", b.dataset.v); };
@@ -1681,12 +1720,12 @@ function trend(cur, prev, lowerBetter, fmt){
 }
 const tile = (label, value, sub="") => `<div style="background:var(--soft);border-radius:16px;padding:12px 12px 10px;min-width:0">
   <div class="muted small" style="font-weight:700">${label}</div><b style="font-size:20px;display:block;margin-top:2px">${value}</b><div style="margin-top:2px;line-height:1.3">${sub}</div></div>`;
-function barsHtml(vals, limit){
+function barsHtml(vals, limit, lbl){
   const max = Math.max(limit*2, ...vals.map(v=>v.v ?? 0));
   return `<div style="position:relative;display:flex;align-items:flex-end;gap:3px;height:96px;margin-top:6px">
     <div style="position:absolute;left:0;right:0;bottom:${limit/max*100}%;border-top:2px dashed var(--muted);opacity:.45"></div>
     ${vals.map(x=>`<div title="${esc(x.label)}: ${x.v==null?"–":Math.round(x.v)+" Min."}" style="flex:1;border-radius:5px 5px 2px 2px;min-height:3px;height:${x.v==null?3:Math.max(3,x.v/max*100)}%;background:${x.v==null?"var(--line)":x.v<=limit?"var(--ok)":"var(--no)"}"></div>`).join("")}
-  </div><div class="muted small" style="display:flex;justify-content:space-between;margin-top:4px"><span>${esc(vals[0]?.label||"")}</span><span>- - Limit ${limit} Min.</span><span>${esc(vals[vals.length-1]?.label||"")}</span></div>`;
+  </div><div class="muted small" style="display:flex;justify-content:space-between;margin-top:4px"><span>${esc(vals[0]?.label||"")}</span><span>- - ${lbl || `Limit ${limit} Min.`}</span><span>${esc(vals[vals.length-1]?.label||"")}</span></div>`;
 }
 const shortDay = d => toDate(d).toLocaleDateString("de-DE",{day:"numeric",month:"numeric",timeZone:"UTC"});
 function myStatsHtml(){
@@ -1703,26 +1742,28 @@ function myStatsHtml(){
   const map = s.map;
   return head + `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
-      ${tile("Ø Social Media / Tag", fmtMin(cur.avg), trend(cur.avg, prev?.avg ?? null, true, fmtHM))}
-      ${tile("Tage geschafft", `${cur.ok} / ${w.cur.length}`, trend(cur.ok, prev ? prev.ok : null, false, v=>v+" Tag"+(v===1?"":"e")))}
+      ${tile(`Ø ${TRACKS[trackOf()].word} / Tag`, fmtMin(cur.avg), trend(cur.avg, prev?.avg ?? null, true, fmtHM))}
+      ${isTotal() ? tile("Tage hochgeladen", `${cur.n} / ${w.cur.length}`, trend(cur.n, prev ? prev.n : null, false, v=>v+" Tag"+(v===1?"":"e")))
+        : tile("Tage geschafft", `${cur.ok} / ${w.cur.length}`, trend(cur.ok, prev ? prev.ok : null, false, v=>v+" Tag"+(v===1?"":"e")))}
       ${tile("Gespart", fmtHM(cur.saved), trend(cur.saved, prev ? prev.saved : null, false, fmtHM))}
-      ${tile("Erfolgsquote", fmtPct(quota(cur)), trend(quota(cur), quota(prev), false, v=>Math.round(v)+" %-Pkt."))}
+      ${isTotal() ? tile("Vorher", fmtHM(m.baseline||0), cur.avg!=null && m.baseline ? `<span class="small" style="font-weight:700;color:var(${cur.avg<m.baseline?"--ok":"--no"})">${Math.round(Math.abs(1-cur.avg/m.baseline)*100)} % ${cur.avg<m.baseline?"weniger":"mehr"}</span>` : "")
+        : tile("Erfolgsquote", fmtPct(quota(cur)), trend(quota(cur), quota(prev), false, v=>Math.round(v)+" %-Pkt."))}
     </div>
-    ${last14.length ? `<div class="muted small" style="font-weight:700;margin-top:14px">Deine letzten ${last14.length} Tage</div>${barsHtml(last14.map(d=>({label:shortDay(d), v: map[d] && map[d].valid!==false ? map[d].minutes : null})), LIMIT)}` : ""}
+    ${last14.length ? `<div class="muted small" style="font-weight:700;margin-top:14px">Deine letzten ${last14.length} Tage</div>${barsHtml(last14.map(d=>({label:shortDay(d), v: map[d] && map[d].valid!==false ? map[d].minutes : null})), isTotal() ? (m.baseline||180) : LIMIT, isTotal() ? `vorher Ø ${fmtHM(m.baseline||180)}` : null)}` : ""}
     <div class="muted small" style="font-weight:700;margin-top:14px">Seit dem Start</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px">
-      ${tile("Geschafft", `${s.total} / ${possible}`)}
-      ${tile("Beste Serie", `${s.best} 🔥`)}
+      ${isTotal() ? tile("Hochgeladen", `${s.validDays} / ${possible}`) : tile("Geschafft", `${s.total} / ${possible}`)}
+      ${isTotal() ? tile("Ø Handyzeit", fmtMin(all.avg)) : tile("Beste Serie", `${s.best} 🔥`)}
       ${tile("Gespart", fmtHM(s.saved))}
     </div>
-    ${less!=null ? `<p class="small" style="margin:12px 0 0;line-height:1.5">${less>0 ? `💪 Du nutzt Social Media im Schnitt <b>${less} % weniger</b> als vor der Fastenzeit (vorher ${fmtHM(m.baseline)}, jetzt Ø ${fmtHM(all.avg)} am Tag).` : `Im Schnitt ${fmtHM(all.avg)} am Tag – vorher waren es ${fmtHM(m.baseline)}. Da geht noch was! 💪`}</p>` : ""}
+    ${less!=null ? `<p class="small" style="margin:12px 0 0;line-height:1.5">${less>0 ? `💪 Du nutzt ${isTotal()?"dein Handy":"Social Media"} im Schnitt <b>${less} % weniger</b> als vor der Fastenzeit (vorher ${fmtHM(m.baseline)}, jetzt Ø ${fmtHM(all.avg)} am Tag).` : `Im Schnitt ${fmtHM(all.avg)} am Tag – vorher waren es ${fmtHM(m.baseline)}. Da geht noch was! 💪`}</p>` : ""}
   </div>`;
 }
 /* Anonyme Statistik: nur Durchschnitte und Verteilungen, keine Namen. Erst ab 5 Personen mit Daten. */
 function allStatsHtml(){
   const MIN_PEOPLE = 5;
-  const ms = (group?.members||[]);
-  const head = `<div class="card"><div class="sectionhead"><h3 style="font-size:17px">📊 Alle im Vergleich</h3><span class="muted small">anonym</span></div>`;
+  const VTr = viewTrack || trackOf(), TT = VTr==="total", ms = (group?.members||[]).filter(m=>(m.track||"social")===VTr);
+  const head = `<div class="card"><div class="sectionhead"><h3 style="font-size:17px">📊 Alle im Vergleich</h3><span class="muted small">${TRACKS[VTr].icon} ${TRACKS[VTr].name} · anonym</span></div>`;
   if (berlinToday() <= START) return head + `<p class="muted small" style="margin:8px 0 0">Sobald die Challenge läuft, siehst du hier, wie alle zusammen abschneiden – ohne Namen.</p></div>`;
   const w = statWeeks();
   const curP = ms.map(m=>({m, p:periodOf(m,w.cur)})).filter(x=>x.p.n);
@@ -1735,7 +1776,7 @@ function allStatsHtml(){
   const savedAll = ms.reduce((a,m)=>a+statsFor(m).saved,0);
   const bl = ms.map(m=>m.baseline).filter(v=>v!=null), blAvg = avgOf(bl);
   // Verteilung: Ø Minuten pro Tag in der letzten Woche
-  const B = [[0,10,"0–10"],[10,20,"10–20"],[20,30,"20–30"],[30,60,"30–60"],[60,1e9,"60+"]];
+  const B = TT ? [[0,60,"<1 h"],[60,120,"1–2 h"],[120,180,"2–3 h"],[180,240,"3–4 h"],[240,1e9,"4 h+"]] : [[0,10,"0–10"],[10,20,"10–20"],[20,30,"20–30"],[30,60,"30–60"],[60,1e9,"60+"]];
   const counts = B.map(([a,b])=>curP.filter(x=>x.p.avg>=a && x.p.avg<b).length);
   const me = curP.find(x=>x.m.id===acc?.member_id);
   const meIdx = me ? B.findIndex(([a,b])=>me.p.avg>=a && me.p.avg<b) : -1;
@@ -1747,21 +1788,21 @@ function allStatsHtml(){
     return { label: shortDay(d), v: v.length >= MIN_PEOPLE ? avgOf(v.map(c=>c.minutes||0)) : null }; });
   return head + `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
-      ${tile("Ø Social Media / Tag", fmtMin(avgCur), trend(avgCur, avgPrev, true, fmtHM))}
-      ${tile("Erfolgsquote aller", fmtPct(qCur), trend(qCur, qPrev, false, v=>Math.round(v)+" %-Pkt."))}
+      ${tile(`Ø ${TRACKS[VTr].word} / Tag`, fmtMin(avgCur), trend(avgCur, avgPrev, true, fmtHM))}
+      ${TT ? tile("Uploads diese Woche", String(curP.reduce((a,x)=>a+x.p.n,0)), `<span class="muted small">von ${curP.length} Personen</span>`) : tile("Erfolgsquote aller", fmtPct(qCur), trend(qCur, qPrev, false, v=>Math.round(v)+" %-Pkt."))}
       ${tile("Vorher im Schnitt", fmtMin(blAvg), blAvg && avgCur!=null ? `<span class="small" style="font-weight:700;color:var(--ok)">${Math.max(0,Math.round((1-avgCur/blAvg)*100))} % weniger</span> <span class="muted small">jetzt</span>` : "")}
       ${tile("Zusammen gespart", fmtHM(savedAll), `<span class="muted small">${curP.length} aktiv diese Woche</span>`)}
     </div>
-    <div class="muted small" style="font-weight:700;margin-top:14px">So viel Social Media am Tag (Ø letzte 7 Tage)</div>
+    <div class="muted small" style="font-weight:700;margin-top:14px">So viel ${TRACKS[VTr].word} am Tag (Ø letzte 7 Tage)</div>
     <div style="display:flex;align-items:flex-end;gap:8px;height:110px;margin-top:8px">
       ${B.map(([,,l],i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px">
         <span class="small" style="font-weight:700">${counts[i]}</span>
-        <div style="width:100%;border-radius:6px 6px 2px 2px;height:${Math.max(4,counts[i]/maxC*100)}%;background:${i===meIdx?"linear-gradient(var(--flame1),var(--flame2))":B[i][1]<=LIMIT?"var(--ok)":"var(--line)"}"></div></div>`).join("")}
+        <div style="width:100%;border-radius:6px 6px 2px 2px;height:${Math.max(4,counts[i]/maxC*100)}%;background:${i===meIdx?"linear-gradient(var(--flame1),var(--flame2))":B[i][1]<=(TT?120:LIMIT)?"var(--ok)":"var(--line)"}"></div></div>`).join("")}
     </div>
     <div style="display:flex;gap:8px;margin-top:4px">${B.map(([,,l],i)=>`<span class="muted small" style="flex:1;text-align:center;${i===meIdx?"font-weight:800;color:var(--ink)":""}">${l}${i===meIdx?"<br>du":""}</span>`).join("")}</div>
-    <p class="muted small" style="margin:6px 0 0">Minuten pro Tag · Zahl = Anzahl Personen</p>
+    <p class="muted small" style="margin:6px 0 0">${TT?"Stunden":"Minuten"} pro Tag · Zahl = Anzahl Personen</p>
     ${better!=null ? `<p class="small" style="margin:10px 0 0;line-height:1.5">🔥 Diese Woche liegst du vor <b>${better} %</b> aller Teilnehmenden.</p>` : ""}
-    ${daily.some(x=>x.v!=null) ? `<div class="muted small" style="font-weight:700;margin-top:14px">Ø aller – letzte ${daily.length} Tage</div>${barsHtml(daily, LIMIT)}` : ""}
+    ${daily.some(x=>x.v!=null) ? `<div class="muted small" style="font-weight:700;margin-top:14px">Ø aller – letzte ${daily.length} Tage</div>${barsHtml(daily, TT ? (blAvg||180) : LIMIT, TT ? `vorher Ø ${fmtHM(blAvg||180)}` : null)}` : ""}
     <p class="muted small" style="margin:12px 0 0;line-height:1.5">🔒 Nur Durchschnitte und Anzahlen – keine Namen, keine Bilder, nichts, was auf einzelne Personen schließen lässt.</p>
   </div>`;
 }
@@ -1840,7 +1881,7 @@ async function copy(t,msg){ try{ await navigator.clipboard.writeText(t); toast(m
 document.querySelectorAll("#tabbar button").forEach(b=>b.addEventListener("click", ()=>{ tab=b.dataset.t; show(); window.scrollTo({top:0}); if(tab==="admin") loadAdmin().then(()=>{ if(tab==="admin") renderAdmin(); }); }));
 function show(){
   const logged = !!(auth?.token && acc);
-  const hasGroup = logged && !!acc.member_id && acc.baseline != null;
+  const hasGroup = logged && !!acc.member_id && acc.baseline != null && (acc.track_chosen !== false || !acc.can_switch);
   if (logged && tab==="admin" && !acc.admin) tab = "today";
   $("#vOnboard").classList.toggle("hidden", logged);
   $("#tabbar").classList.toggle("hidden", !logged);
@@ -1860,7 +1901,7 @@ function show(){
 }
 function decodeState(st){
   if (!st) return null;
-  return { name: st.name, members: st.members.map(([id,name,emoji,av,cs,bl])=>({ id, name, emoji, av, track:"social", baseline: bl,
+  return { name: st.name, members: st.members.map(([id,name,emoji,av,cs,bl,tr])=>({ id, name, emoji, av, track: tr==="total" ? "total" : "social", baseline: bl,
     checkins: cs.map(([d,min,f,ocr])=>({ day:addDays(START,d), minutes:min, success:!!(f&1), valid:!!(f&2), edited:!!(f&4),
       date_ok: f&8 ? true : f&32 ? false : null, reviewed:!!(f&16), disputed:!!(f&64), suspect:!!(f&128), joker:!!(f&256), ocr })) })) };
 }
