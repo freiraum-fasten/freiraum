@@ -154,7 +154,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 
 /* Tabbar */
 .tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 14px);display:flex;gap:4px;padding:6px;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.12);z-index:20}
-.tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 15px;border-radius:16px;font-size:11px;font-weight:700;color:var(--muted)}
+.tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 9px;border-radius:16px;font-size:11px;font-weight:700;color:var(--muted)}
 .tabbar button svg{width:22px;height:22px}
 .tabbar button.on{background:var(--soft);color:var(--ink)}
 
@@ -222,6 +222,13 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 .newlist li{margin-bottom:4px}
 .trackcard{display:flex;gap:14px;align-items:center;width:100%;border:2.5px solid transparent;text-align:left}
 .trackcard.on{border-color:var(--flame2)}
+.fritem{display:flex;gap:12px;align-items:flex-start;padding:12px 10px;border-radius:16px;cursor:pointer;transition:background .2s}
+.fritem + .fritem{margin-top:2px}
+.fritem:active{background:var(--soft)}
+.frnum{width:38px;height:38px;border-radius:12px;background:var(--soft);display:grid;place-items:center;font-weight:800;flex:none;font-size:15px}
+.fritem.done .frnum{background:linear-gradient(135deg,var(--flame1),var(--flame2));color:#fff}
+.fritem.done b{text-decoration:line-through;text-decoration-color:var(--flame2)}
+.frlink{display:inline-block;margin-top:6px;font-weight:700;font-size:14px;color:var(--ink);text-underline-offset:3px}
 .countdown div{background:var(--soft);border-radius:16px;padding:12px 0;width:76px;text-align:center}
 .countdown b{display:block;font-size:28px;font-weight:800;letter-spacing:-.03em}
 .countdown span{font-size:12px;color:var(--muted);font-weight:600}
@@ -281,6 +288,8 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
   <section id="vGroup" class="hidden"></section>
   <!-- INFO -->
   <section id="vInfo" class="hidden"></section>
+  <!-- FREIRÄUME -->
+  <section id="vIdeas" class="hidden"></section>
   <!-- ADMIN -->
   <section id="vAdmin" class="hidden"></section>
 </div>
@@ -288,6 +297,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 <nav class="tabbar hidden" id="tabbar">
   <button data-t="today" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.8 4.3-1.6 6.7-3.6 9C6.9 13.8 6 15.4 6 17.5 6 20 8.7 22 12 22s6-2 6-5c0-2.3-1-4-2.4-5.3-.2 1.5-.9 2.4-2 2.9.9-4.1-.3-7.8-1.6-11.6z"/></svg>Heute</button>
   <button data-t="group"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.7-3.4 3.3-5.5 6.5-5.5s5.8 2.1 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M17.5 14.5c2.2.3 3.6 1.9 4 4.5"/></svg>Rangliste</button>
+  <button data-t="ideas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg>Freiräume</button>
   <button data-t="admin" id="tabAdmin" class="hidden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4 5.5v6c0 5 3.4 8.8 8 10 4.6-1.2 8-5 8-10v-6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Admin</button>
   <button data-t="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Einstellungen</button>
 </nav>
@@ -298,7 +308,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "11";
+const APP_VERSION = "12";
 const START = "2026-11-14", END = "2026-12-23", DAYS = 40, GRACE = 2;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -492,7 +502,7 @@ function renderToday(){
     ${acc?.admin ? `<button class="btn btn-primary" id="goAdmin" style="margin-bottom:14px">🧪 Screenshot-Erkennung testen (Admin)</button>` : ""}
     <button class="btn btn-flame" id="goInvite" style="margin-bottom:14px">Freunde einladen</button>
     <button class="btn btn-ghost" id="goSetup" style="margin-bottom:14px">📸 So machst du den Screenshot</button>`;
-    html += impulseCard(0, "Vorgeschmack auf Tag 1");
+    html += impulseCard(diffDays(today, START) + 400, "");
   } else if (today > lastUpload){
     html += `<div class="card" style="text-align:center">
       <div style="font-size:54px">🎄</div>
@@ -528,6 +538,8 @@ function renderToday(){
   }
   $("#vToday").innerHTML = html;
   $("#goInvite")?.addEventListener("click", invite);
+  $("#goIdeas")?.addEventListener("click", ()=>{ tab="ideas"; show(); window.scrollTo({top:0}); });
+  bindFr("#vToday", renderToday);
   $("#goAdmin")?.addEventListener("click", ()=>{ tab="admin"; show(); });
   $("#goSetup")?.addEventListener("click", ()=>{ tab="info"; show(); setTimeout(()=>{ const d=$("#cardGuide"); if(d) d.scrollIntoView({behavior:"smooth"}); },60); });
   document.querySelectorAll("#vToday [data-up]").forEach(b=>b.addEventListener("click", ()=>uploadFlow(b.dataset.up)));
@@ -674,10 +686,100 @@ function compressShot(im){
   }
   throw new Error("Bild ist zu groß");
 }
-function impulseCard(i, tag){
-  const [t,x,a] = IMPULSES[Math.max(0,Math.min(DAYS-1,i))];
-  return `<div class="card impulse"><div class="tag grad">${esc(tag)}</div><h3>${esc(t)}</h3><p>${esc(x)}</p><div class="todo">🎯 ${esc(a)}</div></div>`;
+/* ---------- Freiräume – Mach was draus! (Inhalte vom Freiraum-Team) ---------- */
+const FR_CATS = [
+  { icon:"🤝", title:"Mit anderen was erleben", sub:"Echte Begegnungen statt nur Likes und Nachrichten.", items:[
+    ["Freunde treffen","Triff dich mit Freunden und unternehmt etwas zusammen. Das Handy bleibt dabei möglichst in der Tasche."],
+    ["Spieleabend","Hol ein Brett- oder Kartenspiel raus und spiel eine Runde mit anderen."],
+    ["Einfach mal quatschen","Setz dich zu jemandem aus deiner Familie und quatsch mindestens 15 Minuten mit ihm."],
+    ["Alte Kontakte auffrischen","Meld dich bei jemandem, den du schon länger nicht gesehen oder gesprochen hast."],
+    ["Gemeinsamer Abend","Mach einen Spiele- oder Filmabend mit deiner Familie oder Freunden."],
+    ["Kompliment machen","Sag jemandem etwas Nettes, das du wirklich so meinst."],
+    ["Familienzeit","Unternimm etwas mit deinen Geschwistern oder jemandem aus deiner Familie."],
+    ["Jemanden einladen","Frag jemanden, ob ihr heute oder in den nächsten Tagen zusammen etwas unternehmen wollt."]]},
+  { icon:"🌳", title:"Rausgehen & bewegen", sub:"Runter vom Sofa, raus ins echte Leben!", items:[
+    ["Kopf freikriegen","Geh eine halbe Stunde raus, schnapp frische Luft und lass den Alltag hinter dir."],
+    ["Sport machen","Beweg dich mindestens 20 Minuten. Fußball, Joggen, Workout – ganz egal!"],
+    ["Neues entdecken","Erkunde einen Weg oder Ort in deiner Umgebung, an dem du noch nie warst."],
+    ["Kleine Tour","Schnapp dir jemanden und macht zusammen eine kleine Wanderung oder Tour durch die Natur."],
+    ["Schönes entdecken","Such draußen fünf Dinge, die du richtig schön findest. Schau mal genauer hin!"],
+    ["Neue Sportart ausprobieren","Probier eine Sportart oder Bewegung aus, die du sonst nicht machst."],
+    ["Sonnenaufgang oder Sonnenuntergang","Nimm dir Zeit und schau dir bewusst einen Sonnenaufgang oder Sonnenuntergang an."]]},
+  { icon:"🎨", title:"Mal was anderes machen", sub:"Entdecke, was du alles machen kannst, wenn du nicht am Scrollen bist.", items:[
+    ["Kochen oder backen","Mach etwas Leckeres – vielleicht sogar für andere mit."],
+    ["Kreativ werden","Zeichne, male oder gestalte irgendwas. Es muss kein Kunstwerk werden!"],
+    ["Ein Buch lesen","Lies mindestens 20 Minuten in einem Buch, das dich interessiert."],
+    ["Etwas Neues ausprobieren","Mach endlich etwas, das du schon länger mal ausprobieren wolltest."],
+    ["Selber machen","Bau, bastle oder reparier etwas mit deinen eigenen Händen."],
+    ["Etwas lernen","Bring dir etwas Neues bei – ohne dich durch Social Media zu scrollen."],
+    ["Schreiben","Schreib eine Geschichte, einen Songtext, ein Gedicht oder einfach deine Gedanken auf."],
+    ["Zimmer auf Vordermann bringen","Räum eine Ecke deines Zimmers auf, die es dringend nötig hat."],
+    ["Eine Stunde ohne Bildschirm","Mach eine Stunde lang etwas, das dir Spaß macht – ganz ohne Bildschirm."]]},
+  { icon:"❤️", title:"Anderen was Gutes tun", sub:"Manchmal braucht es nicht viel, um jemandem den Tag schöner zu machen.", items:[
+    ["Einfach mithelfen","Hilf zu Hause bei etwas mit, ohne dass dich jemand darum bitten muss."],
+    ["Jemanden überraschen","Mach jemandem eine kleine Freude. Es muss nichts kosten!"],
+    ["Danke sagen","Schreib jemandem eine persönliche Nachricht oder Karte, um Danke zu sagen."],
+    ["Hilfe anbieten","Frag jemanden, ob du ihm bei irgendetwas helfen kannst."],
+    ["Müll sammeln","Sammel beim Spazierengehen Müll auf und entsorg ihn richtig."],
+    ["Etwas verschenken","Verschenk etwas, das du nicht mehr brauchst und das jemand anderem Freude macht."],
+    ["Richtig zuhören","Hör jemandem aufmerksam zu – ohne nebenbei aufs Handy zu schauen."],
+    ["Heimlich Gutes tun","Mach eine gute Tat, ohne jemandem davon zu erzählen."]]},
+  { icon:"✨", title:"Zeit für dich & Gott", sub:"Mal zur Ruhe kommen, nachdenken und Gott Raum geben.", items:[
+    ["Zehn Minuten Stille","Gönn dir zehn Minuten Ruhe – ohne Handy, Musik oder andere Ablenkung."],
+    ["Dankbar sein","Überleg dir fünf Dinge, für die du dankbar bist. Große oder ganz kleine."],
+    ["Jesus kennenlernen","Lies eine Geschichte von Jesus in der Bibel und überleg, was sie mit deinem Leben zu tun hat."],
+    ["Für andere beten","Nimm dir Zeit und bete für drei Menschen, denen du etwas Gutes wünschst."],
+    ["Was hat sich verändert?","Überleg dir mindestens eine Sache, die heute besser war, weil du weniger am Handy warst."],
+    ["Gute Gewohnheiten entdecken","Überleg dir, welche gute Gewohnheit du nach den 40 Tagen beibehalten möchtest."],
+    ["Bibel lesen – Gott an mich","Lies einen Abschnitt aus dem Bibelleseplan „Gemeinde liest Bibel (GlB) – Gott an mich“ in der YouVersion-Bibel-App.","https://www.bible.com/de/organizations/4b288f6a-e0cd-4ee0-a953-233d2e323a6b"],
+    ["Bibel lesen – #Jesus","Lies einen Abschnitt aus dem Bibelleseplan „#Jesus – Daily Devotionals“ in der YouVersion-Bibel-App.","https://www.bible.com/de/reading-plans/3723-jesus-daily-devotionals"]]}
+];
+const FR = []; FR_CATS.forEach((c,ci)=>c.items.forEach(it=>FR.push({ n:FR.length+1, cat:ci, t:it[0], d:it[1], url:it[2] })));
+function frDone(day){ try { return (JSON.parse(localStorage.getItem("fr_done")||"{}")[day]) || []; } catch { return []; } }
+function frToggle(day, n){
+  let all = {}; try { all = JSON.parse(localStorage.getItem("fr_done")||"{}"); } catch {}
+  const list = new Set(all[day] || []); const on = !list.has(n);
+  on ? list.add(n) : list.delete(n); all[day] = [...list];
+  try { localStorage.setItem("fr_done", JSON.stringify(all)); } catch {}
+  return on;
 }
+function frTotal(){ try { return Object.values(JSON.parse(localStorage.getItem("fr_done")||"{}")).reduce((a,l)=>a+l.length,0); } catch { return 0; } }
+function frItemHtml(f, done){
+  return `<div class="fritem ${done?"done":""}" data-fr="${f.n}">
+    <div class="frnum">${done?"✓":f.n}</div>
+    <div style="flex:1;min-width:0"><b>${esc(f.t)}</b><div class="muted small" style="line-height:1.45;margin-top:2px">${esc(f.d)}</div>
+      ${f.url?`<a class="frlink" href="${f.url}" target="_blank" rel="noopener">Bibelplan öffnen ↗</a>`:""}</div></div>`;
+}
+/* Vorschlag des Tages (ersetzt den alten Impuls) */
+function impulseCard(i, tag){
+  const today = berlinToday(), f = FR[Math.max(0,i) % FR.length], done = frDone(today).includes(f.n);
+  return `<div class="card impulse"><div class="sectionhead"><div class="tag grad">🔥 Freiraum-Idee für heute</div><span class="muted small">${frDone(today).length} heute erledigt</span></div>
+    <div style="margin-top:10px">${frItemHtml(f, done)}</div>
+    <button class="btn btn-ghost" id="goIdeas" style="margin-top:12px">Alle 40 Freiräume ansehen</button></div>`;
+}
+function renderIdeas(){
+  const today = berlinToday(), done = frDone(today);
+  $("#vIdeas").innerHTML = `
+    <div class="card" style="text-align:left">
+      <h2 style="font-size:24px;line-height:1.2">🔥 Freiräume – <span class="grad">Mach was draus!</span></h2>
+      <p style="font-weight:700;margin:8px 0 6px">40 Tage. Weniger Feed. Mehr Leben.</p>
+      <p class="muted" style="margin:0 0 8px;line-height:1.55;font-size:15px">Weniger Social Media bedeutet mehr Zeit für die Dinge, die wirklich zählen. Such dir jeden Tag mindestens eine Aktion aus und mach was aus deiner gewonnenen Zeit. Du kannst jede Aufgabe beliebig oft wiederholen, auch mehrere an einem Tag.</p>
+      <div class="stats3" style="margin:12px 0 0"><div><b>${done.length}</b><span>heute erledigt</span></div><div><b>${frTotal()}</b><span>insgesamt</span></div><div><b>40</b><span>Ideen</span></div></div>
+    </div>
+    ${FR_CATS.map((c,ci)=>`<div class="card"><h3 style="font-size:19px">${c.icon} ${esc(c.title)}</h3><p class="muted small" style="margin:4px 0 10px;font-style:italic">${esc(c.sub)}</p>
+      ${FR.filter(f=>f.cat===ci).map(f=>frItemHtml(f, done.includes(f.n))).join("")}</div>`).join("")}
+    <p class="muted small" style="text-align:center">Tippe eine Idee an, um sie für heute abzuhaken ✓</p>`;
+  bindFr("#vIdeas", renderIdeas);
+}
+function bindFr(scope, rerender){
+  document.querySelectorAll(scope+" .fritem").forEach(el=>el.addEventListener("click", e=>{
+    if (e.target.closest("a")) return;
+    const on = frToggle(berlinToday(), +el.dataset.fr);
+    if (on){ navigator.vibrate?.(20); toast("✓ Stark – Freiraum genutzt!"); }
+    rerender();
+  }));
+}
+
 function calendarCard(s, today){
   let cells = "";
   for (let i=0;i<DAYS;i++){
@@ -1118,6 +1220,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"12", date:"11. November", items:[
+    "🔥 Neu: <b>Freiräume – Mach was draus!</b> 40 Ideen in 5 Kategorien, was du mit deiner gewonnenen Zeit machen kannst.",
+    "✓ Ideen antippen zum Abhaken – auch mehrere am Tag.",
+    "💡 Auf der Startseite gibt's jeden Tag eine Freiraum-Idee."]},
   { v:"11", date:"11. November", items:[
     "🤖 Die KI <b>gibt Uploads automatisch frei</b> – du siehst direkt „Von der KI geprüft und freigegeben“.",
     "💬 Neu: <b>Einspruch</b>. Findest du eine Bewertung falsch, kannst du sie mit kurzer Begründung von einem Admin prüfen lassen.",
@@ -1314,11 +1420,12 @@ function show(){
   $("#topPill").textContent = "bis Weihnachten 🎄";
   const needGroup = logged && !hasGroup && (tab==="today" || tab==="group");
   $("#vNoGroup").classList.toggle("hidden", !needGroup);
-  ["today","group","info","admin"].forEach(t=>$("#v"+t[0].toUpperCase()+t.slice(1)).classList.toggle("hidden", !logged || needGroup || tab!==t));
+  ["today","group","ideas","info","admin"].forEach(t=>$("#v"+t[0].toUpperCase()+t.slice(1)).classList.toggle("hidden", !logged || needGroup || tab!==t));
   document.querySelectorAll("#tabbar button").forEach(b=>b.classList.toggle("on", b.dataset.t===tab));
   if (!logged){ renderOnboard(); return; }
   if (needGroup){ renderNoGroup(); return; }
   if (tab==="info") return renderInfo();
+  if (tab==="ideas") return renderIdeas();
   if (tab==="admin") return renderAdmin();
   if (!group){ $("#v"+tab[0].toUpperCase()+tab.slice(1)).innerHTML = `<div class="loader"></div>`; return; }
   if (tab==="today") renderToday(); else renderGroup();
