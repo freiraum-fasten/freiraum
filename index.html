@@ -695,8 +695,20 @@ function ocrCanvas(im){
   const px = g.getImageData(0,0,c.width,c.height), d = px.data;
   let sum=0; for (let i=0;i<d.length;i+=16) sum += (d[i]+d[i+1]+d[i+2])/3;
   const dark = sum/(d.length/16) < 110; // Dark Mode → invertieren
-  for (let i=0;i<d.length;i+=4){ let v=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; if(dark) v=255-v; d[i]=d[i+1]=d[i+2]=v; }
-  g.putImageData(px,0,0); return c;
+  // Dark Mode: invertieren + Kontrast-Kurve, damit die kleinen grauen Zeiten („20min“) dunkel genug für die Texterkennung werden
+  for (let i=0;i<d.length;i+=4){ let v=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; if(dark){ v=255-v; v=255*Math.pow(v/255,3); } d[i]=d[i+1]=d[i+2]=v; }
+  g.putImageData(px,0,0); c.dark = dark; return c;
+}
+/* Text lesen. Dunkelmodus: zweiter Durchgang im Modus „verstreuter Text“ – findet die kleinen Zeiten unter den Balken */
+async function ocrRead(w, im){
+  const c = ocrCanvas(im);
+  let text = (await w.recognize(c)).data.text || "";
+  if (c.dark){
+    try{ await w.setParameters({tessedit_pageseg_mode:"11"}); text += "\n" + ((await w.recognize(c)).data.text || ""); }
+    catch(e){ console.warn(e); }
+    finally{ try{ await w.setParameters({tessedit_pageseg_mode:"6"}); }catch{} }
+  }
+  return text;
 }
 function compressShot(im){
   let w = Math.min(640, im.width), q = 0.55;
@@ -917,9 +929,9 @@ async function analyse(root, files, day, test){
     const w = await getOcr();
     for (let i=0;i<loaded.length;i++){
       ocrProgress = m => { const b=root.querySelector("#ocrBar"); if (b && m.progress!=null && m.status==="recognizing text") b.style.width = Math.round((i + m.progress)/loaded.length*100)+"%"; };
-      const { data } = await w.recognize(ocrCanvas(loaded[i].im));
-      text += "\n" + (data.text || "");
-      parseScreenTime(data.text || "").forEach(a=>{ found[a.name] = Math.max(found[a.name] ?? 0, a.min); });
+      const t = await ocrRead(w, loaded[i].im);
+      text += "\n" + t;
+      parseScreenTime(t).forEach(a=>{ found[a.name] = Math.max(found[a.name] ?? 0, a.min); });
     }
   }catch(err){ ocrOk = false; console.warn(err); }
   ocrProgress = null;
@@ -1289,6 +1301,7 @@ const CHANGELOG = [
     "📊 Neu: <b>Deine Statistik</b> unter Einstellungen – mit Vergleich zur Vorwoche.",
     "👥 In der Rangliste: <b>Alle im Vergleich</b> – komplett anonym, ohne Namen.",
     "⏱️ Live in der Rangliste: <b>wie lange alle zusammen in Freiraum</b> sind – und wie viele gerade online.",
+    "🌙 Die KI liest Screenshots im <b>Dunkelmodus</b> jetzt deutlich besser.",
     "⏸️ Konten können pausiert werden – pausierte Personen tauchen vorübergehend nicht in der Rangliste auf."]},
   { v:"14", date:"11. November", items:[
     "⏱️ Deine Social-Media-Zeit von <b>vorher</b> gibst du jetzt ganz einfach per Schätzung an: 10 Min., 30 Min., 1 Std. …"]},
