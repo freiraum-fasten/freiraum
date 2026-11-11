@@ -220,6 +220,8 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 .label2{font-size:13px;font-weight:700;color:var(--muted);margin:14px 2px 8px;text-transform:uppercase;letter-spacing:.05em}
 .newlist{margin:8px 0 0;padding-left:20px;line-height:1.6;font-size:15px}
 .newlist li{margin-bottom:4px}
+.trackcard{display:flex;gap:14px;align-items:center;width:100%;border:2.5px solid transparent;text-align:left}
+.trackcard.on{border-color:var(--flame2)}
 .countdown div{background:var(--soft);border-radius:16px;padding:12px 0;width:76px;text-align:center}
 .countdown b{display:block;font-size:28px;font-weight:800;letter-spacing:-.03em}
 .countdown span{font-size:12px;color:var(--muted);font-weight:600}
@@ -248,7 +250,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
       <p>Social-Media-Fasten bis Weihnachten. Wir bestimmen über unser Leben – nicht das Smartphone.</p>
     </div>
     <div class="rules">
-      <div class="rule"><b>30</b><span>Minuten/Tag max.</span></div>
+      <div class="rule"><b>30<small style="font-size:14px">/60</small></b><span>Min. Social Media / Handy</span></div>
       <div class="rule"><b>40</b><span>Tage durchziehen</span></div>
       <div class="rule"><b>🔥</b><span>Flammen sammeln</span></div>
     </div>
@@ -270,20 +272,8 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
     </div>
   </section>
 
-  <!-- KEINE GRUPPE -->
-  <section id="vNoGroup" class="hidden">
-    <div class="hero" style="padding-top:6px"><div class="big" style="font-size:30px">Fast geschafft!<br><span class="grad">Jetzt deine Gruppe.</span></div>
-      <p>Tritt mit dem Code deiner Freunde bei oder gründe eine eigene Gruppe.</p></div>
-    <div class="card">
-      <div class="seg" id="segMode">
-        <button class="on" data-m="join">Beitreten</button>
-        <button data-m="create">Gruppe gründen</button>
-      </div>
-      <label class="field" id="fCode"><span>Gruppen-Code</span><input class="input code-input" id="inCode" maxlength="6" placeholder="ABC123" autocapitalize="characters" autocomplete="off"></label>
-      <label class="field hidden" id="fGroup"><span>Name der Gruppe</span><input class="input" id="inGroup" maxlength="40" placeholder="z. B. Die Freundesgruppe"></label>
-      <button class="btn btn-flame" id="btnStart" style="margin-top:6px">Beitreten</button>
-    </div>
-  </section>
+  <!-- GRUPPE WÄHLEN -->
+  <section id="vNoGroup" class="hidden"></section>
 
   <!-- TODAY -->
   <section id="vToday" class="hidden"></section>
@@ -308,7 +298,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "9";
+const APP_VERSION = "10";
 const START = "2026-11-14", END = "2026-12-23", DAYS = 40, GRACE = 2;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -462,32 +452,27 @@ $("#btnAuth").addEventListener("click", async ()=>{
   btn.disabled = false;
 });
 
-/* ---------- Gruppe beitreten / gründen ---------- */
-$("#segMode").addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return; mode=b.dataset.m; renderNoGroup(); });
+/* ---------- Gruppe wählen: Social Media oder Handyzeit ---------- */
+const TRACKS = {
+  social: { icon:"📵", name:"Social Media", desc:l=>`Max. <b>${l} Min.</b> am Tag für Instagram, TikTok, YouTube, Snapchat & Co. Messenger wie WhatsApp sind erlaubt.`, word:"Social Media", unit:"Social-Media-Minuten" },
+  total:  { icon:"📱", name:"Handyzeit",    desc:l=>`Max. <b>${l} Min.</b> Bildschirmzeit am Tag – <b>für alles</b> auf dem Handy zusammen. Die harte Variante! 💪`, word:"Handyzeit", unit:"Handyzeit gesamt" }
+};
+const trackOf = () => acc?.track || "social";
+const limitOf = t => t==="total" ? (acc?.limit_total||60) : (acc?.limit_social||30);
 function renderNoGroup(){
-  $("#fCode").classList.toggle("hidden", mode!=="join");
-  $("#fGroup").classList.toggle("hidden", mode!=="create");
-  document.querySelectorAll("#segMode button").forEach(b=>b.classList.toggle("on", b.dataset.m===mode));
-  $("#btnStart").textContent = mode==="join" ? "Beitreten" : "Gruppe gründen";
+  const sel = acc?.track;
+  $("#vNoGroup").innerHTML = `
+    <div class="hero" style="padding-top:6px"><div class="big" style="font-size:30px">Wähle deine<br><span class="grad">Challenge</span></div>
+      <p>Jede Gruppe hat ihre eigene Rangliste. Bis zum Start am 14.11. kannst du noch wechseln.</p></div>
+    ${["social","total"].map(t=>`<button class="card trackcard ${sel===t?"on":""}" data-track="${t}">
+      <div style="font-size:40px">${TRACKS[t].icon}</div>
+      <div style="flex:1;text-align:left"><b style="font-size:19px">${TRACKS[t].name}</b>
+      <div class="muted small" style="line-height:1.5;margin-top:4px">${TRACKS[t].desc(limitOf(t))}</div></div></button>`).join("")}`;
+  document.querySelectorAll("#vNoGroup [data-track]").forEach(b=>b.onclick=async ()=>{
+    try{ await rpc("sf_set_track",{p_token:T(),p_track:b.dataset.track}); await refresh(); tab="today"; show(); toast(`${TRACKS[b.dataset.track].icon} Du bist in der Gruppe „${TRACKS[b.dataset.track].name}“`); }
+    catch(err){ toast(err.message); }
+  });
 }
-$("#btnStart").addEventListener("click", async ()=>{
-  const btn = $("#btnStart"); btn.disabled = true;
-  try{
-    if (mode==="join"){
-      const code = $("#inCode").value.trim().toUpperCase();
-      if (code.length!==6){ toast("Der Code hat 6 Zeichen"); btn.disabled=false; return; }
-      await rpc("sf_join_group2",{p_token:T(),p_code:code});
-    } else {
-      const g = $("#inGroup").value.trim();
-      if (!g){ toast("Wie soll eure Gruppe heißen?"); btn.disabled=false; return; }
-      await rpc("sf_create_group2",{p_token:T(),p_group_name:g});
-    }
-    try { sessionStorage.removeItem("freiraum_g"); } catch {}
-    await refresh(); tab = mode==="create" ? "group" : "today"; show();
-    toast(mode==="create" ? "Gruppe erstellt – lade jetzt deine Leute ein!" : "Willkommen in der Gruppe! 🔥");
-  }catch(err){ toast(err.message); }
-  btn.disabled = false;
-});
 
 /* ---------- Heute ---------- */
 function renderToday(){
@@ -532,11 +517,11 @@ function renderToday(){
     if (acc.hidden) html += `<div class="hint" style="display:block;margin-bottom:14px"><b>🕶️ Unsichtbar-Modus aktiv</b><br><span class="muted small">Du machst nicht mit und beobachtest nur. Zum Mitmachen im Admin-Bereich ausschalten.</span></div>`;
     else {
       if (inWindow(y)) html += checkinCard(s, y, today);
-      else html += `<div class="card"><p class="q">Tag 1 läuft! 🔥</p><div class="muted small" style="line-height:1.5">Heute zählt's zum ersten Mal: max. ${LIMIT} Min. Social Media. <b>Morgen</b> lädst du dann den Screenshot von heute hoch.</div>
+      else html += `<div class="card"><p class="q">Tag 1 läuft! 🔥</p><div class="muted small" style="line-height:1.5">Heute zählt's zum ersten Mal: max. ${LIMIT} Min. ${TRACKS[trackOf()].word}. <b>Morgen</b> lädst du dann den Screenshot von heute hoch.</div>
         <button class="btn btn-ghost" id="goSetup" style="margin-top:14px">📸 So machst du den Screenshot</button></div>`;
       const d2 = addDays(today,-2);
       if (inWindow(d2) && !s.map[d2]) html += `<div class="card" style="padding:16px 20px;border:2px solid var(--no)"><div class="sectionhead"><div><b>${esc(fmtDate(d2))} fehlt</b><div class="muted small">Heute letzte Chance zum Nachtragen!</div></div><button class="pill" data-up="${d2}">Nachtragen</button></div></div>`;
-      if (running) html += `<div class="card" style="padding:16px 20px"><b>Heute läuft:</b> <span class="muted">max. ${LIMIT} Min. Social Media. Den Screenshot von heute lädst du morgen hoch.</span></div>`;
+      if (running) html += `<div class="card" style="padding:16px 20px"><b>Heute läuft:</b> <span class="muted">max. ${LIMIT} Min. ${TRACKS[trackOf()].word}. Den Screenshot von heute lädst du morgen hoch.</span></div>`;
     }
     if (running) html += impulseCard(idx-1, `Impuls · Tag ${idx}`);
     html += calendarCard(s, today);
@@ -555,7 +540,7 @@ function checkinCard(s, day, today){
     return `<div class="card"><div class="done">
       <div class="badge ${ok?"ok":"no"}">${ok?"✅":"❌"}</div>
       <div style="flex:1"><b style="font-size:17px;${ok?"":"color:var(--no)"}">${ok?"Gestern geschafft! 🔥":"Gestern ungültig"}</b>
-      <div class="muted small" style="margin-top:2px">${ok? e.minutes+" Min. Social Media – stark!" : (e.valid===false?"Ein Admin hat den Screenshot abgelehnt.":e.minutes+" Min. – über dem Limit von "+LIMIT+" Min. Keine Flamme. Heute neu angreifen! 💪")}</div></div>
+      <div class="muted small" style="margin-top:2px">${ok? e.minutes+" Min. "+TRACKS[trackOf()].word+" – stark!" : (e.valid===false?"Ein Admin hat den Screenshot abgelehnt.":e.minutes+" Min. – über dem Limit von "+LIMIT+" Min. Keine Flamme. Heute neu angreifen! 💪")}</div></div>
     </div><button class="linkbtn" data-up="${day}">Screenshot nochmal hochladen</button></div>`;
   }
   return `<div class="card" style="border:2px solid var(--flame2)">
@@ -601,6 +586,20 @@ function durNear(lines, i){
     const v = parseDur(nx); if (v != null) return v;
   }
   return null;
+}
+/* Handyzeit-Gruppe: Gesamtzeit = größte Zeitangabe auf dem Screenshot (die große Zahl oben/in der Mitte) */
+function parseTotalTime(text){
+  const lines = text.split(/\n/).map(l=>l.trim()).filter(Boolean);
+  let best = null, sum = 0, n = 0;
+  for (const l of lines){
+    if (/^\D{0,3}(0|30|60)\s*(min|m)\.?\s*$/i.test(l)) continue;     // Achsenbeschriftung im Diagramm
+    if (/durchschnitt|average|woche|week/i.test(l)) continue;           // Wochenschnitt nicht zählen
+    const d = parseDur(l); if (d == null) continue;
+    n++; sum += d; if (best == null || d > best) best = d;
+  }
+  // Wenn die Summe der übrigen Zeiten deutlich größer ist, fehlt die Gesamtzeit vermutlich auf dem Bild
+  const missing = best != null && n > 2 && (sum - best) > best * 1.15;
+  return { total: best, missing };
 }
 function parseScreenTime(text){
   const lines = text.split(/\n/).map(l=>l.trim()).filter(Boolean);
@@ -685,17 +684,19 @@ const GUIDES = {
     <li>Oben <b>„Tag“</b> wählen. Für gestern/vorgestern: nach rechts wischen bzw. auf den Pfeil ‹ tippen.</li>
     <li>Etwas runterscrollen bis <b>„Meistgenutzt“</b> – oben muss noch der Tag stehen (z. B. „Heute“ oder „Montag, 16. Nov.“).</li>
     <li>Screenshot: <b>Seitentaste + Lauter</b> gleichzeitig drücken (iPhone mit Home-Taste: <b>Home + Seitentaste</b>).</li>
-    <li>Stehen nicht alle Social-Media-Apps drauf: auf <b>„Mehr anzeigen“</b> tippen und einen 2. Screenshot machen.</li></ol>`],
+    <li>Gruppe <b>Social Media</b>: Stehen nicht alle Social-Media-Apps drauf, auf <b>„Mehr anzeigen“</b> tippen und einen 2. Screenshot machen.</li>
+    <li>Gruppe <b>Handyzeit</b>: Die große Zahl ganz oben (unter dem Datum) muss drauf sein.</li></ol>`],
   android: ["🤖 Google Pixel & andere Android", `<ol class="steps">
     <li>Öffne <b>Einstellungen → Digital Wellbeing & Jugendschutz</b>.</li>
-    <li>Tippe auf das <b>Diagramm</b> bzw. <b>„Dashboard“</b> – dort stehen alle Apps mit Minuten.</li>
+    <li>Gruppe <b>Handyzeit</b>: Der Startbildschirm mit der <b>großen Zahl in der Mitte des Kreises</b> reicht schon – das ist deine Gesamtzeit.</li>
+    <li>Gruppe <b>Social Media</b>: Tippe auf den Kreis bzw. <b>„Dashboard“</b> – dort stehen alle Apps mit Minuten.</li>
     <li>Oben den <b>Tag</b> wählen (Pfeile ‹ › oder Balken antippen). Das Datum muss sichtbar sein.</li>
     <li>Screenshot: <b>Ein/Aus + Leiser</b> gleichzeitig drücken.</li>
     <li>Bei langer Liste: runterscrollen und einen 2. Screenshot machen.</li></ol>
     <p class="muted small">Gilt auch für Motorola, Nothing, OnePlus, Oppo, Realme, Fairphone (heißt dort ggf. nur „Digital Wellbeing“).</p>`],
   samsung: ["📱 Samsung Galaxy", `<ol class="steps">
     <li>Öffne <b>Einstellungen → Digitales Wohlbefinden und Kindersicherung</b>.</li>
-    <li>Tippe auf die angezeigte <b>Bildschirmzeit</b> (die große Zahl/das Diagramm) – dann erscheint die Liste aller Apps.</li>
+    <li>Die große Zahl oben ist deine <b>Gesamtzeit</b> (für Gruppe Handyzeit). Tippe darauf, um die Liste aller Apps zu sehen (für Gruppe Social Media).</li>
     <li>Oben den <b>Tag</b> wählen (Pfeile oder Wochenübersicht). Das Datum muss sichtbar sein.</li>
     <li>Screenshot: <b>Seitentaste + Leiser</b> gleichzeitig drücken (oder mit der Handkante über den Bildschirm wischen).</li>
     <li>Bei langer Liste: runterscrollen und einen 2. Screenshot machen.</li></ol>`],
@@ -714,11 +715,11 @@ function guideHtml(openKind){
   const k = openKind || deviceKind();
   const order = [k, ...Object.keys(GUIDES).filter(x=>x!==k)];
   return `<div class="hint" style="display:block;margin-bottom:10px"><b>✅ Das muss auf dem Screenshot zu sehen sein:</b>
-      <ul class="steps" style="margin:6px 0 0;padding-left:18px"><li>der <b>Tag</b> (z. B. „Heute“, „Gestern“ oder das Datum)</li><li>die <b>Liste der Apps mit Minuten</b> – alle Social-Media-Apps, die du genutzt hast</li><li>bei langer Liste: bis zu <b>3 Screenshots</b> auf einmal hochladen</li></ul></div>`
+      <ul class="steps" style="margin:6px 0 0;padding-left:18px"><li>der <b>Tag</b> (z. B. „Heute“, „Gestern“ oder das Datum)</li>${trackOf()==="total" ? `<li>die <b>Gesamtzeit des Tages</b> – die große Zahl oben (iPhone) bzw. in der Mitte des Kreises (Android)</li>` : `<li>die <b>Liste der Apps mit Minuten</b> – alle Social-Media-Apps, die du genutzt hast</li>`}<li>bei langer Liste: bis zu <b>3 Screenshots</b> auf einmal hochladen</li></ul></div>`
     + order.map((key,i)=>`<details ${i===0?"open":""}><summary>${GUIDES[key][0]}</summary>${GUIDES[key][1]}</details>`).join("");
 }
 function platformsHtml(){
-  return `<p style="margin:0 0 6px"><b>❌ Zählt als Social Media</b> (zusammen max. ${LIMIT} Min./Tag):</p>
+  return `<p style="margin:0 0 6px"><b>❌ Zählt als Social Media</b> (zusammen max. ${limitOf("social")} Min./Tag):</p>
     <p class="muted" style="margin:0 0 12px;line-height:1.6">${PLATFORMS_BAD.join(" · ")} – und alle ähnlichen Apps oder deren Webseiten.</p>
     <p style="margin:0 0 6px"><b>✅ Zählt nicht</b> (darfst du normal nutzen):</p>
     <p class="muted" style="margin:0;line-height:1.6">${PLATFORMS_OK.join(" · ")}</p>`;
@@ -763,23 +764,27 @@ async function analyse(root, files, day, test){
   }catch(err){ ocrOk = false; console.warn(err); }
   ocrProgress = null;
   const apps = Object.entries(found).map(([name,min])=>({name,min}));
-  const total = apps.reduce((a,x)=>a+x.min,0);
+  const isTotal = trackOf()==="total", TR = TRACKS[trackOf()];
+  let total = apps.reduce((a,x)=>a+x.min,0), totalMissing = false;
+  if (isTotal){ const r = parseTotalTime(text); total = r.total ?? 0; totalMissing = r.missing || r.total == null; }
   const dateOk = ocrOk ? dateMatches(text, day) : false;
   const ocrMin = ocrOk ? total : null;
   res.innerHTML = `<div class="shotwrap"><div style="display:flex;flex-direction:column;gap:6px">${thumbs}</div><div style="flex:1">
-      ${apps.length ? apps.map(a=>`<div class="approw"><span>${esc(a.name)}</span><span>${a.min} Min.</span></div>`).join("")
+      ${isTotal ? `<div class="approw"><span>📱 Handyzeit gesamt</span><span>${total} Min.</span></div>${apps.map(a=>`<div class="approw muted" style="font-weight:500"><span>davon ${esc(a.name)}</span><span>${a.min} Min.</span></div>`).join("")}
+          ${totalMissing?`<div class="status warn" style="margin-top:8px">⚠️ Die Gesamtzeit ist evtl. nicht auf dem Screenshot. Nimm den Bildschirm mit der großen Gesamtzahl – oder trag sie unten selbst ein.</div>`:""}`
+      : apps.length ? apps.map(a=>`<div class="approw"><span>${esc(a.name)}</span><span>${a.min} Min.</span></div>`).join("")
         : `<div class="muted small" style="line-height:1.5">${ocrOk ? "Keine Social-Media-Apps erkannt. Wenn du wirklich nichts genutzt hast: super! Sonst trag die Minuten unten selbst ein." : "Automatisches Auslesen hat nicht geklappt. Trag die Minuten bitte selbst ein."}</div>`}
     </div></div>
     <div class="status ${dateOk?"ok":"warn"}">${dateOk?"✅ Datum passt":"⚠️ Datum im Screenshot nicht erkannt – wird von einem Admin geprüft."}</div>
-    <div class="minutes"><label for="minIn">Social-Media-Minuten gesamt</label><input id="minIn" type="number" inputmode="numeric" min="0" max="1440" value="${total}"></div>
+    <div class="minutes"><label for="minIn">${TR.unit}</label><input id="minIn" type="number" inputmode="numeric" min="0" max="1440" value="${total}"></div>
     <div class="status" id="limitInfo" style="font-size:15px"></div>
-    <div class="muted small" style="margin:8px 4px 0">Messenger wie WhatsApp oder Telegram zählen nicht. Änderst du die Zahl, sehen das die Prüfer.</div>
+    <div class="muted small" style="margin:8px 4px 0">${isTotal ? "In deiner Gruppe zählt die gesamte Bildschirmzeit des Tages – alle Apps." : "Messenger wie WhatsApp oder Telegram zählen nicht."} Änderst du die Zahl, sehen das die Prüfer.</div>
     ${test ? `<details style="margin-top:8px"><summary class="small">Erkannter Text (für Admins)</summary><pre style="white-space:pre-wrap;font-size:11px;max-height:180px;overflow:auto">${esc(text)}</pre></details>` : ""}
     <button class="btn btn-primary" id="sendShot" style="margin-top:14px">${test?"Test speichern":"Eintragen"}</button>`;
   const upd = ()=>{ const v = parseInt(root.querySelector("#minIn").value,10); const li = root.querySelector("#limitInfo");
     if (Number.isNaN(v)){ li.textContent=""; li.className="status"; return; }
-    if (v <= LIMIT){ li.className="status ok"; li.textContent=`✅ GÜLTIG – ${v} Min. Social Media, max. ${LIMIT} erlaubt. Das gibt eine Flamme! 🔥`; }
-    else { li.className="status bad"; li.textContent=`❌ UNGÜLTIG – ${v} Min. Social Media, erlaubt sind max. ${LIMIT}. Keine Flamme, der Tag zählt als nicht geschafft.`; } };
+    if (v <= LIMIT){ li.className="status ok"; li.textContent=`✅ GÜLTIG – ${v} Min. ${TR.word}, max. ${LIMIT} erlaubt. Das gibt eine Flamme! 🔥`; }
+    else { li.className="status bad"; li.textContent=`❌ UNGÜLTIG – ${v} Min. ${TR.word}, erlaubt sind max. ${LIMIT}. Keine Flamme, der Tag zählt als nicht geschafft.`; } };
   root.querySelector("#minIn").oninput = upd; upd();
   root.querySelector("#sendShot").onclick = async ()=>{
     const btn = root.querySelector("#sendShot"); btn.disabled = true;
@@ -802,8 +807,9 @@ async function analyse(root, files, day, test){
 }
 
 /* ---------- Rangliste (eine gemeinsame Gruppe für alle) ---------- */
+let viewTrack = null;
 function rankRows(){
-  let rows = group.members.map(m=>({m, s:statsFor(m)}));
+  let rows = group.members.filter(m=>(m.track||"social")===viewTrack).map(m=>({m, s:statsFor(m)}));
   const key = rankMode==="streak" ? (r=>[r.s.streak, r.s.total]) : (r=>[r.s.validDays, -r.s.minutes]);
   const better = (a,b)=>{ const ka=key(a), kb=key(b); return ka[0]>kb[0] || (ka[0]===kb[0] && ka[1]>kb[1]); };
   rows.forEach(r=>{ r.rank = 1 + rows.filter(o=>better(o,r)).length; });   // Gleichstand = gleicher Platz
@@ -813,6 +819,8 @@ function rankRows(){
 function renderGroup(){
   if (!group){ $("#vGroup").innerHTML = `<div class="loader"></div>`; return; }
   const today = berlinToday(), yd = addDays(today,-1), active = inWindow(yd), canReview = !!acc?.admin;
+  if (!viewTrack) viewTrack = acc.hidden ? "social" : trackOf();
+  const vLimit = limitOf(viewTrack), cnt = t => group.members.filter(m=>(m.track||"social")===t).length;
   const rows = rankRows();
   const mine = rows.find(r=>r.m.id===acc.member_id);
   const n = rows.length;
@@ -832,6 +840,7 @@ function renderGroup(){
   let strip = "";
   for (let i=0;i<DAYS;i++){ const d=addDays(START,i), e=mine?.s.map[d]; strip += `<i class="${e?(e.success?"ok":"no"):""} ${d===today?"t":""}"></i>`; }
   $("#vGroup").innerHTML = `
+    <div class="seg" id="segTrack" style="margin-bottom:14px">${["social","total"].map(t=>`<button data-t="${t}" class="${viewTrack===t?"on":""}">${TRACKS[t].icon} ${TRACKS[t].name} <span class="muted" style="font-weight:600">${cnt(t)}</span></button>`).join("")}</div>
     <div class="stats3">
       <div><b>${n}</b><span>dabei</span></div>
       <div><b>${active?succToday:"–"}</b><span>gestern 🔥</span></div>
@@ -839,7 +848,7 @@ function renderGroup(){
     </div>
     ${acc.hidden ? `<div class="hint" style="display:block;margin-bottom:16px"><b>🕶️ Unsichtbar-Modus aktiv</b><br><span class="muted small">Du beobachtest nur – niemand sieht dich in der Rangliste. Ausschalten im Admin-Bereich.</span></div>` : ""}
     ${mine ? `<div class="mecard">
-      <div class="mehead"><span class="youtag">DU</span><span class="muted small">${rankMode==="streak"?"Flammen-Rangliste":"Wettbewerb"}</span></div>
+      <div class="mehead"><span class="youtag">DU</span><span class="muted small">${TRACKS[viewTrack].icon} ${TRACKS[viewTrack].name} · ${rankMode==="streak"?"Flammen":"Wettbewerb"}</span></div>
       <div class="merow">
         <div class="bigrank"><small>Platz</small>${mine.rank}<small>von ${n}</small></div>
         <div class="av big">${avatarHtml(mine.m)}</div>
@@ -853,11 +862,12 @@ function renderGroup(){
       <div class="strip">${strip}</div>
     </div>` : ""}
     <div class="seg" id="segRank"><button data-r="streak" class="${rankMode==="streak"?"on":""}">🔥 Flammen</button><button data-r="comp" class="${rankMode==="comp"?"on":""}">🏆 Wettbewerb</button></div>
-    <p class="muted small" style="margin:-6px 4px 12px;line-height:1.5">${rankMode==="streak" ? `Sortiert nach Flammen in Folge (Tage mit max. ${LIMIT} Min.). Gleichstand = gleicher Platz.` : `Wer die meisten geschafften Tage hat, liegt vorn. Bei Gleichstand gewinnt, wer weniger Minuten hatte. Ungültige Tage zählen nicht.`}${canReview?" <b>Admin:</b> Tippe auf eine Person, um Screenshots zu prüfen.":""}</p>
-    <div class="card" style="padding:8px 20px"><ul class="lb">${list || `<li><div class="who"><span>Noch niemand sonst dabei – lade Freunde ein!</span></div></li>`}</ul></div>
+    <p class="muted small" style="margin:-6px 4px 12px;line-height:1.5">${rankMode==="streak" ? `Sortiert nach Flammen in Folge (Tage mit max. ${vLimit} Min. ${TRACKS[viewTrack].word}). Gleichstand = gleicher Platz.` : `Wer die meisten geschafften Tage hat, liegt vorn. Bei Gleichstand gewinnt, wer weniger Minuten hatte. Ungültige Tage zählen nicht.`}${canReview?" <b>Admin:</b> Tippe auf eine Person, um Screenshots zu prüfen.":""}</p>
+    <div class="card" style="padding:8px 20px"><ul class="lb">${list || `<li><div class="who"><span>Noch niemand ${mine?"sonst ":""}in dieser Gruppe – lade Freunde ein!</span></div></li>`}</ul></div>
     <button class="btn btn-flame" id="btnInvite" style="margin-bottom:14px">Freunde einladen</button>`;
   $("#btnInvite").onclick = invite;
   $("#segRank").onclick = e => { const b=e.target.closest("button"); if(!b) return; rankMode=b.dataset.r; renderGroup(); };
+  $("#segTrack").onclick = e => { const b=e.target.closest("button"); if(!b) return; viewTrack=b.dataset.t; renderGroup(); };
   if (canReview) document.querySelectorAll("#vGroup .lb li[data-mid]").forEach(li=>li.onclick=()=>memberSheet(li.dataset.mid));
   if (canReview && mine) $("#vGroup .mecard").onclick = ()=>memberSheet(mine.m.id);
 }
@@ -921,11 +931,12 @@ function renderAdmin(){
       <span>${q.minutes}</span>${q.edited?`<span class="flag">✏️</span>`:""}${q.date_ok===false?`<span class="flag">📅?</span>`:""}
       <button class="pill" data-q="${i}">Prüfen</button></div>`).join("") || `<p class="muted small">Alles geprüft 👍</p>`;
   const accs = d.accounts.filter(a=>!accSearch || (a.email+" "+a.name).toLowerCase().includes(accSearch.toLowerCase()));
-  const accRows = accs.map(a=>`<div class="row" style="flex-wrap:wrap"><b style="min-width:0;flex:1 1 100%">${esc(a.emoji)} ${esc(a.name)}${a.admin?" 🛡️":""}${a.hidden?" 🕶️":""}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)}${a.group?" · "+esc(a.group):" · ohne Gruppe"}</div></b>
+  const accRows = accs.map(a=>`<div class="row" style="flex-wrap:wrap"><b style="min-width:0;flex:1 1 100%">${esc(a.emoji)} ${esc(a.name)}${a.admin?" 🛡️":""}${a.hidden?" 🕶️":""}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)} · ${a.track?TRACKS[a.track].icon+" "+TRACKS[a.track].name:"noch keine Gruppe"}</div></b>
+      <button class="pill" data-trk="${a.id}">${a.track==="total"?"→ 📵":"→ 📱"}</button>
       <button class="pill" data-adm="${a.id}" data-v="${a.admin?0:1}">${a.admin?"Admin entziehen":"Zum Admin"}</button>
       <button class="pill" data-pw="${a.id}">Passwort neu</button>${a.has_avatar?`<button class="pill" data-rmav="${a.id}">Bild entfernen</button>`:""}</div>`).join("");
   v.innerHTML = `
-    <div class="card"><div class="sectionhead"><h3>🛡️ Admin-Bereich</h3><span class="muted small">${d.accounts.length} Konten · ${d.stats?.uploads ?? 0} Uploads · ${d.stats?.db ?? ""}</span></div>
+    <div class="card"><div class="sectionhead"><h3>🛡️ Admin-Bereich</h3><span class="muted small">${d.accounts.length} Konten (📵 ${d.stats?.social ?? 0} · 📱 ${d.stats?.total ?? 0}) · ${d.stats?.uploads ?? 0} Uploads</span></div>
       <p class="muted small" style="margin:6px 0 0">Nur Admins sehen diesen Bereich.</p></div>
     <div class="card" style="${acc.hidden?"border:2px solid var(--ink)":""}"><div class="sectionhead"><h3 style="font-size:17px">🕶️ Unsichtbar-Modus</h3>
         <input type="checkbox" id="hidToggle" style="width:26px;height:26px" ${acc.hidden?"checked":""}></div>
@@ -945,7 +956,8 @@ function renderAdmin(){
       <input class="input" id="accSearch" placeholder="Suchen (Name oder E-Mail)" value="${esc(accSearch)}" style="margin-bottom:6px">
       <div class="daylist">${accRows || `<p class="muted small">Keine Treffer.</p>`}</div></div>
     <div class="card"><h3 style="font-size:17px;margin-bottom:10px">⚙️ Einstellungen</h3>
-      <div class="minutes" style="margin-top:0"><label for="setLimit">Tageslimit (Minuten) für 🔥</label><input id="setLimit" type="number" inputmode="numeric" min="1" max="600" value="${esc(st.limit_minutes||30)}"></div>
+      <div class="minutes" style="margin-top:0"><label for="setLimit">📵 Limit Social Media (Min./Tag)</label><input id="setLimit" type="number" inputmode="numeric" min="1" max="900" value="${esc(st.limit_minutes||30)}"></div>
+      <div class="minutes"><label for="setLimitT">📱 Limit Handyzeit (Min./Tag)</label><input id="setLimitT" type="number" inputmode="numeric" min="1" max="900" value="${esc(st.limit_total_minutes||60)}"></div>
       <div class="minutes"><label for="setReg">Neue Registrierungen erlauben</label><input id="setReg" type="checkbox" style="width:24px;height:24px" ${st.registration_open==="true"?"checked":""}></div>
       <button class="btn btn-primary" id="btnSaveSet" style="margin-top:12px">Einstellungen speichern</button>
       <button class="btn btn-ghost" id="btnClearTests" style="margin-top:10px;color:var(--no)">Alle Tests löschen</button></div>`;
@@ -973,6 +985,8 @@ function renderAdmin(){
       try{ await rpc("sf_admin_set_admin",{p_token:T(),p_account:a.id,p_admin:true}); await loadAdmin(); show(); toast("Ist jetzt Admin 🛡️"); }catch(err){ toast(err.message); }
     });
   };
+  v.querySelectorAll("[data-trk]").forEach(b=>b.onclick=()=>{ const a=d.accounts.find(x=>x.id===b.dataset.trk), to = a.track==="total"?"social":"total";
+    confirmSheet(`${a.name} in die Gruppe „${TRACKS[to].name}“ verschieben? Bisherige Tage werden mit dem neuen Limit neu bewertet.`, async ()=>{ try{ await rpc("sf_admin_set_track",{p_token:T(),p_account:a.id,p_track:to}); await refresh(); await loadAdmin(); show(); toast("Gruppe geändert"); }catch(err){ toast(err.message); } }); });
   v.querySelectorAll("[data-rmav]").forEach(b=>b.onclick=()=>{ const a=d.accounts.find(x=>x.id===b.dataset.rmav);
     confirmSheet(`Profilbild von ${a.name} entfernen?`, async ()=>{ try{ await rpc("sf_admin_remove_avatar",{p_token:T(),p_account:a.id}); await refresh(); await loadAdmin(); show(); toast("Bild entfernt"); }catch(err){ toast(err.message); } }); });
   v.querySelectorAll("[data-pw]").forEach(b=>b.onclick=()=>{
@@ -987,6 +1001,7 @@ function renderAdmin(){
   $("#btnSaveSet").onclick = async ()=>{
     try{
       await rpc("sf_admin_setting",{p_token:T(),p_key:"limit_minutes",p_value:String(parseInt($("#setLimit").value,10))});
+      await rpc("sf_admin_setting",{p_token:T(),p_key:"limit_total_minutes",p_value:String(parseInt($("#setLimitT").value,10))});
       await rpc("sf_admin_setting",{p_token:T(),p_key:"registration_open",p_value:$("#setReg").checked?"true":"false"});
       await refresh(); await loadAdmin(); show(); toast("Gespeichert");
     }catch(err){ toast(err.message); }
@@ -1075,6 +1090,11 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"10", date:"11. November", items:[
+    "👥 <b>Zwei Gruppen</b>: 📵 <b>Social Media</b> (max. 30 Min. Insta, TikTok & Co.) oder 📱 <b>Handyzeit</b> (max. 60 Min. fürs ganze Handy).",
+    "🏆 Jede Gruppe hat ihre eigene Rangliste – oben kannst du zwischen beiden umschalten.",
+    "🔄 Bis zum Start am 14.11. kannst du in den Einstellungen die Gruppe noch wechseln.",
+    "🤖 Für die Gruppe Handyzeit liest die KI die Gesamtzeit des Tages aus."]},
   { v:"9", date:"11. November", items:[
     "📸 Neu: Du lädst jetzt immer den Screenshot vom <b>Vortag</b> hoch – am Sonntag den vom Samstag. Spätestens 2 Tage danach.",
     "🖼️ <b>Profilbilder</b>: Eigenes Foto in den Einstellungen hochladen, Name jederzeit ändern.",
@@ -1117,6 +1137,10 @@ function renderInfo(){
         <button class="btn btn-ghost" id="btnEdit" style="padding:13px">✏️ Name</button>
       </div>
     </div>
+    <div class="card"><div class="sectionhead"><div><div class="muted small" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em">Deine Challenge</div>
+        <b style="font-size:18px">${TRACKS[trackOf()].icon} ${TRACKS[trackOf()].name} · max. ${LIMIT} Min.</b></div>
+        ${acc.can_switch?`<button class="pill" id="btnTrack">Wechseln</button>`:""}</div>
+      ${acc.can_switch?"":`<p class="muted small" style="margin:6px 0 0">Seit dem Start kann nur ein Admin die Gruppe wechseln.</p>`}</div>
     <div class="card">
       <h3 style="font-size:17px">🎨 Aussehen</h3>
       <div class="label2">Design</div>
@@ -1134,7 +1158,7 @@ function renderInfo(){
       <h3 style="font-size:20px;margin-bottom:8px">So funktioniert's</h3>
       <ol class="steps">
         <li>Vom <b>14.11. bis 23.12.</b> – 40 Tage bis Heiligabend.</li>
-        <li>Pro Tag <b>max. ${LIMIT} Minuten</b> für alle Social-Media-Apps zusammen.</li>
+        <li>Es gibt <b>zwei Gruppen</b> mit eigener Rangliste: 📵 <b>Social Media</b> – max. ${limitOf("social")} Min. am Tag für Insta, TikTok & Co. · 📱 <b>Handyzeit</b> – max. ${limitOf("total")} Min. am Tag fürs ganze Handy. Du bist in: <b>${TRACKS[trackOf()].icon} ${TRACKS[trackOf()].name}</b>.</li>
         <li>Jeden Tag lädst du den <b>Screenshot deiner Bildschirmzeit vom Vortag</b> hoch (z. B. am Sonntag den vom Samstag). Die Minuten werden direkt auf deinem Handy ausgelesen.</li>
         <li>Vergessen? Spätestens <b>2 Tage danach</b> muss er drin sein – sonst zählt der Tag als nicht geschafft.</li>
         <li>Max. ${LIMIT} Min. = <b>geschafft 🔥</b>. Mehr als ${LIMIT} Min. = <b>nicht geschafft</b> – du kannst trotzdem hochladen, bekommst aber keine Flamme. Tage in Folge = deine Flammen-Serie.</li>
@@ -1143,7 +1167,7 @@ function renderInfo(){
         <li>Admins 🛡️ können Screenshots prüfen und falsche Tage korrigieren oder als ungültig markieren. Ehrlich bleiben!</li>
       </ol>
     </div>
-    <div class="card"><h3 style="font-size:17px;margin-bottom:10px">📵 Was zählt als Social Media?</h3>${platformsHtml()}</div>
+    <div class="card"><h3 style="font-size:17px;margin-bottom:10px">📵 Was zählt als Social Media?</h3>${trackOf()==="total"?`<p class="muted small" style="margin:0 0 10px">Gilt für die Gruppe Social Media. In deiner Gruppe Handyzeit zählt <b>alles</b>.</p>`:""}${platformsHtml()}</div>
     <div class="card" id="cardGuide"><h3 style="font-size:17px;margin-bottom:10px">📸 So machst du den Screenshot</h3>${guideHtml()}</div>
     <div class="card">
       <details id="dSetup"><summary>📱 Limit am iPhone einstellen</summary>
@@ -1178,6 +1202,7 @@ function renderInfo(){
     </div>
     <p class="muted small" style="text-align:center;margin-top:20px">Freiraum · 40 Tage Social-Media-Fasten 🎄</p>`;
   $("#btnEdit").onclick = editProfile;
+  $("#btnTrack")?.addEventListener("click", ()=>{ tab="today"; acc.track = null; show(); window.scrollTo({top:0}); });
   $("#btnAv").onclick = $("#avBig").onclick = avatarSheet;
   $("#chTheme").onclick = e=>{ const b=e.target.closest("button"); if(b) setLook("theme", b.dataset.v); };
   $("#chFont").onclick = e=>{ const b=e.target.closest("button"); if(b) setLook("font", b.dataset.v); };
@@ -1248,7 +1273,7 @@ async function copy(t,msg){ try{ await navigator.clipboard.writeText(t); toast(m
 document.querySelectorAll("#tabbar button").forEach(b=>b.addEventListener("click", ()=>{ tab=b.dataset.t; show(); window.scrollTo({top:0}); if(tab==="admin") loadAdmin().then(()=>{ if(tab==="admin") renderAdmin(); }); }));
 function show(){
   const logged = !!(auth?.token && acc);
-  const hasGroup = logged && !!acc.member_id;
+  const hasGroup = logged && !!acc.member_id && !!acc.track;
   if (logged && tab==="admin" && !acc.admin) tab = "today";
   $("#vOnboard").classList.toggle("hidden", logged);
   $("#tabbar").classList.toggle("hidden", !logged);
@@ -1267,7 +1292,7 @@ function show(){
 }
 function decodeState(st){
   if (!st) return null;
-  return { name: st.name, members: st.members.map(([id,name,emoji,av,cs])=>({ id, name, emoji, av,
+  return { name: st.name, members: st.members.map(([id,name,emoji,av,cs,tr])=>({ id, name, emoji, av, track: tr==="t"?"total":tr==="s"?"social":"",
     checkins: cs.map(([d,min,f,ocr])=>({ day:addDays(START,d), minutes:min, success:!!(f&1), valid:!!(f&2), edited:!!(f&4),
       date_ok: f&8 ? true : f&32 ? false : null, reviewed:!!(f&16), ocr })) })) };
 }
