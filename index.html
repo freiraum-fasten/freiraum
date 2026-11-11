@@ -257,7 +257,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
       <p>Social-Media-Fasten bis Weihnachten. Wir bestimmen über unser Leben – nicht das Smartphone.</p>
     </div>
     <div class="rules">
-      <div class="rule"><b>30<small style="font-size:14px">/60</small></b><span>Min. Social Media / Handy</span></div>
+      <div class="rule"><b>30</b><span>Min. Social Media pro Tag</span></div>
       <div class="rule"><b>40</b><span>Tage durchziehen</span></div>
       <div class="rule"><b>🔥</b><span>Flammen sammeln</span></div>
     </div>
@@ -308,8 +308,8 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "12";
-const START = "2026-11-14", END = "2026-12-23", DAYS = 40, GRACE = 2;
+const APP_VERSION = "13";
+const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 2;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
 
@@ -424,7 +424,9 @@ function statsFor(m){
   for (let i=0;i<DAYS;i++){ const dd=addDays(START,i); if (diffDays(today,dd) > GRACE && !(map[dd] && map[dd].success)) missed++; }
   let best=0, run=0;
   for (let i=0;i<DAYS;i++){ const dd=addDays(START,i); if(map[dd]&&map[dd].success){run++;best=Math.max(best,run);} else run=0; }
-  return { map, streak, total, best, validDays, minutes, missed, todayEntry: map[today] };
+  // Ersparnis: Ausgangswert (vorher pro Tag) minus tatsächliche Minuten, für jeden gültigen Tag
+  const saved = m.baseline != null ? (m.checkins||[]).filter(c=>c.valid!==false).reduce((a,c)=>a+Math.max(0, m.baseline-(c.minutes||0)),0) : 0;
+  return { map, streak, total, best, validDays, minutes, missed, saved, todayEntry: map[today] };
 }
 const myMember = () => group?.members.find(m => m.id === acc?.member_id);
 
@@ -462,26 +464,67 @@ $("#btnAuth").addEventListener("click", async ()=>{
   btn.disabled = false;
 });
 
-/* ---------- Gruppe wählen: Social Media oder Handyzeit ---------- */
+function fmtHM(min){ min = Math.round(min||0); const h = Math.floor(min/60), m = min%60; return h ? `${h} Std.${m?" "+m+" Min.":""}` : `${m} Min.`; }
+function goalCard(rows){
+  const all = group.members.map(m=>statsFor(m));
+  const savedMin = all.reduce((a,s)=>a+s.saved,0);
+  const people = group.members.filter(m=>m.baseline!=null).length;
+  const goalH = Math.max(100, Math.ceil(people * (acc?.goal_per_person || 30) / 100) * 100);
+  const pct = Math.min(100, savedMin/60/goalH*100);
+  return `<div class="card" style="margin-bottom:14px"><div class="sectionhead"><b>🎯 Gemeinsames Ziel</b><span class="muted small">${people} dabei</span></div>
+    <div style="font-size:30px;font-weight:800;letter-spacing:-.03em;margin-top:6px">${Math.floor(savedMin/60).toLocaleString("de-DE")} <span class="muted" style="font-size:16px;font-weight:600">von ${goalH.toLocaleString("de-DE")} Stunden gespart</span></div>
+    <div class="progress" style="margin:10px 0 4px;height:10px"><i style="width:${pct}%"></i></div>
+    <div class="muted small">Gesparte Social-Media-Zeit aller Teilnehmer im Vergleich zu ihrer Woche vor dem Start. Das Ziel wächst mit jeder Person, die mitmacht.</div></div>`;
+}
+/* ---------- Challenge & Ausgangswert ---------- */
 const TRACKS = {
   social: { icon:"📵", name:"Social Media", desc:l=>`Max. <b>${l} Min.</b> am Tag für Instagram, TikTok, YouTube, Snapchat & Co. Messenger wie WhatsApp sind erlaubt.`, word:"Social Media", unit:"Social-Media-Minuten" },
   total:  { icon:"📱", name:"Handyzeit",    desc:l=>`Max. <b>${l} Min.</b> Bildschirmzeit am Tag – <b>für alles</b> auf dem Handy zusammen. Die harte Variante! 💪`, word:"Handyzeit", unit:"Handyzeit gesamt" }
 };
-const trackOf = () => acc?.track || "social";
-const limitOf = t => t==="total" ? (acc?.limit_total||60) : (acc?.limit_social||30);
+const trackOf = () => "social";
+const limitOf = t => acc?.limit_social || 30;
 function renderNoGroup(){
-  const sel = acc?.track;
+  const cur = acc?.baseline;
   $("#vNoGroup").innerHTML = `
-    <div class="hero" style="padding-top:6px"><div class="big" style="font-size:30px">Wähle deine<br><span class="grad">Challenge</span></div>
-      <p>Jede Gruppe hat ihre eigene Rangliste. Bis zum Start am 14.11. kannst du noch wechseln.</p></div>
-    ${["social","total"].map(t=>`<button class="card trackcard ${sel===t?"on":""}" data-track="${t}">
-      <div style="font-size:40px">${TRACKS[t].icon}</div>
-      <div style="flex:1;text-align:left"><b style="font-size:19px">${TRACKS[t].name}</b>
-      <div class="muted small" style="line-height:1.5;margin-top:4px">${TRACKS[t].desc(limitOf(t))}</div></div></button>`).join("")}`;
-  document.querySelectorAll("#vNoGroup [data-track]").forEach(b=>b.onclick=async ()=>{
-    try{ await rpc("sf_set_track",{p_token:T(),p_track:b.dataset.track}); await refresh(); tab="today"; show(); toast(`${TRACKS[b.dataset.track].icon} Du bist in der Gruppe „${TRACKS[b.dataset.track].name}“`); }
+    <div class="hero" style="padding-top:6px"><div class="big" style="font-size:30px">Wie viel Social Media<br><span class="grad">hattest du bisher?</span></div>
+      <p>Damit wir am Ende sehen, wie viel Zeit du – und wir alle zusammen – eingespart haben.</p></div>
+    <div class="card">
+      <p class="q" style="font-size:17px">Wie lange warst du <b>letzte Woche</b> im Schnitt <b>pro Tag</b> auf Social Media?</p>
+      <p class="muted small" style="line-height:1.5;margin:4px 0 12px">Instagram, TikTok, YouTube, Snapchat & Co. zusammen – ohne WhatsApp & andere Messenger.</p>
+      <label class="btn btn-flame" style="cursor:pointer;margin-bottom:8px">📷 Wochen-Screenshot hochladen<input type="file" accept="image/*" multiple id="blShot" hidden></label>
+      <p class="muted small" style="margin:0 0 14px;line-height:1.5"><b>iPhone:</b> Bildschirmzeit → Alle Aktivitäten → oben <b>„Woche“</b> → letzte Woche. <b>Android:</b> Digital Wellbeing → Dashboard → Wochenansicht. Die KI rechnet die Social-Media-Apps zusammen und teilt durch 7.</p>
+      <div id="blRes"></div>
+      <div class="label2">Oder schätzen</div>
+      <div class="chips" id="blChips">${[[30,"30 Min."],[60,"1 Std."],[90,"1,5 Std."],[120,"2 Std."],[180,"3 Std."],[240,"4 Std."],[300,"5+ Std."]].map(([v,l])=>`<button data-v="${v}">${l}</button>`).join("")}</div>
+      <div class="minutes"><label for="blMin">Minuten pro Tag</label><input id="blMin" type="number" inputmode="numeric" min="0" max="1440" value="${cur ?? ""}" placeholder="–"></div>
+      <button class="btn btn-primary" id="blSave" style="margin-top:14px">Weiter</button>
+      <p class="muted small" style="text-align:center;margin:10px 0 0">Ehrlich sein lohnt sich – sonst stimmt deine Ersparnis nicht. Bis zum Start kannst du den Wert noch ändern.</p>
+    </div>`;
+  $("#blChips").onclick = e=>{ const b=e.target.closest("button"); if(!b) return; $("#blMin").value = b.dataset.v; document.querySelectorAll("#blChips button").forEach(x=>x.classList.toggle("on",x===b)); };
+  $("#blShot").onchange = async e=>{
+    const files = [...e.target.files].slice(0,5); if (!files.length) return;
+    $("#blRes").innerHTML = `<div class="muted small" style="margin-bottom:10px">Lese Wochen-Screenshot … <div class="bar"><i id="blBar"></i></div></div>`;
+    try{
+      const w = await getOcr(); const found = {};
+      for (let i=0;i<files.length;i++){
+        const {im,url} = await loadImage(files[i]);
+        ocrProgress = m => { const b=$("#blBar"); if (b && m.progress!=null && m.status==="recognizing text") b.style.width = Math.round((i+m.progress)/files.length*100)+"%"; };
+        const { data } = await w.recognize(ocrCanvas(im)); URL.revokeObjectURL(url);
+        parseScreenTime(data.text||"").forEach(a=>{ found[a.name] = Math.max(found[a.name] ?? 0, a.min); });
+      }
+      ocrProgress = null;
+      const week = Object.values(found).reduce((a,b)=>a+b,0), perDay = Math.round(week/7);
+      $("#blRes").innerHTML = Object.keys(found).length ? `<div class="status ok" style="margin:0 0 10px;display:block">🤖 Erkannt: ${Object.entries(found).map(([n,v])=>`${esc(n)} ${fmtHM(v)}`).join(" · ")} in der Woche → <b>${fmtHM(perDay)} pro Tag</b></div>`
+        : `<div class="status warn" style="margin:0 0 10px">Keine Social-Media-Apps erkannt – trag den Wert bitte unten selbst ein.</div>`;
+      if (Object.keys(found).length) $("#blMin").value = perDay;
+    }catch(err){ ocrProgress = null; $("#blRes").innerHTML = `<div class="status warn" style="margin:0 0 10px">Auslesen hat nicht geklappt – trag den Wert bitte selbst ein.</div>`; }
+  };
+  $("#blSave").onclick = async ()=>{
+    const v = parseInt($("#blMin").value,10);
+    if (Number.isNaN(v)) return toast("Bitte einen Wert eingeben oder auswählen");
+    try{ await rpc("sf_set_baseline",{p_token:T(),p_minutes:v}); await refresh(); tab="today"; show(); toast("Gespeichert – los geht's! 🔥"); }
     catch(err){ toast(err.message); }
-  });
+  };
 }
 
 /* ---------- Heute ---------- */
@@ -494,7 +537,7 @@ function renderToday(){
   if (today < START){
     const left = diffDays(START, today);
     html += `<div class="card" style="text-align:center">
-      <div class="daystrip" style="justify-content:center"><div class="label">Start am Samstag, 14. November</div></div>
+      <div class="daystrip" style="justify-content:center"><div class="label">Start am Sonntag, 15. November</div></div>
       <svg class="flame off" style="width:64px;height:64px"><use href="#flame"/></svg>
       <div class="countdown"><div><b>${left}</b><span>${left===1?"Tag":"Tage"}</span></div></div>
       <p class="muted" style="margin:10px 0 0;line-height:1.5">Noch bis zum Start. Ab dem 15. lädst du jeden Tag den Screenshot vom Vortag hoch. Nutze die Zeit: Freunde einladen und dein ${LIMIT}-Minuten-Limit einstellen.</p>
@@ -511,7 +554,7 @@ function renderToday(){
       <div class="rules" style="margin:0">
         <div class="rule"><b>${s.total}</b><span>🔥 Tage geschafft</span></div>
         <div class="rule"><b>${s.best}</b><span>beste Serie</span></div>
-        <div class="rule"><b>${s.minutes}</b><span>Min. gesamt</span></div>
+        <div class="rule"><b>${fmtHM(s.saved)}</b><span>gespart</span></div>
       </div></div>`;
     html += calendarCard(s, today);
   } else {
@@ -523,7 +566,7 @@ function renderToday(){
     html += `<div class="card"><div class="streak">
       <svg class="flame ${s.streak? "":"off"}" id="bigFlame"><use href="#flame"/></svg>
       <div><div class="num">${s.streak}</div><div class="sub">${s.streak===1?"Tag in Folge":"Tage in Folge"} · ${s.total} 🔥 geschafft</div></div>
-    </div></div>`;
+    </div>${acc.baseline!=null?`<div class="status ok" style="margin-top:14px;display:block">⏱️ Schon <b>${fmtHM(s.saved)}</b> Social Media gespart (vorher ${fmtHM(acc.baseline)} am Tag)</div>`:""}</div>`;
     if (acc.hidden) html += `<div class="hint" style="display:block;margin-bottom:14px"><b>🕶️ Unsichtbar-Modus aktiv</b><br><span class="muted small">Du machst nicht mit und beobachtest nur. Zum Mitmachen im Admin-Bereich ausschalten.</span></div>`;
     else {
       if (inWindow(y)) html += checkinCard(s, y, today);
@@ -809,19 +852,18 @@ const GUIDES = {
     <li>Oben <b>„Tag“</b> wählen. Für gestern/vorgestern: nach rechts wischen bzw. auf den Pfeil ‹ tippen.</li>
     <li>Etwas runterscrollen bis <b>„Meistgenutzt“</b> – oben muss noch der Tag stehen (z. B. „Heute“ oder „Montag, 16. Nov.“).</li>
     <li>Screenshot: <b>Seitentaste + Lauter</b> gleichzeitig drücken (iPhone mit Home-Taste: <b>Home + Seitentaste</b>).</li>
-    <li>Gruppe <b>Social Media</b>: Stehen nicht alle Social-Media-Apps drauf, auf <b>„Mehr anzeigen“</b> tippen und einen 2. Screenshot machen.</li>
-    <li>Gruppe <b>Handyzeit</b>: Die große Zahl ganz oben (unter dem Datum) muss drauf sein.</li></ol>`],
+    <li>Stehen nicht alle Social-Media-Apps drauf: auf <b>„Mehr anzeigen“</b> tippen und einen 2. Screenshot machen.</li>
+    <li>Tipp: Unter <b>„Kategorien anzeigen“ → „Soziale Netze“</b> stehen nur die Social-Apps (YouTube liegt unter „Unterhaltung“).</li></ol>`],
   android: ["🤖 Google Pixel & andere Android", `<ol class="steps">
     <li>Öffne <b>Einstellungen → Digital Wellbeing & Jugendschutz</b>.</li>
-    <li>Gruppe <b>Handyzeit</b>: Der Startbildschirm mit der <b>großen Zahl in der Mitte des Kreises</b> reicht schon – das ist deine Gesamtzeit.</li>
-    <li>Gruppe <b>Social Media</b>: Tippe auf den Kreis bzw. <b>„Dashboard“</b> – dort stehen alle Apps mit Minuten.</li>
+    <li>Tippe auf den Kreis bzw. <b>„Dashboard“</b> – dort stehen alle Apps mit Minuten.</li>
     <li>Oben den <b>Tag</b> wählen (Pfeile ‹ › oder Balken antippen). Das Datum muss sichtbar sein.</li>
     <li>Screenshot: <b>Ein/Aus + Leiser</b> gleichzeitig drücken.</li>
     <li>Bei langer Liste: runterscrollen und einen 2. Screenshot machen.</li></ol>
     <p class="muted small">Gilt auch für Motorola, Nothing, OnePlus, Oppo, Realme, Fairphone (heißt dort ggf. nur „Digital Wellbeing“).</p>`],
   samsung: ["📱 Samsung Galaxy", `<ol class="steps">
     <li>Öffne <b>Einstellungen → Digitales Wohlbefinden und Kindersicherung</b>.</li>
-    <li>Die große Zahl oben ist deine <b>Gesamtzeit</b> (für Gruppe Handyzeit). Tippe darauf, um die Liste aller Apps zu sehen (für Gruppe Social Media).</li>
+    <li>Tippe auf die große Zahl bzw. das Diagramm – dann erscheint die Liste aller Apps mit Minuten.</li>
     <li>Oben den <b>Tag</b> wählen (Pfeile oder Wochenübersicht). Das Datum muss sichtbar sein.</li>
     <li>Screenshot: <b>Seitentaste + Leiser</b> gleichzeitig drücken (oder mit der Handkante über den Bildschirm wischen).</li>
     <li>Bei langer Liste: runterscrollen und einen 2. Screenshot machen.</li></ol>`],
@@ -840,7 +882,7 @@ function guideHtml(openKind){
   const k = openKind || deviceKind();
   const order = [k, ...Object.keys(GUIDES).filter(x=>x!==k)];
   return `<div class="hint" style="display:block;margin-bottom:10px"><b>✅ Das muss auf dem Screenshot zu sehen sein:</b>
-      <ul class="steps" style="margin:6px 0 0;padding-left:18px"><li>der <b>Tag</b> (z. B. „Heute“, „Gestern“ oder das Datum)</li>${trackOf()==="total" ? `<li>die <b>Gesamtzeit des Tages</b> – die große Zahl oben (iPhone) bzw. in der Mitte des Kreises (Android)</li>` : `<li>die <b>Liste der Apps mit Minuten</b> – alle Social-Media-Apps, die du genutzt hast</li>`}<li>bei langer Liste: bis zu <b>3 Screenshots</b> auf einmal hochladen</li></ul></div>`
+      <ul class="steps" style="margin:6px 0 0;padding-left:18px"><li>der <b>Tag</b> (z. B. „Heute“, „Gestern“ oder das Datum)</li>${trackOf()==="total" ? `<li>die <b>Gesamtzeit des Tages</b> – die große Zahl oben (iPhone) bzw. in der Mitte des Kreises (Android)</li>` : `<li>die <b>Liste der Apps mit Minuten</b> – alle Social-Media-Apps, die du genutzt hast</li>`}<li>bei langer Liste: bis zu <b>5 Screenshots</b> auf einmal hochladen</li></ul></div>`
     + order.map((key,i)=>`<details ${i===0?"open":""}><summary>${GUIDES[key][0]}</summary>${GUIDES[key][1]}</details>`).join("");
 }
 function platformsHtml(){
@@ -857,8 +899,8 @@ function uploadFlow(day, test=false){
     <div id="shotRes"></div>
     <div id="shotGuide"><p class="muted small" style="margin:0 0 8px">So kommst du an deine Bildschirmzeit:</p>${guideHtml()}</div>`, root=>{
     root.querySelector("#shotIn").onchange = e => {
-      const files = [...e.target.files].slice(0,3);
-      if (e.target.files.length > 3) toast("Maximal 3 Screenshots – die ersten 3 werden genommen");
+      const files = [...e.target.files].slice(0,5);
+      if (e.target.files.length > 5) toast("Maximal 5 Screenshots – die ersten 5 werden genommen");
       if (files.length){ root.querySelector("#shotGuide").remove(); analyse(root, files, day, test); }
     };
   });
@@ -935,9 +977,9 @@ async function analyse(root, files, day, test){
 }
 
 /* ---------- Rangliste (eine gemeinsame Gruppe für alle) ---------- */
-let viewTrack = null;
+let viewTrack = "social";
 function rankRows(){
-  let rows = group.members.filter(m=>(m.track||"social")===viewTrack).map(m=>({m, s:statsFor(m)}));
+  let rows = group.members.map(m=>({m, s:statsFor(m)}));
   const key = rankMode==="streak" ? (r=>[r.s.streak, r.s.total]) : (r=>[r.s.validDays, -r.s.minutes]);
   const better = (a,b)=>{ const ka=key(a), kb=key(b); return ka[0]>kb[0] || (ka[0]===kb[0] && ka[1]>kb[1]); };
   rows.forEach(r=>{ r.rank = 1 + rows.filter(o=>better(o,r)).length; });   // Gleichstand = gleicher Platz
@@ -968,7 +1010,7 @@ function renderGroup(){
   let strip = "";
   for (let i=0;i<DAYS;i++){ const d=addDays(START,i), e=mine?.s.map[d]; strip += `<i class="${e?(e.success?"ok":"no"):""} ${d===today?"t":""}"></i>`; }
   $("#vGroup").innerHTML = `
-    <div class="seg" id="segTrack" style="margin-bottom:14px">${["social","total"].map(t=>`<button data-t="${t}" class="${viewTrack===t?"on":""}">${TRACKS[t].icon} ${TRACKS[t].name} <span class="muted" style="font-weight:600">${cnt(t)}</span></button>`).join("")}</div>
+    ${goalCard(rows)}
     <div class="stats3">
       <div><b>${n}</b><span>dabei</span></div>
       <div><b>${active?succToday:"–"}</b><span>gestern 🔥</span></div>
@@ -976,16 +1018,16 @@ function renderGroup(){
     </div>
     ${acc.hidden ? `<div class="hint" style="display:block;margin-bottom:16px"><b>🕶️ Unsichtbar-Modus aktiv</b><br><span class="muted small">Du beobachtest nur – niemand sieht dich in der Rangliste. Ausschalten im Admin-Bereich.</span></div>` : ""}
     ${mine ? `<div class="mecard">
-      <div class="mehead"><span class="youtag">DU</span><span class="muted small">${TRACKS[viewTrack].icon} ${TRACKS[viewTrack].name} · ${rankMode==="streak"?"Flammen":"Wettbewerb"}</span></div>
+      <div class="mehead"><span class="youtag">DU</span><span class="muted small">${rankMode==="streak"?"🔥 Flammen":"🏆 Wettbewerb"}</span></div>
       <div class="merow">
         <div class="bigrank"><small>Platz</small>${mine.rank}<small>von ${n}</small></div>
         <div class="av big">${avatarHtml(mine.m)}</div>
-        <div class="who" style="flex:1;min-width:0"><b style="font-size:19px">${esc(mine.m.name)}</b><span>${statusOf(mine) || (today < START ? "Start am 14. November" : "")}</span></div>
+        <div class="who" style="flex:1;min-width:0"><b style="font-size:19px">${esc(mine.m.name)}</b><span>${statusOf(mine) || (today < START ? "Start am 15. November" : "")}</span></div>
       </div>
       <div class="mestats">
         <div><svg class="${mine.s.streak?"":"flame off"}"><use href="#flame"/></svg><b>${mine.s.streak}</b><span>in Folge</span></div>
         <div><b>${mine.s.total}</b><span>🔥 geschafft</span></div>
-        <div><b>${mine.s.minutes}</b><span>Min. gesamt</span></div>
+        <div><b>${fmtHM(mine.s.saved)}</b><span>gespart</span></div>
       </div>
       <div class="strip">${strip}</div>
     </div>` : ""}
@@ -995,7 +1037,7 @@ function renderGroup(){
     <button class="btn btn-flame" id="btnInvite" style="margin-bottom:14px">Freunde einladen</button>`;
   $("#btnInvite").onclick = invite;
   $("#segRank").onclick = e => { const b=e.target.closest("button"); if(!b) return; rankMode=b.dataset.r; renderGroup(); };
-  $("#segTrack").onclick = e => { const b=e.target.closest("button"); if(!b) return; viewTrack=b.dataset.t; renderGroup(); };
+
   if (canReview) document.querySelectorAll("#vGroup .lb li[data-mid]").forEach(li=>li.onclick=()=>memberSheet(li.dataset.mid));
   if (canReview && mine) $("#vGroup .mecard").onclick = ()=>memberSheet(mine.m.id);
 }
@@ -1061,12 +1103,12 @@ function renderAdmin(){
       ${q.dispute?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">💬 „${esc(q.dispute)}“</div>`:""}
       <button class="pill" data-q="${i}">Prüfen</button></div>`).join("") || `<p class="muted small">Alles geprüft 👍</p>`;
   const accs = d.accounts.filter(a=>!accSearch || (a.email+" "+a.name).toLowerCase().includes(accSearch.toLowerCase()));
-  const accRows = accs.map(a=>`<div class="row" style="flex-wrap:wrap"><b style="min-width:0;flex:1 1 100%">${esc(a.emoji)} ${esc(a.name)}${a.admin?" 🛡️":""}${a.hidden?" 🕶️":""}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)} · ${a.track?TRACKS[a.track].icon+" "+TRACKS[a.track].name:"noch keine Gruppe"}</div></b>
-      <button class="pill" data-trk="${a.id}">${a.track==="total"?"→ 📵":"→ 📱"}</button>
+  const accRows = accs.map(a=>`<div class="row" style="flex-wrap:wrap"><b style="min-width:0;flex:1 1 100%">${esc(a.emoji)} ${esc(a.name)}${a.admin?" 🛡️":""}${a.hidden?" 🕶️":""}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)} · vorher ${a.baseline!=null?fmtHM(a.baseline)+"/Tag":"–"}</div></b>
+      <button class="pill" data-bl="${a.id}">Ausgangswert</button>
       <button class="pill" data-adm="${a.id}" data-v="${a.admin?0:1}">${a.admin?"Admin entziehen":"Zum Admin"}</button>
       <button class="pill" data-pw="${a.id}">Passwort neu</button>${a.has_avatar?`<button class="pill" data-rmav="${a.id}">Bild entfernen</button>`:""}</div>`).join("");
   v.innerHTML = `
-    <div class="card"><div class="sectionhead"><h3>🛡️ Admin-Bereich</h3><span class="muted small">${d.accounts.length} Konten (📵 ${d.stats?.social ?? 0} · 📱 ${d.stats?.total ?? 0}) · ${d.stats?.uploads ?? 0} Uploads</span></div>
+    <div class="card"><div class="sectionhead"><h3>🛡️ Admin-Bereich</h3><span class="muted small">${d.accounts.length} Konten · ${d.stats?.uploads ?? 0} Uploads</span></div>
       <p class="muted small" style="margin:6px 0 0">Nur Admins sehen diesen Bereich.</p></div>
     <div class="card" style="${acc.hidden?"border:2px solid var(--ink)":""}"><div class="sectionhead"><h3 style="font-size:17px">🕶️ Unsichtbar-Modus</h3>
         <input type="checkbox" id="hidToggle" style="width:26px;height:26px" ${acc.hidden?"checked":""}></div>
@@ -1086,8 +1128,8 @@ function renderAdmin(){
       <input class="input" id="accSearch" placeholder="Suchen (Name oder E-Mail)" value="${esc(accSearch)}" style="margin-bottom:6px">
       <div class="daylist">${accRows || `<p class="muted small">Keine Treffer.</p>`}</div></div>
     <div class="card"><h3 style="font-size:17px;margin-bottom:10px">⚙️ Einstellungen</h3>
-      <div class="minutes" style="margin-top:0"><label for="setLimit">📵 Limit Social Media (Min./Tag)</label><input id="setLimit" type="number" inputmode="numeric" min="1" max="900" value="${esc(st.limit_minutes||30)}"></div>
-      <div class="minutes"><label for="setLimitT">📱 Limit Handyzeit (Min./Tag)</label><input id="setLimitT" type="number" inputmode="numeric" min="1" max="900" value="${esc(st.limit_total_minutes||60)}"></div>
+      <div class="minutes" style="margin-top:0"><label for="setLimit">📵 Tageslimit Social Media (Min.)</label><input id="setLimit" type="number" inputmode="numeric" min="1" max="900" value="${esc(st.limit_minutes||30)}"></div>
+      <div class="minutes"><label for="setGoal">🎯 Ziel: gesparte Stunden pro Person</label><input id="setGoal" type="number" inputmode="numeric" min="1" max="900" value="${esc(st.goal_hours_per_person||30)}"></div>
       <div class="minutes"><label for="setReg">Neue Registrierungen erlauben</label><input id="setReg" type="checkbox" style="width:24px;height:24px" ${st.registration_open==="true"?"checked":""}></div>
       <button class="btn btn-primary" id="btnSaveSet" style="margin-top:12px">Einstellungen speichern</button>
       <button class="btn btn-ghost" id="btnClearTests" style="margin-top:10px;color:var(--no)">Alle Tests löschen</button></div>`;
@@ -1115,8 +1157,10 @@ function renderAdmin(){
       try{ await rpc("sf_admin_set_admin",{p_token:T(),p_account:a.id,p_admin:true}); await loadAdmin(); show(); toast("Ist jetzt Admin 🛡️"); }catch(err){ toast(err.message); }
     });
   };
-  v.querySelectorAll("[data-trk]").forEach(b=>b.onclick=()=>{ const a=d.accounts.find(x=>x.id===b.dataset.trk), to = a.track==="total"?"social":"total";
-    confirmSheet(`${a.name} in die Gruppe „${TRACKS[to].name}“ verschieben? Bisherige Tage werden mit dem neuen Limit neu bewertet.`, async ()=>{ try{ await rpc("sf_admin_set_track",{p_token:T(),p_account:a.id,p_track:to}); await refresh(); await loadAdmin(); show(); toast("Gruppe geändert"); }catch(err){ toast(err.message); } }); });
+  v.querySelectorAll("[data-bl]").forEach(b=>b.onclick=()=>{ const a=d.accounts.find(x=>x.id===b.dataset.bl);
+    sheet(`<h3 style="margin-bottom:10px">Ausgangswert von ${esc(a.name)}</h3><div class="minutes" style="margin-top:0"><label for="admBl">Social Media vorher (Min./Tag)</label><input id="admBl" type="number" inputmode="numeric" min="0" max="1440" value="${a.baseline ?? ""}"></div>
+      <button class="btn btn-primary" id="admBlSave" style="margin-top:12px">Speichern</button>`, r=>{ r.querySelector("#admBlSave").onclick = async ()=>{
+        try{ await rpc("sf_admin_set_baseline",{p_token:T(),p_account:a.id,p_minutes:parseInt(r.querySelector("#admBl").value,10)}); closeSheet(); await refresh(); await loadAdmin(); show(); toast("Gespeichert"); }catch(err){ toast(err.message); } }; }); });
   v.querySelectorAll("[data-rmav]").forEach(b=>b.onclick=()=>{ const a=d.accounts.find(x=>x.id===b.dataset.rmav);
     confirmSheet(`Profilbild von ${a.name} entfernen?`, async ()=>{ try{ await rpc("sf_admin_remove_avatar",{p_token:T(),p_account:a.id}); await refresh(); await loadAdmin(); show(); toast("Bild entfernt"); }catch(err){ toast(err.message); } }); });
   v.querySelectorAll("[data-pw]").forEach(b=>b.onclick=()=>{
@@ -1131,7 +1175,7 @@ function renderAdmin(){
   $("#btnSaveSet").onclick = async ()=>{
     try{
       await rpc("sf_admin_setting",{p_token:T(),p_key:"limit_minutes",p_value:String(parseInt($("#setLimit").value,10))});
-      await rpc("sf_admin_setting",{p_token:T(),p_key:"limit_total_minutes",p_value:String(parseInt($("#setLimitT").value,10))});
+      await rpc("sf_admin_setting",{p_token:T(),p_key:"goal_hours_per_person",p_value:String(parseInt($("#setGoal").value,10))});
       await rpc("sf_admin_setting",{p_token:T(),p_key:"registration_open",p_value:$("#setReg").checked?"true":"false"});
       await refresh(); await loadAdmin(); show(); toast("Gespeichert");
     }catch(err){ toast(err.message); }
@@ -1220,6 +1264,12 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"13", date:"11. November", items:[
+    "📅 Start ist jetzt <b>Sonntag, 15.11.</b> – bis <b>Heiligabend, 24.12.</b>",
+    "🎯 Neu: <b>Gemeinsames Ziel</b> – wie viele Stunden Social Media sparen wir alle zusammen?",
+    "⏱️ Du gibst an, wie viel Social Media du <b>vorher</b> hattest (Wochen-Screenshot oder schätzen) – und siehst, wie viel du einsparst.",
+    "👥 Es gibt nur noch <b>eine Challenge</b>: max. 30 Min. Social Media am Tag.",
+    "📸 Bis zu <b>5 Screenshots</b> auf einmal hochladen."]},
   { v:"12", date:"11. November", items:[
     "🔥 Neu: <b>Freiräume – Mach was draus!</b> 40 Ideen in 5 Kategorien, was du mit deiner gewonnenen Zeit machen kannst.",
     "✓ Ideen antippen zum Abhaken – auch mehrere am Tag.",
@@ -1275,10 +1325,9 @@ function renderInfo(){
         <button class="btn btn-ghost" id="btnEdit" style="padding:13px">✏️ Name</button>
       </div>
     </div>
-    <div class="card"><div class="sectionhead"><div><div class="muted small" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em">Deine Challenge</div>
-        <b style="font-size:18px">${TRACKS[trackOf()].icon} ${TRACKS[trackOf()].name} · max. ${LIMIT} Min.</b></div>
-        ${acc.can_switch?`<button class="pill" id="btnTrack">Wechseln</button>`:""}</div>
-      ${acc.can_switch?"":`<p class="muted small" style="margin:6px 0 0">Seit dem Start kann nur ein Admin die Gruppe wechseln.</p>`}</div>
+    <div class="card"><div class="sectionhead"><div><div class="muted small" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em">Dein Ausgangswert</div>
+        <b style="font-size:18px">${fmtHM(acc.baseline)} Social Media pro Tag</b><div class="muted small">vor der Fastenzeit · max. ${LIMIT} Min. pro Tag erlaubt</div></div>
+        ${acc.can_switch?`<button class="pill" id="btnTrack">Ändern</button>`:""}</div></div>
     <div class="card">
       <h3 style="font-size:17px">🎨 Aussehen</h3>
       <div class="label2">Design</div>
@@ -1295,8 +1344,9 @@ function renderInfo(){
     <div class="card">
       <h3 style="font-size:20px;margin-bottom:8px">So funktioniert's</h3>
       <ol class="steps">
-        <li>Vom <b>14.11. bis 23.12.</b> – 40 Tage bis Heiligabend.</li>
-        <li>Es gibt <b>zwei Gruppen</b> mit eigener Rangliste: 📵 <b>Social Media</b> – max. ${limitOf("social")} Min. am Tag für Insta, TikTok & Co. · 📱 <b>Handyzeit</b> – max. ${limitOf("total")} Min. am Tag fürs ganze Handy. Du bist in: <b>${TRACKS[trackOf()].icon} ${TRACKS[trackOf()].name}</b>.</li>
+        <li>Vom <b>15.11. bis 24.12.</b> – 40 Tage bis Heiligabend.</li>
+        <li>Pro Tag <b>max. ${LIMIT} Minuten Social Media</b> (Insta, TikTok, YouTube & Co. zusammen). Messenger wie WhatsApp sind erlaubt.</li>
+        <li>Beim Start gibst du an, wie viel Social Media du <b>vorher</b> pro Tag hattest. So sehen wir, wie viel Zeit du – und wir alle gemeinsam – einsparen. 🎯</li>
         <li>Jeden Tag lädst du den <b>Screenshot deiner Bildschirmzeit vom Vortag</b> hoch (z. B. am Sonntag den vom Samstag). Die Minuten werden direkt auf deinem Handy ausgelesen.</li>
         <li>Vergessen? Spätestens <b>2 Tage danach</b> muss er drin sein – sonst zählt der Tag als nicht geschafft.</li>
         <li>Max. ${LIMIT} Min. = <b>geschafft 🔥</b>. Mehr als ${LIMIT} Min. = <b>nicht geschafft</b> – du kannst trotzdem hochladen, bekommst aber keine Flamme. Tage in Folge = deine Flammen-Serie.</li>
@@ -1306,7 +1356,7 @@ function renderInfo(){
         <li>Findest du eine Bewertung falsch, tippe auf <b>„Einspruch“</b> – ein Admin prüft dann deinen Screenshot. Ehrlich bleiben!</li>
       </ol>
     </div>
-    <div class="card"><h3 style="font-size:17px;margin-bottom:10px">📵 Was zählt als Social Media?</h3>${trackOf()==="total"?`<p class="muted small" style="margin:0 0 10px">Gilt für die Gruppe Social Media. In deiner Gruppe Handyzeit zählt <b>alles</b>.</p>`:""}${platformsHtml()}</div>
+    <div class="card"><h3 style="font-size:17px;margin-bottom:10px">📵 Was zählt als Social Media?</h3>${platformsHtml()}</div>
     <div class="card" id="cardGuide"><h3 style="font-size:17px;margin-bottom:10px">📸 So machst du den Screenshot</h3>${guideHtml()}</div>
     <div class="card">
       <details id="dSetup"><summary>📱 Limit am iPhone einstellen</summary>
@@ -1341,7 +1391,7 @@ function renderInfo(){
     </div>
     <p class="muted small" style="text-align:center;margin-top:20px">Freiraum · 40 Tage Social-Media-Fasten 🎄</p>`;
   $("#btnEdit").onclick = editProfile;
-  $("#btnTrack")?.addEventListener("click", ()=>{ tab="today"; acc.track = null; show(); window.scrollTo({top:0}); });
+  $("#btnTrack")?.addEventListener("click", ()=>{ tab="today"; acc.baseline = null; show(); window.scrollTo({top:0}); });
   $("#btnAv").onclick = $("#avBig").onclick = avatarSheet;
   $("#chTheme").onclick = e=>{ const b=e.target.closest("button"); if(b) setLook("theme", b.dataset.v); };
   $("#chFont").onclick = e=>{ const b=e.target.closest("button"); if(b) setLook("font", b.dataset.v); };
@@ -1412,7 +1462,7 @@ async function copy(t,msg){ try{ await navigator.clipboard.writeText(t); toast(m
 document.querySelectorAll("#tabbar button").forEach(b=>b.addEventListener("click", ()=>{ tab=b.dataset.t; show(); window.scrollTo({top:0}); if(tab==="admin") loadAdmin().then(()=>{ if(tab==="admin") renderAdmin(); }); }));
 function show(){
   const logged = !!(auth?.token && acc);
-  const hasGroup = logged && !!acc.member_id && !!acc.track;
+  const hasGroup = logged && !!acc.member_id && acc.baseline != null;
   if (logged && tab==="admin" && !acc.admin) tab = "today";
   $("#vOnboard").classList.toggle("hidden", logged);
   $("#tabbar").classList.toggle("hidden", !logged);
@@ -1432,7 +1482,7 @@ function show(){
 }
 function decodeState(st){
   if (!st) return null;
-  return { name: st.name, members: st.members.map(([id,name,emoji,av,cs,tr])=>({ id, name, emoji, av, track: tr==="t"?"total":tr==="s"?"social":"",
+  return { name: st.name, members: st.members.map(([id,name,emoji,av,cs,bl])=>({ id, name, emoji, av, track:"social", baseline: bl,
     checkins: cs.map(([d,min,f,ocr])=>({ day:addDays(START,d), minutes:min, success:!!(f&1), valid:!!(f&2), edited:!!(f&4),
       date_ok: f&8 ? true : f&32 ? false : null, reviewed:!!(f&16), disputed:!!(f&64), ocr })) })) };
 }
