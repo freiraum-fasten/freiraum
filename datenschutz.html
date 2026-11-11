@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; script-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="robots" content="noindex">
+<title>Freiraum – Datenschutz</title>
+<style>
+@font-face{font-family:"Jakarta";src:url(font.woff2) format("woff2");font-weight:200 800;font-display:swap}
+:root{--bg:#FAF7F2;--card:#fff;--ink:#1C1B19;--muted:#6F6A62;--line:#ECE6DC;--soft:#F3EEE6;--flame1:#FF8A1F;--flame2:#FF3D5A}
+@media (prefers-color-scheme:dark){:root{--bg:#121110;--card:#1C1B19;--ink:#F5F1EA;--muted:#A39D93;--line:#2B2926;--soft:#252320}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Jakarta",system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
+main{max-width:760px;margin:0 auto;padding:24px 18px 60px}
+h1{font-size:30px;line-height:1.15;letter-spacing:-.02em;margin:8px 0 6px}
+h1 span{background:linear-gradient(90deg,var(--flame1),var(--flame2));-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-size:19px;margin:30px 0 8px;letter-spacing:-.01em}
+h3{font-size:16px;margin:18px 0 4px}
+p,li{color:var(--ink)}
+.muted{color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px;margin:14px 0}
+.tldr li{margin:4px 0}
+table{width:100%;border-collapse:collapse;font-size:14.5px;margin:8px 0}
+th,td{text-align:left;vertical-align:top;padding:8px 6px;border-bottom:1px solid var(--line)}
+th{font-weight:700}
+.todo{background:#FFF4D6;color:#5C4500;border-radius:12px;padding:10px 14px}
+.top{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 4px}
+.btn{display:inline-block;text-decoration:none;font-weight:700;padding:10px 16px;border-radius:999px;background:var(--soft);color:var(--ink)}
+.btn.main{background:linear-gradient(90deg,var(--flame1),var(--flame2));color:#fff}
+@media print{.top{display:none}body{background:#fff;color:#000}.card{border-color:#ccc}main{padding:0}}
+</style>
+</head>
+<body>
+<main>
+  <p class="muted" style="margin:0">🔥 Freiraum · 40 Tage Social-Media-Fasten</p>
+  <h1>Datenschutz-<span>Information</span></h1>
+  <p class="muted">Stand: 11. November 2026</p>
+  <div class="top">
+    <a class="btn main" href="datenschutz.pdf" download="Freiraum-Datenschutz.pdf">⬇️ Als PDF herunterladen</a>
+    <a class="btn" href="./">← Zurück zur App</a>
+  </div>
+
+  <div class="card tldr">
+    <b>Das Wichtigste in Kürze</b>
+    <ul>
+      <li>Wir speichern nur, was für die Challenge nötig ist: dein Konto, deine hochgeladenen Bildschirmzeit-Screenshots und die Minuten.</li>
+      <li>Die <b>Texterkennung („KI“) läuft direkt auf deinem Handy</b>. Deine Screenshots werden nicht an KI-Firmen geschickt.</li>
+      <li>In der Rangliste sehen andere nur deinen <b>Spitznamen, dein Symbol/Profilbild und deine Minuten bzw. Flammen</b>. Deine E-Mail und deine Screenshots sehen nur du und die Admins.</li>
+      <li><b>Keine Werbung, kein Tracking, keine Weitergabe</b> an Dritte zu Werbezwecken.</li>
+      <li>Du kannst einzelne Screenshots, deine Daten oder dein ganzes Konto jederzeit selbst in der App löschen.</li>
+    </ul>
+  </div>
+
+  <h2>1. Wer ist verantwortlich?</h2>
+  <p>Verantwortlich für die Datenverarbeitung in der App „Freiraum“ im Sinne der Datenschutz-Grundverordnung (DSGVO) ist:</p>
+  <p class="todo" id="verantwortlich">[Name, Anschrift und E-Mail-Adresse des Verantwortlichen werden hier eingetragen.]</p>
+  <p>An diese Adresse kannst du dich mit allen Fragen zum Datenschutz, für Auskünfte und Löschanfragen wenden.</p>
+
+  <h2>2. Welche Daten wir verarbeiten – und wofür</h2>
+  <table>
+    <tr><th>Daten</th><th>Wofür</th><th>Wer sieht sie?</th></tr>
+    <tr><td>E-Mail-Adresse</td><td>Anmeldung, Zuordnung deines Kontos</td><td>nur du und Admins</td></tr>
+    <tr><td>Passwort</td><td>Anmeldung – wird nur verschlüsselt (bcrypt) gespeichert, niemand kann es lesen</td><td>niemand</td></tr>
+    <tr><td>Spitzname, Symbol, Profilbild (freiwillig)</td><td>Anzeige in der Rangliste</td><td>alle Teilnehmenden</td></tr>
+    <tr><td>Gewählte Challenge und dein „Vorher“-Wert (geschätzt)</td><td>Rangliste, Berechnung der gesparten Zeit</td><td>alle Teilnehmenden (als Teil der Rangliste) und Admins</td></tr>
+    <tr><td>Screenshots deiner Bildschirmzeit</td><td>Nachweis deiner Minuten, Prüfung durch die KI und die Admins</td><td>nur du und Admins</td></tr>
+    <tr><td>Minuten pro Tag, Flammen, Joker</td><td>Rangliste, Statistik</td><td>alle Teilnehmenden</td></tr>
+    <tr><td>Kommentare an die Admins, Einsprüche</td><td>Prüfung deiner Einträge</td><td>nur du und Admins</td></tr>
+    <tr><td>Ergebnis der KI-Prüfung (z.&nbsp;B. „Datum nicht erkannt“, Fake-Verdacht)</td><td>Schutz vor Schummeln</td><td>Admins</td></tr>
+    <tr><td>Anmelde-Token (zufälliger Schlüssel)</td><td>damit du angemeldet bleibst – wird nur verschlüsselt gespeichert, gilt max. 180 Tage</td><td>niemand</td></tr>
+    <tr><td>Fehlgeschlagene Anmeldeversuche (E-Mail + Uhrzeit)</td><td>Schutz vor Passwort-Raten</td><td>niemand, nach 15 Minuten nicht mehr wirksam</td></tr>
+    <tr><td>Zeitpunkt „zuletzt in der App“</td><td>Live-Zähler „Zeit in Freiraum“ (es wird nur eine Gesamtsumme aller gespeichert, nicht pro Person)</td><td>niemand – sichtbar ist nur die Gesamtsumme und wie viele gerade online sind</td></tr>
+  </table>
+  <p>Anonyme Statistiken („Alle im Vergleich“) zeigen nur Durchschnitte und Anzahlen ohne Namen und erscheinen erst, wenn mindestens 5 Personen Daten haben.</p>
+  <p><b>Rechtsgrundlage</b> ist deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO), die du bei der Registrierung gibst, sowie die Durchführung der Challenge, für die du dich angemeldet hast (Art. 6 Abs. 1 lit. b DSGVO). Du kannst deine Einwilligung jederzeit widerrufen, indem du dein Konto löschst.</p>
+
+  <h2>3. Die „KI“ – was passiert mit deinem Screenshot?</h2>
+  <p>Wenn du einen Screenshot auswählst, liest eine Texterkennung (Tesseract) <b>direkt auf deinem Gerät</b> die Minuten und das Datum aus. Dafür wird kein externer KI-Dienst verwendet. Erst wenn du auf „Eintragen“ tippst, wird ein verkleinertes Bild (JPEG) zusammen mit den Minuten gespeichert. Die App prüft außerdem auf deinem Gerät, wann das Bild erstellt wurde, und vergleicht auf dem Server, ob genau dasselbe Bild schon einmal hochgeladen wurde. So erkennen wir mögliche Fakes. Eine automatische Entscheidung mit rechtlicher Wirkung gibt es nicht: Bei einem Verdacht entscheidet immer ein Mensch (ein Admin), und du kannst Einspruch einlegen.</p>
+
+  <h2>4. Wo werden die Daten gespeichert?</h2>
+  <ul>
+    <li><b>Datenbank:</b> Supabase (Supabase Inc.), Rechenzentrum in <b>Frankfurt am Main (EU)</b>. Supabase verarbeitet die Daten in unserem Auftrag. Die Übertragung erfolgt verschlüsselt (HTTPS).</li>
+    <li><b>App-Dateien:</b> Die App selbst wird über GitHub Pages (GitHub Inc., USA) ausgeliefert. Beim Aufruf erhält GitHub technisch bedingt deine IP-Adresse und Geräteinformationen (Server-Logfiles). Persönliche Daten der Challenge liegen dort nicht.</li>
+    <li><b>Auf deinem Gerät:</b> Die App speichert deinen Anmelde-Schlüssel, dein gewähltes Design und ob du Hinweise schon gesehen hast im Speicher deines Browsers. Es werden keine Cookies für Tracking oder Werbung verwendet.</li>
+  </ul>
+
+  <h2>5. Wie lange werden Daten gespeichert?</h2>
+  <ul>
+    <li>Deine Daten bleiben gespeichert, solange dein Konto besteht.</li>
+    <li><b>Screenshots</b> werden automatisch am <b>31. Januar 2027</b> gelöscht (nach Ende der Challenge). Die Minuten bleiben für die Statistik erhalten, bis du dein Konto löschst.</li>
+    <li>Wenn du dein Konto löschst, werden alle Daten sofort und endgültig gelöscht.</li>
+  </ul>
+
+  <h2>6. Deine Rechte</h2>
+  <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerruf deiner Einwilligung (Art. 15–21 DSGVO). Vieles kannst du direkt in der App erledigen:</p>
+  <ul>
+    <li><b>Daten ansehen und herunterladen:</b> Einstellungen → Datenschutz → „Meine Daten herunterladen“.</li>
+    <li><b>Namen, Symbol, Profilbild ändern:</b> Einstellungen.</li>
+    <li><b>Einzelne Screenshots löschen:</b> beim jeweiligen Tag auf „Löschen“.</li>
+    <li><b>Konto komplett löschen:</b> Einstellungen → „Konto löschen“.</li>
+  </ul>
+  <p>Außerdem kannst du dich bei einer Datenschutz-Aufsichtsbehörde beschweren, zum Beispiel beim Bayerischen Landesamt für Datenschutzaufsicht (BayLDA).</p>
+
+  <h2>7. Jugendliche</h2>
+  <p>Mitmachen kannst du ab 16 Jahren selbst. Wenn du jünger als 16 bist, brauchst du die Erlaubnis deiner Eltern bzw. Erziehungsberechtigten (Art. 8 DSGVO).</p>
+
+  <h2>8. Wie wir deine Daten schützen</h2>
+  <ul>
+    <li>Verschlüsselte Übertragung (HTTPS) zwischen App und Server.</li>
+    <li>Passwörter und Anmelde-Schlüssel werden nur verschlüsselt gespeichert.</li>
+    <li>Die Datenbank-Tabellen sind von außen komplett gesperrt. Zugriff gibt es nur über geprüfte Funktionen, die bei jeder Anfrage deine Anmeldung und deine Rechte kontrollieren.</li>
+    <li>Hochgeladene Bilder werden auf dem Server geprüft: Es werden nur echte JPEG-Bilder angenommen, keine anderen Dateien. Texte werden bereinigt und in der App so angezeigt, dass kein fremder Code ausgeführt werden kann.</li>
+    <li>Schutz vor Passwort-Raten (Sperre nach mehreren Fehlversuchen).</li>
+    <li>Nur wenige, vertrauenswürdige Admins haben Zugriff auf Screenshots.</li>
+  </ul>
+
+  <h2>9. Änderungen</h2>
+  <p>Wenn sich an dieser Information etwas ändert, zeigen wir das in der App unter „Was ist neu“ an.</p>
+</main>
+</body>
+</html>

@@ -299,6 +299,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
         <label class="field"><span>Dein Spitzname (sehen alle in der Rangliste)</span><input class="input" id="inName" maxlength="24" placeholder="z. B. Lena oder Sonnenschein" autocomplete="off"></label>
         <div class="field"><span>Dein Symbol</span><div class="emojis" id="emojiPick"></div></div>
         <p class="muted small" style="margin:0 4px 12px">🔒 Deine E-Mail sieht niemand außer den Admins. Kein Tracking, keine Werbung.</p>
+        <label class="small" style="display:flex;gap:10px;align-items:flex-start;margin:0 4px 14px;line-height:1.45;cursor:pointer"><input type="checkbox" id="inConsent" style="width:22px;height:22px;flex:none;margin-top:1px"><span>Ich habe die <a href="datenschutz.html" target="_blank" rel="noopener" style="color:inherit;font-weight:700">Datenschutz-Info</a> gelesen und bin einverstanden. Unter 16 nur mit Erlaubnis meiner Eltern.</span></label>
       </div>
       <button class="btn btn-flame" id="btnAuth" style="margin-top:6px">Anmelden</button>
       <p class="muted small" style="text-align:center;margin:12px 0 0">Passwort vergessen? Ein Admin kann es zurücksetzen.</p>
@@ -334,7 +335,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "21";
+const APP_VERSION = "22";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -472,6 +473,7 @@ $("#segAuth").addEventListener("click", e=>{ const b=e.target.closest("button");
 $("#btnAuth").addEventListener("click", async ()=>{
   const email = $("#inEmail").value.trim(), pw = $("#inPw").value;
   if (!email || !pw){ toast("Bitte E-Mail und Passwort eingeben"); return; }
+  if (authMode!=="login" && !$("#inConsent")?.checked){ toast("Bitte bestätige die Datenschutz-Info"); return; }
   const btn = $("#btnAuth"); btn.disabled = true;
   try{
     let r;
@@ -1477,6 +1479,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"22", date:"11. November", items:[
+    "🔒 Neu: <b>Datenschutz-Info</b> unter Einstellungen – zum Lesen oder als PDF. Dort kannst du auch <b>alle deine Daten herunterladen</b>.",
+    "🛡️ Mehr Sicherheit: Hochgeladene Bilder werden auf dem Server streng geprüft, Namen und Symbole werden bereinigt, die Datenbank ist noch stärker abgeschottet."]},
   { v:"21", date:"11. November", items:[
     "📱 Neu: Die <b>Handyzeit-Challenge</b>! Ohne Limit – du lädst jeden Tag deine gesamte Bildschirmzeit hoch. Wer im Schnitt am wenigsten am Handy ist, steht in der Rangliste vorn.",
     "🔀 Bis zum Start am 15.11. kannst du wählen: <b>Social-Media-Challenge</b> (max. 30 Min.) oder <b>Handyzeit-Challenge</b>. Wechseln geht unter Einstellungen.",
@@ -1634,6 +1639,11 @@ function renderInfo(){
       <p class="muted small" style="margin:8px 0 0">Tipp: Schneide Mitteilungen oder Privates vor dem Hochladen weg, wenn welche auf dem Screenshot sind.</p>
     </div>
     <div class="card">
+      <h3 style="font-size:17px;margin-bottom:6px">🔒 Datenschutz</h3>
+      <p class="muted small" style="margin:0 0 12px;line-height:1.5">Was wir speichern, wer was sieht und wie deine Daten geschützt sind.</p>
+      <a class="btn btn-ghost" href="datenschutz.html" target="_blank" rel="noopener" style="margin-bottom:10px;display:block;text-align:center;text-decoration:none">📄 Datenschutz-Info lesen</a>
+      <a class="btn btn-ghost" href="datenschutz.pdf" download="Freiraum-Datenschutz.pdf" style="margin-bottom:10px;display:block;text-align:center;text-decoration:none">⬇️ Als PDF herunterladen</a>
+      <button class="btn btn-ghost" id="btnExport" style="margin-bottom:22px">📦 Meine Daten herunterladen</button>
       <h3 style="font-size:17px;margin-bottom:12px">Konto</h3>
       <button class="btn btn-ghost" id="btnPw" style="margin-bottom:10px">🔒 Passwort ändern</button>
       
@@ -1650,6 +1660,14 @@ function renderInfo(){
   $("#clAll").onclick = ()=>{ $("#clBox").innerHTML = changelogHtml(true); $("#clAll").remove(); };
   $("#btnPw").onclick = changePw;
   $("#btnInstall")?.addEventListener("click", installSheet);
+  $("#btnExport").onclick = async ()=>{
+    try{ const data = await rpc("sf_export_me",{p_token:T()});
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Freiraum-meine-Daten.json";
+      document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      toast("📦 Deine Daten wurden heruntergeladen"); }
+    catch(err){ toast(err.message); }
+  };
   $("#btnLogout").onclick = async ()=>{ try{ await rpc("sf_logout",{p_token:T()}); }catch{} logoutLocal(); };
   $("#btnDel").onclick = ()=>sheet(`<h3 style="margin-bottom:6px">Konto löschen?</h3><p class="muted small" style="margin:0 0 12px">Alle deine Daten, Screenshots und Flammen werden sofort gelöscht. Das geht nicht rückgängig.</p>
     <label class="field"><span>Zur Sicherheit: dein Passwort</span><input class="input" id="delPw" type="password" autocomplete="current-password"></label>
