@@ -298,7 +298,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "10";
+const APP_VERSION = "11";
 const START = "2026-11-14", END = "2026-12-23", DAYS = 40, GRACE = 2;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -531,6 +531,28 @@ function renderToday(){
   $("#goAdmin")?.addEventListener("click", ()=>{ tab="admin"; show(); });
   $("#goSetup")?.addEventListener("click", ()=>{ tab="info"; show(); setTimeout(()=>{ const d=$("#cardGuide"); if(d) d.scrollIntoView({behavior:"smooth"}); },60); });
   document.querySelectorAll("#vToday [data-up]").forEach(b=>b.addEventListener("click", ()=>uploadFlow(b.dataset.up)));
+  document.querySelectorAll("#vToday [data-dispute]").forEach(b=>b.addEventListener("click", ()=>disputeSheet(b.dataset.dispute)));
+}
+function reviewLine(e){
+  if (e.disputed) return `<div class="status warn" style="margin-top:12px">💬 Dein Einspruch wird von einem Admin geprüft.</div>`;
+  if (e.reviewed) return `<div class="status ${e.valid?"ok":"bad"}" style="margin-top:12px">${e.valid?"✅ Von einem Admin bestätigt":"❌ Von einem Admin abgelehnt"}</div>`;
+  if (e.edited || e.date_ok !== true) return `<div class="status warn" style="margin-top:12px">⏳ Zählt schon – ein Admin schaut noch kurz drüber${e.edited?" (Minuten von Hand geändert)":" (Datum nicht erkannt)"}.</div>`;
+  return e.success ? `<div class="status ok" style="margin-top:12px">🤖 Von der KI geprüft und automatisch freigegeben</div>`
+                   : `<div class="status bad" style="margin-top:12px">🤖 Von der KI geprüft: über dem Limit</div>`;
+}
+function disputeSheet(day){
+  const e = myMember() && statsFor(myMember()).map[day];
+  sheet(`<h3 style="margin-bottom:6px">Einspruch für ${esc(fmtDate(day))}</h3>
+    <p class="muted small" style="margin:0 0 12px;line-height:1.5">Die KI oder ein Admin lag falsch? Schreib kurz, warum – ein Admin schaut sich deinen Screenshot nochmal an.</p>
+    <div class="minutes" style="margin-top:0"><label for="dpMin">Richtige Minuten</label><input id="dpMin" type="number" inputmode="numeric" min="0" max="1440" value="${e?.minutes ?? ""}"></div>
+    <label class="field" style="margin-top:10px"><span>Begründung</span><textarea class="input" id="dpTxt" rows="3" maxlength="300" placeholder="z. B. YouTube war nur Musik im Hintergrund / die KI hat 1 Std. falsch gelesen"></textarea></label>
+    <button class="btn btn-primary" id="dpSend">Einspruch senden</button>`, r=>{
+    r.querySelector("#dpSend").onclick = async ()=>{
+      const mv = parseInt(r.querySelector("#dpMin").value,10);
+      try{ await rpc("sf_dispute",{p_token:T(),p_day:day,p_text:r.querySelector("#dpTxt").value,p_minutes:Number.isNaN(mv)?null:mv}); closeSheet(); await refresh(); show(); toast("💬 Einspruch gesendet"); }
+      catch(err){ toast(err.message); }
+    };
+  });
 }
 function checkinCard(s, day, today){
   const e = s.map[day];
@@ -541,7 +563,8 @@ function checkinCard(s, day, today){
       <div class="badge ${ok?"ok":"no"}">${ok?"✅":"❌"}</div>
       <div style="flex:1"><b style="font-size:17px;${ok?"":"color:var(--no)"}">${ok?"Gestern geschafft! 🔥":"Gestern ungültig"}</b>
       <div class="muted small" style="margin-top:2px">${ok? e.minutes+" Min. "+TRACKS[trackOf()].word+" – stark!" : (e.valid===false?"Ein Admin hat den Screenshot abgelehnt.":e.minutes+" Min. – über dem Limit von "+LIMIT+" Min. Keine Flamme. Heute neu angreifen! 💪")}</div></div>
-    </div><button class="linkbtn" data-up="${day}">Screenshot nochmal hochladen</button></div>`;
+    </div>${reviewLine(e)}
+    <div style="display:flex;gap:16px;flex-wrap:wrap"><button class="linkbtn" data-up="${day}">Screenshot nochmal hochladen</button>${e.disputed?"":`<button class="linkbtn" data-dispute="${day}">Stimmt nicht? Einspruch</button>`}</div></div>`;
   }
   return `<div class="card" style="border:2px solid var(--flame2)">
     <p class="q">📸 Lade den Screenshot von ${label} hoch</p>
@@ -781,7 +804,10 @@ async function analyse(root, files, day, test){
     <div class="muted small" style="margin:8px 4px 0">${isTotal ? "In deiner Gruppe zählt die gesamte Bildschirmzeit des Tages – alle Apps." : "Messenger wie WhatsApp oder Telegram zählen nicht."} Änderst du die Zahl, sehen das die Prüfer.</div>
     ${test ? `<details style="margin-top:8px"><summary class="small">Erkannter Text (für Admins)</summary><pre style="white-space:pre-wrap;font-size:11px;max-height:180px;overflow:auto">${esc(text)}</pre></details>` : ""}
     <button class="btn btn-primary" id="sendShot" style="margin-top:14px">${test?"Test speichern":"Eintragen"}</button>`;
+  const autoNote = document.createElement("div"); autoNote.className = "muted small"; autoNote.style.margin = "8px 4px 0";
+  root.querySelector("#limitInfo").after(autoNote);
   const upd = ()=>{ const v = parseInt(root.querySelector("#minIn").value,10); const li = root.querySelector("#limitInfo");
+    autoNote.innerHTML = (v === ocrMin && dateOk) ? "🤖 Passt alles – die KI gibt den Tag <b>automatisch frei</b>." : "⏳ Zählt sofort – weil " + (v !== ocrMin ? "du die Minuten geändert hast" : "das Datum nicht erkannt wurde") + ", schaut ein Admin noch kurz drüber.";
     if (Number.isNaN(v)){ li.textContent=""; li.className="status"; return; }
     if (v <= LIMIT){ li.className="status ok"; li.textContent=`✅ GÜLTIG – ${v} Min. ${TR.word}, max. ${LIMIT} erlaubt. Das gibt eine Flamme! 🔥`; }
     else { li.className="status bad"; li.textContent=`❌ UNGÜLTIG – ${v} Min. ${TR.word}, erlaubt sind max. ${LIMIT}. Keine Flamme, der Tag zählt als nicht geschafft.`; } };
@@ -882,7 +908,7 @@ function memberSheet(mid){
   const s = statsFor(m);
   const rows = [...(m.checkins||[])].sort((a,b)=>a.day<b.day?1:-1).map(c=>`<div class="row"><b>${esc(toDate(c.day).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"}))}</b>
       <span>${c.minutes} Min.</span>
-      ${c.valid===false?`<span class="flag bad">ungültig</span>`:""}${c.edited?`<span class="flag">✏️ ${c.ocr ?? "–"}→${c.minutes}</span>`:""}${c.date_ok===false?`<span class="flag">📅?</span>`:""}${c.reviewed?`<span class="flag">✓</span>`:""}
+      ${c.valid===false?`<span class="flag bad">ungültig</span>`:""}${c.edited?`<span class="flag">✏️ ${c.ocr ?? "–"}→${c.minutes}</span>`:""}${c.date_ok===false?`<span class="flag">📅?</span>`:""}${c.disputed?`<span class="flag bad">💬</span>`:""}${c.reviewed?`<span class="flag">✓</span>`:""}
       <button class="pill" data-day="${c.day}">Ansehen</button></div>`).join("") || `<p class="muted">Noch keine Screenshots.</p>`;
   sheet(`<h3 style="margin-bottom:2px">${esc(m.emoji)} ${esc(m.name)}</h3>
     <p class="muted small" style="margin:0 0 10px">${s.validDays} Tage · ${s.minutes} Min. · ✏️ = Minuten von Hand geändert · 📅? = Datum nicht erkannt · ✓ = geprüft</p>
@@ -897,6 +923,7 @@ async function reviewSheet(item, back){
     const img = await rpc("sf_shot2",{p_token:T(),p_member:item.member,p_day:item.day});
     const box = $("#shotBox"); $("#shotLoad")?.remove(); if (!box) return;
     box.innerHTML = `${img && img.startsWith("data:image/jpeg;base64,") ? `<img class="full" src="${img}" alt="Screenshot">` : `<p class="muted">Kein Bild vorhanden.</p>`}
+      ${item.dispute?`<div class="status warn" style="margin:0 0 10px">💬 Einspruch: „${esc(item.dispute)}“</div>`:""}
       <div class="muted small" style="margin:0 0 8px">KI erkannt: <b>${item.ocr ?? "–"} Min.</b> · eingetragen: <b>${item.minutes} Min.</b>${item.date_ok===false?" · 📅 Datum nicht erkannt":""}</div>
       <div class="minutes" style="margin-top:0"><label for="revMin">Richtige Minuten (falls nötig korrigieren)</label><input id="revMin" type="number" inputmode="numeric" min="0" max="1440" value="${item.minutes}"></div>
       <div class="choice"><button class="yes" data-v="1"><span class="ic">✓</span>Gültig</button><button class="no" data-v="0"><span class="ic">✕</span>Ungültig</button></div>
@@ -927,8 +954,9 @@ function renderAdmin(){
       <span>${t.minutes} Min.${t.ocr!==t.minutes?` <span class="flag">KI: ${t.ocr ?? "–"}</span>`:""}</span>
       ${t.verdict===true?`<span class="flag" style="color:var(--ok)">KI ✓</span>`:t.verdict===false?`<span class="flag bad">KI ✕</span>`:""}
       <button class="pill" data-test="${t.id}">Prüfen</button></div>`).join("") || `<p class="muted small">Noch keine Tests.</p>`;
-  const queue = d.queue.slice(0,60).map((q,i)=>`<div class="row"><b>${esc(q.emoji)} ${esc(q.name)} <span class="muted small">· ${esc(q.group)} · ${esc(toDate(q.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
-      <span>${q.minutes}</span>${q.edited?`<span class="flag">✏️</span>`:""}${q.date_ok===false?`<span class="flag">📅?</span>`:""}
+  const queue = d.queue.slice(0,60).map((q,i)=>`<div class="row" style="flex-wrap:wrap"><b>${esc(q.emoji)} ${esc(q.name)} <span class="muted small">· ${q.group?TRACKS[q.group].icon:""} · ${esc(toDate(q.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
+      <span>${q.minutes}</span>${q.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${q.edited?`<span class="flag">✏️</span>`:""}${q.date_ok===false?`<span class="flag">📅?</span>`:""}
+      ${q.dispute?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">💬 „${esc(q.dispute)}“</div>`:""}
       <button class="pill" data-q="${i}">Prüfen</button></div>`).join("") || `<p class="muted small">Alles geprüft 👍</p>`;
   const accs = d.accounts.filter(a=>!accSearch || (a.email+" "+a.name).toLowerCase().includes(accSearch.toLowerCase()));
   const accRows = accs.map(a=>`<div class="row" style="flex-wrap:wrap"><b style="min-width:0;flex:1 1 100%">${esc(a.emoji)} ${esc(a.name)}${a.admin?" 🛡️":""}${a.hidden?" 🕶️":""}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)} · ${a.track?TRACKS[a.track].icon+" "+TRACKS[a.track].name:"noch keine Gruppe"}</div></b>
@@ -946,7 +974,7 @@ function renderAdmin(){
       <button class="btn btn-flame" id="btnTest">📷 Test-Screenshot hochladen</button>
       <div class="daylist" style="margin-top:10px">${tests}</div></div>
     <div class="card"><div class="sectionhead"><h3 style="font-size:17px">📋 Zu prüfen</h3><span class="muted small">${d.queue.length} offen</span></div>
-      <p class="muted small" style="margin:6px 0 8px">Nur auffällige Uploads: ✏️ = Minuten von Hand geändert · 📅? = Datum nicht erkannt. Alle anderen kannst du über die Rangliste prüfen (Person antippen).</p>
+      <p class="muted small" style="margin:6px 0 8px">🤖 Die KI hat ${d.stats?.auto ?? 0} Uploads automatisch freigegeben. Hier landen nur Einsprüche 💬 und auffällige Uploads: ✏️ = Minuten von Hand geändert · 📅? = Datum nicht erkannt. Alle anderen kannst du über die Rangliste prüfen (Person antippen).</p>
       <div class="daylist">${queue}</div></div>
     <div class="card"><h3 style="font-size:17px;margin-bottom:6px">🛡️ Admins</h3>
       <p class="muted small" style="margin:0 0 10px">Admins sehen alle Screenshots, können prüfen, Konten verwalten und Einstellungen ändern. Die Person muss sich vorher in der App registriert haben.</p>
@@ -1090,6 +1118,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"11", date:"11. November", items:[
+    "🤖 Die KI <b>gibt Uploads automatisch frei</b> – du siehst direkt „Von der KI geprüft und freigegeben“.",
+    "💬 Neu: <b>Einspruch</b>. Findest du eine Bewertung falsch, kannst du sie mit kurzer Begründung von einem Admin prüfen lassen.",
+    "⏳ Nur wenn du Minuten von Hand änderst oder das Datum nicht erkannt wird, schaut zusätzlich ein Admin drüber – der Tag zählt trotzdem sofort."]},
   { v:"10", date:"11. November", items:[
     "👥 <b>Zwei Gruppen</b>: 📵 <b>Social Media</b> (max. 30 Min. Insta, TikTok & Co.) oder 📱 <b>Handyzeit</b> (max. 60 Min. fürs ganze Handy).",
     "🏆 Jede Gruppe hat ihre eigene Rangliste – oben kannst du zwischen beiden umschalten.",
@@ -1164,7 +1196,8 @@ function renderInfo(){
         <li>Max. ${LIMIT} Min. = <b>geschafft 🔥</b>. Mehr als ${LIMIT} Min. = <b>nicht geschafft</b> – du kannst trotzdem hochladen, bekommst aber keine Flamme. Tage in Folge = deine Flammen-Serie.</li>
         <li><b>🏆 Wettbewerb:</b> Wer die meisten geschafften Tage hat, liegt vorn. Bei Gleichstand gewinnt, wer an diesen Tagen insgesamt weniger Minuten hatte.</li>
         <li>Alle, die sich registrieren, sind in <b>einer gemeinsamen Rangliste</b>. Am Anfang ist jeder auf Platz 1. Du siehst dich immer ganz oben.</li>
-        <li>Admins 🛡️ können Screenshots prüfen und falsche Tage korrigieren oder als ungültig markieren. Ehrlich bleiben!</li>
+        <li>🤖 Die <b>KI prüft und gibt automatisch frei</b>. Nur wenn du Minuten von Hand änderst oder das Datum nicht erkannt wird, schaut zusätzlich ein Admin drüber.</li>
+        <li>Findest du eine Bewertung falsch, tippe auf <b>„Einspruch“</b> – ein Admin prüft dann deinen Screenshot. Ehrlich bleiben!</li>
       </ol>
     </div>
     <div class="card"><h3 style="font-size:17px;margin-bottom:10px">📵 Was zählt als Social Media?</h3>${trackOf()==="total"?`<p class="muted small" style="margin:0 0 10px">Gilt für die Gruppe Social Media. In deiner Gruppe Handyzeit zählt <b>alles</b>.</p>`:""}${platformsHtml()}</div>
@@ -1294,7 +1327,7 @@ function decodeState(st){
   if (!st) return null;
   return { name: st.name, members: st.members.map(([id,name,emoji,av,cs,tr])=>({ id, name, emoji, av, track: tr==="t"?"total":tr==="s"?"social":"",
     checkins: cs.map(([d,min,f,ocr])=>({ day:addDays(START,d), minutes:min, success:!!(f&1), valid:!!(f&2), edited:!!(f&4),
-      date_ok: f&8 ? true : f&32 ? false : null, reviewed:!!(f&16), ocr })) })) };
+      date_ok: f&8 ? true : f&32 ? false : null, reviewed:!!(f&16), disputed:!!(f&64), ocr })) })) };
 }
 async function refresh(){
   if (!auth?.token) return;
