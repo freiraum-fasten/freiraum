@@ -521,7 +521,10 @@ function renderToday(){
       <div class="countdown"><div><b>${left}</b><span>${left===1?"Tag":"Tage"}</span></div></div>
       <p class="muted" style="margin:10px 0 0;line-height:1.5">Noch bis zum Start. Ab dem 15. lädst du jeden Tag den Screenshot vom Vortag hoch. Nutze die Zeit: Freunde einladen und dein ${LIMIT}-Minuten-Limit einstellen.</p>
     </div>
-    ${acc?.admin ? `<button class="btn btn-primary" id="goAdmin" style="margin-bottom:14px">🧪 Screenshot-Erkennung testen (Admin)</button>` : ""}
+    <div class="card"><h3 style="font-size:17px;margin-bottom:6px">🧪 Probe-Upload</h3>
+      <p class="muted small" style="margin:0 0 12px;line-height:1.5">Bis zum Start kannst du schon üben: Lade den Screenshot von <b>gestern</b> hoch. Die KI prüft ihn, ein Admin schaut drüber – gezählt wird aber erst ab dem 15. November.</p>
+      <button class="btn btn-primary" id="goProbe">📷 Probe-Screenshot hochladen</button></div>
+    ${acc?.admin ? `<button class="btn btn-ghost" id="goAdmin" style="margin-bottom:14px">🛡️ Tests im Admin-Bereich prüfen</button>` : ""}
     <button class="btn btn-flame" id="goInvite" style="margin-bottom:14px">Freunde einladen</button>
     <button class="btn btn-ghost" id="goSetup" style="margin-bottom:14px">📸 So machst du den Screenshot</button>`;
     html += impulseCard(diffDays(today, START) + 400, "");
@@ -560,6 +563,7 @@ function renderToday(){
   }
   $("#vToday").innerHTML = html;
   $("#goInvite")?.addEventListener("click", invite);
+  $("#goProbe")?.addEventListener("click", ()=>uploadFlow(addDays(berlinToday(),-1), true));
   $("#goIdeas")?.addEventListener("click", ()=>{ tab="ideas"; show(); window.scrollTo({top:0}); });
   bindFr("#vToday", renderToday);
   $("#goAdmin")?.addEventListener("click", ()=>{ tab="admin"; show(); });
@@ -688,23 +692,25 @@ function dateMatches(text, day){
   return pats.some(p=>t.includes(p));
 }
 function loadImage(file){ return new Promise((res,rej)=>{ const url=URL.createObjectURL(file); const im=new Image(); im.onload=()=>res({im,url}); im.onerror=rej; im.src=url; }); }
-function ocrCanvas(im){
+function ocrCanvas(im, boost=false){
   const scale = Math.min(1, 1400/im.width), c = document.createElement("canvas");
   c.width = Math.round(im.width*scale); c.height = Math.round(im.height*scale);
   const g = c.getContext("2d"); g.drawImage(im,0,0,c.width,c.height);
   const px = g.getImageData(0,0,c.width,c.height), d = px.data;
   let sum=0; for (let i=0;i<d.length;i+=16) sum += (d[i]+d[i+1]+d[i+2])/3;
   const dark = sum/(d.length/16) < 110; // Dark Mode → invertieren
-  // Dark Mode: invertieren + Kontrast-Kurve, damit die kleinen grauen Zeiten („20min“) dunkel genug für die Texterkennung werden
-  for (let i=0;i<d.length;i+=4){ let v=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; if(dark){ v=255-v; v=255*Math.pow(v/255,3); } d[i]=d[i+1]=d[i+2]=v; }
+  // Dark Mode oder „boost“: Kontrast-Kurve, damit kleine graue Zeiten („20min“) dunkel genug für die Texterkennung werden
+  const gamma = dark ? 3 : boost ? 2.2 : 1;
+  for (let i=0;i<d.length;i+=4){ let v=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; if(dark) v=255-v; if(gamma!==1) v=255*Math.pow(v/255,gamma); d[i]=d[i+1]=d[i+2]=v; }
   g.putImageData(px,0,0); c.dark = dark; return c;
 }
-/* Text lesen. Dunkelmodus: zweiter Durchgang im Modus „verstreuter Text“ – findet die kleinen Zeiten unter den Balken */
+/* Text lesen – egal welches Handy: erster Durchgang normal. Wenn Dunkelmodus oder keine Social-Media-Zeit gefunden wurde,
+   zweiter Durchgang mit verstärktem Kontrast im Modus „verstreuter Text“ (findet kleine Zeiten unter Balken, ungewöhnliche Layouts). */
 async function ocrRead(w, im){
   const c = ocrCanvas(im);
   let text = (await w.recognize(c)).data.text || "";
-  if (c.dark){
-    try{ await w.setParameters({tessedit_pageseg_mode:"11"}); text += "\n" + ((await w.recognize(c)).data.text || ""); }
+  if (c.dark || !parseScreenTime(text).length){
+    try{ await w.setParameters({tessedit_pageseg_mode:"11"}); text += "\n" + ((await w.recognize(c.dark ? c : ocrCanvas(im, true))).data.text || ""); }
     catch(e){ console.warn(e); }
     finally{ try{ await w.setParameters({tessedit_pageseg_mode:"6"}); }catch{} }
   }
@@ -885,8 +891,8 @@ function platformsHtml(){
 }
 
 function uploadFlow(day, test=false){
-  sheet(`<h3 style="margin-bottom:4px">${test ? "🧪 Test-Upload (Admin)" : "Screenshot für "+esc(fmtDate(day))}</h3>
-    ${test ? `<p class="muted small" style="margin:0 0 10px">Läuft genauso wie später bei allen – zählt aber nirgends. Danach kannst du prüfen, ob die KI richtig lag.</p>` : ""}
+  sheet(`<h3 style="margin-bottom:4px">${test ? (acc?.admin ? "🧪 Test-Upload (Admin)" : "🧪 Probe-Upload") : "Screenshot für "+esc(fmtDate(day))}</h3>
+    ${test ? `<p class="muted small" style="margin:0 0 10px">${acc?.admin ? "Läuft genauso wie später bei allen – zählt aber nirgends. Danach kannst du prüfen, ob die KI richtig lag." : "Läuft genauso wie ab dem 15.11. – zählt aber noch nicht. Nimm den Screenshot von <b>gestern</b> (Tagesansicht)."}</p>` : ""}
     <label class="btn btn-flame" style="cursor:pointer;margin:6px 0 12px">📷 Screenshot(s) auswählen<input type="file" accept="image/*" multiple id="shotIn" hidden></label>
     <div id="shotRes"></div>
     <div id="shotGuide"><p class="muted small" style="margin:0 0 8px">So kommst du an deine Bildschirmzeit:</p>${guideHtml()}</div>`, root=>{
@@ -949,11 +955,11 @@ async function analyse(root, files, day, test){
         : `<div class="muted small" style="line-height:1.5">${ocrOk ? "Keine Social-Media-Apps erkannt. Wenn du wirklich nichts genutzt hast: super! Sonst trag die Minuten unten selbst ein." : "Automatisches Auslesen hat nicht geklappt. Trag die Minuten bitte selbst ein."}</div>`}
     </div></div>
     <div class="status ${dateOk?"ok":"warn"}">${dateOk?"✅ Datum passt":"⚠️ Datum im Screenshot nicht erkannt – wird von einem Admin geprüft."}</div>
-    ${test ? `<div class="status ${sus.length?"bad":"ok"}" style="display:block">${sus.length ? "🕵️ <b>KI-Verdacht:</b> "+sus.map(esc).join(" · ") : "🕵️ Kein Fake-Verdacht"}</div>` : ""}
+    ${test && acc?.admin ? `<div class="status ${sus.length?"bad":"ok"}" style="display:block">${sus.length ? "🕵️ <b>KI-Verdacht:</b> "+sus.map(esc).join(" · ") : "🕵️ Kein Fake-Verdacht"}</div>` : ""}
     <div class="minutes"><label for="minIn">${TR.unit}</label><input id="minIn" type="number" inputmode="numeric" min="0" max="1440" value="${total}"></div>
     <div class="status" id="limitInfo" style="font-size:15px"></div>
     <div class="muted small" style="margin:8px 4px 0">${isTotal ? "In deiner Gruppe zählt die gesamte Bildschirmzeit des Tages – alle Apps." : "Messenger wie WhatsApp oder Telegram zählen nicht."} Änderst du die Zahl, sehen das die Prüfer.</div>
-    ${test ? `<details style="margin-top:8px"><summary class="small">Erkannter Text (für Admins)</summary><pre style="white-space:pre-wrap;font-size:11px;max-height:180px;overflow:auto">${esc(text)}</pre></details>` : ""}
+    ${test && acc?.admin ? `<details style="margin-top:8px"><summary class="small">Erkannter Text (für Admins)</summary><pre style="white-space:pre-wrap;font-size:11px;max-height:180px;overflow:auto">${esc(text)}</pre></details>` : ""}
     <button class="btn btn-primary" id="sendShot" style="margin-top:14px">${test?"Test speichern":"Eintragen"}</button>`;
   const autoNote = document.createElement("div"); autoNote.className = "muted small"; autoNote.style.margin = "8px 4px 0";
   root.querySelector("#limitInfo").after(autoNote);
@@ -971,8 +977,10 @@ async function analyse(root, files, day, test){
       const shot = compressShot(loaded.length===1 ? loaded[0].im : stitch(loaded.map(x=>x.im)));
       const done = ()=>loaded.forEach(x=>URL.revokeObjectURL(x.url));
       if (test){
-        await rpc("sf_admin_test_upload",{p_token:T(),p_minutes:minutes,p_shot:shot,p_ocr_minutes:ocrMin,p_date_ok:dateOk});
-        closeSheet(); done(); await loadAdmin(); show(); toast("Test gespeichert – jetzt unten prüfen");
+        await rpc("sf_admin_test_upload",{p_token:T(),p_minutes:minutes,p_shot:shot,p_ocr_minutes:ocrMin,p_date_ok:dateOk,p_suspect:sus.length ? sus.join(" · ") : null});
+        closeSheet(); done();
+        if (acc?.admin){ await loadAdmin(); show(); toast("Test gespeichert – jetzt unten prüfen"); }
+        else toast("🧪 Probe gespeichert – zählt noch nicht. Ab dem 15.11. geht's richtig los! 🔥");
         return;
       }
       await rpc("sf_upload",{p_token:T(),p_day:day,p_minutes:minutes,p_shot:shot,p_ocr_minutes:ocrMin,p_date_ok:dateOk,p_suspect:sus.length ? sus.join(" · ") : null});
@@ -1107,7 +1115,7 @@ function renderAdmin(){
   const d = adminData, st = d.settings || {};
   const tests = d.tests.map(t=>`<div class="row"><b>${esc(new Date(t.created).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))} · ${esc(t.by)}</b>
       <span>${t.minutes} Min.${t.ocr!==t.minutes?` <span class="flag">KI: ${t.ocr ?? "–"}</span>`:""}</span>
-      ${t.verdict===true?`<span class="flag" style="color:var(--ok)">KI ✓</span>`:t.verdict===false?`<span class="flag bad">KI ✕</span>`:""}
+      ${t.suspect?`<span class="flag bad">🕵️</span>`:""}${t.verdict===true?`<span class="flag" style="color:var(--ok)">KI ✓</span>`:t.verdict===false?`<span class="flag bad">KI ✕</span>`:""}
       <button class="pill" data-test="${t.id}">Prüfen</button></div>`).join("") || `<p class="muted small">Noch keine Tests.</p>`;
   const queue = d.queue.slice(0,60).map((q,i)=>`<div class="row" style="flex-wrap:wrap"><b>${esc(q.emoji)} ${esc(q.name)} <span class="muted small">· ${q.group?TRACKS[q.group].icon:""} · ${esc(toDate(q.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
       <span>${q.minutes}</span>${q.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${q.edited?`<span class="flag">✏️</span>`:""}${q.date_ok===false?`<span class="flag">📅?</span>`:""}${q.suspect?`<span class="flag bad">🕵️ Fake?</span>`:""}
@@ -1222,6 +1230,7 @@ async function testSheet(t){
     const box = $("#shotBox"); $("#shotLoad")?.remove(); if (!box) return;
     box.innerHTML = `${img ? `<img class="full" src="${img}" alt="Screenshot">` : ""}
       <p class="muted small" style="margin:0 0 12px">KI hat erkannt: <b>${t.ocr ?? "–"} Min.</b> · eingetragen: <b>${t.minutes} Min.</b> · Datum: ${t.date_ok?"✅ erkannt":"⚠️ nicht erkannt"}</p>
+      ${t.suspect?`<div class="status bad" style="display:block;margin:0 0 12px">🕵️ <b>KI-Verdacht:</b> ${esc(t.suspect)}</div>`:""}
       <p class="q" style="font-size:16px">Hat die KI richtig gezählt?</p>
       <div class="choice"><button class="yes" data-v="1"><span class="ic">✓</span>Richtig</button><button class="no" data-v="0"><span class="ic">✕</span>Falsch</button></div>`;
     box.querySelectorAll("[data-v]").forEach(b=>b.onclick=async ()=>{
@@ -1302,6 +1311,7 @@ const CHANGELOG = [
     "👥 In der Rangliste: <b>Alle im Vergleich</b> – komplett anonym, ohne Namen.",
     "⏱️ Live in der Rangliste: <b>wie lange alle zusammen in Freiraum</b> sind – und wie viele gerade online.",
     "🌙 Die KI liest Screenshots im <b>Dunkelmodus</b> jetzt deutlich besser.",
+    "🧪 Neu: <b>Probe-Upload für alle</b> – bis zum Start kannst du üben. Die KI prüft, ein Admin schaut drüber, gezählt wird ab dem 15.11.",
     "⏸️ Konten können pausiert werden – pausierte Personen tauchen vorübergehend nicht in der Rangliste auf."]},
   { v:"14", date:"11. November", items:[
     "⏱️ Deine Social-Media-Zeit von <b>vorher</b> gibst du jetzt ganz einfach per Schätzung an: 10 Min., 30 Min., 1 Std. …"]},
