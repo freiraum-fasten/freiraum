@@ -116,6 +116,25 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .daystrip .day{font-size:30px;font-weight:800;letter-spacing:-.03em}
 .daystrip .pill{white-space:nowrap;flex:none;display:inline-flex;align-items:center;gap:6px;font-weight:800}.daystrip .pill svg{width:18px;height:18px}
 .devbar{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(255,122,24,.16),rgba(255,61,104,.14));border:1.5px solid rgba(255,90,60,.35);border-radius:16px;padding:12px 14px;margin-bottom:12px}.devbar .devic{font-size:30px;line-height:1}.devbar small{display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.devbar b{font-size:18px}.devsteps .steps{margin-top:0}.devchips{display:flex;flex-wrap:wrap;gap:8px}
+.tabbar button{position:relative}.tdot{position:absolute;top:4px;right:12px;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--flame2);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center;box-shadow:0 0 0 2px var(--bg)}
+.chat{display:flex;flex-direction:column;gap:6px;max-height:380px;overflow-y:auto;padding:4px 2px 8px;-webkit-overflow-scrolling:touch}
+.chatday{align-self:center;font-size:11.5px;font-weight:800;color:var(--muted);background:var(--soft);padding:3px 10px;border-radius:99px;margin:8px 0 2px}
+.bub{max-width:82%;padding:9px 13px;border-radius:18px;line-height:1.4;white-space:pre-wrap;word-break:break-word;font-size:15px}
+.bub.me{align-self:flex-end;background:linear-gradient(135deg,var(--flame1),var(--flame2));color:#fff;border-bottom-right-radius:6px}
+.bub.them{align-self:flex-start;background:var(--soft);border-bottom-left-radius:6px}.bub.them.new{box-shadow:0 0 0 2px var(--flame2)}
+.bub small{display:block;font-size:11px;opacity:.7;margin-top:3px;text-align:right}.bub-by{display:block;font-size:12px;margin-bottom:2px;opacity:.85}
+.chatin{display:flex;gap:8px;align-items:flex-end;margin-top:8px}.chatin textarea{flex:1;resize:none;font:inherit;min-height:46px;max-height:140px}.chatin .btn{width:52px;min-width:52px;height:46px;padding:0;margin:0;font-size:20px}
+.thr{display:flex!important;gap:12px;align-items:center;padding:12px!important;border-radius:16px;background:var(--soft);margin:8px 0;cursor:pointer;border-bottom:0!important}
+.thr.unread{box-shadow:inset 0 0 0 2px var(--flame2)}.thr-av{font-size:26px;width:44px;height:44px;border-radius:14px;background:var(--card);display:grid;place-items:center;flex:none}
+.thr-mid{flex:1;min-width:0}.thr-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}.thr-top b{flex:none!important}
+.thr-last{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.thr-st{font-size:11.5px;font-weight:800}.thr-st.wait{color:#C27C00}.thr-st.ok{color:var(--ok)}
+.thr-cnt{background:var(--flame2);color:#fff;border-radius:99px;min-width:24px;height:24px;font-size:12px;font-weight:800;display:grid;place-items:center;flex:none}
+.trackpick{display:block;width:100%;text-align:left;cursor:pointer}
+.tp-main{position:relative;padding:22px 20px;background:linear-gradient(150deg,rgba(255,122,24,.22),rgba(255,61,104,.18));border:2px solid rgba(255,90,60,.55)!important;box-shadow:0 10px 30px rgba(255,70,60,.18)}
+.tp-tag{display:inline-block;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#fff;background:linear-gradient(90deg,var(--flame1),var(--flame2));padding:5px 10px;border-radius:99px;margin-bottom:14px}
+.tp-go{margin-top:16px;text-align:center;font-weight:800;color:#fff;background:linear-gradient(90deg,var(--flame1),var(--flame2));border-radius:14px;padding:13px}
+.tp-alt{padding:14px 16px;margin-bottom:10px}
 .btnrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}.btnrow .btn{margin:0;padding-left:8px;padding-right:8px}
 .todaynote{text-align:center;margin:-2px 8px 18px;line-height:1.5}
 .progress{height:8px;background:var(--soft);border-radius:99px;overflow:hidden;margin-bottom:18px}
@@ -421,7 +440,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "44";
+const APP_VERSION = "45";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -525,7 +544,7 @@ function confetti(){
 let auth = load();          // {token}
 let acc = null;             // Konto: {id,email,name,emoji,admin,member_id,group_code,limit}
 let group = null;           // {name, code, members:[...]}
-let adminData = null, reviewData = null, cwMsgs = null;
+let adminData = null, reviewData = null, cwMsgs = null, chatThreads = [], chatUnread = {mine:0, admin:0}, chatFilter = "open", chatSearch = "";
 let tab = "group";
 let mode = "join", authMode = "login";
 let pickedEmoji = EMOJIS[0];
@@ -624,10 +643,17 @@ function renderTrackChoice(){
   $("#vNoGroup").innerHTML = `
     <div class="hero" style="padding-top:6px"><div class="big" style="font-size:30px">Welche Challenge<br><span class="grad">machst du?</span></div>
       <p>Du kannst bis zum Start am 15. November noch wechseln.</p></div>
-    ${["social","total","both"].map(t=>`<button class="card trackpick" data-track="${t}" style="display:block;width:100%;text-align:left;cursor:pointer;border:2px solid ${acc.track===t&&acc.track_chosen?"var(--flame2)":"transparent"}">
-      <div style="display:flex;gap:14px;align-items:flex-start"><div style="font-size:38px;line-height:1">${TRACKS[t].icon}</div>
-      <div style="flex:1"><b style="font-size:19px">${t==="social"?"Social-Media-Challenge":t==="total"?"Handyzeit-Challenge":"Beides zusammen"}</b>${t==="both"?` <span class="pill" style="font-size:11px;padding:3px 8px;vertical-align:2px">Für Ehrgeizige</span>`:""}
-        <div class="muted small" style="line-height:1.5;margin-top:4px">${t==="social" ? `Max. <b>${LIMIT} Min. Social Media</b> am Tag (Insta, TikTok, YouTube & Co.). Geschaffte Tage = Flammen 🔥, dazu 3 Joker.` : t==="total" ? TRACKS.total.desc() : `<b>Beide Challenges auf einmal:</b> max. ${LIMIT} Min. Social Media (Flammen 🔥 & Joker) <b>und</b> du bist in der Handyzeit-Rangliste. Trotzdem nur <b>ein Screenshot</b> am Tag – die KI liest beides aus.`}</div></div></div></button>`).join("")}`;
+    <button class="card trackpick tp-main" data-track="social" style="${acc.track==="social"&&acc.track_chosen?"outline:3px solid var(--flame2);outline-offset:2px":""}">
+      <div class="tp-tag">⭐ Die Haupt-Challenge</div>
+      <div style="display:flex;gap:16px;align-items:center"><div style="font-size:54px;line-height:1">📵</div>
+        <div style="flex:1"><b style="font-size:24px;letter-spacing:-.02em;line-height:1.15;display:block">30 Minuten<br>Social Media</b></div></div>
+      <div style="line-height:1.5;margin-top:12px;font-size:15px">Max. <b>${LIMIT} Min. Social Media</b> am Tag – Insta, TikTok, YouTube & Co. Jeder geschaffte Tag = eine Flamme 🔥, dazu 3 Joker.</div>
+      <div class="tp-go">Das mache ich →</div></button>
+    <div class="muted small" style="font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin:18px 4px 8px">Oder</div>
+    ${["both","total"].map(t=>`<button class="card trackpick tp-alt" data-track="${t}" style="${acc.track===t&&acc.track_chosen?"outline:2px solid var(--flame2);outline-offset:2px":""}">
+      <div style="display:flex;gap:12px;align-items:flex-start"><div style="font-size:28px;line-height:1">${t==="both"?"🔥":"📱"}</div>
+      <div style="flex:1"><b style="font-size:16px">${t==="both"?"Beides: 30 Min. + Handyzeit":"Nur Handyzeit"}</b>
+        <div class="muted small" style="line-height:1.45;margin-top:3px">${t==="both" ? `Die 30-Min-Challenge <b>plus</b> Handyzeit-Rangliste – mit einem Screenshot am Tag.` : `Gesamte Bildschirmzeit, kein Limit. Wer im Schnitt am wenigsten am Handy ist, steht vorn.`}</div></div></div></button>`).join("")}`;
   document.querySelectorAll("#vNoGroup .trackpick").forEach(b=>b.onclick = async ()=>{
     try{ await rpc("sf_set_track",{p_token:T(),p_track:b.dataset.track}); await refresh(); show(); window.scrollTo({top:0});
       toast(b.dataset.track==="both" ? "🔥📱 Du machst beide Challenges" : `${TRACKS[b.dataset.track].icon} Du machst die ${b.dataset.track==="social"?"Social-Media":"Handyzeit"}-Challenge`); }
@@ -1381,7 +1407,7 @@ function renderGroup(){
   const avgAll = r => { const c = (r.m.checkins||[]).filter(x=>x.valid!==false && !isPending(x)); return c.length ? c.reduce((a,x)=>a+(x.minutes||0),0)/c.length : null; };
   const valueOf = r => VT ? `<div style="text-align:right"><b style="font-size:17px">${avgOfStats(r.s)!=null?fmtHM(avgOfStats(r.s)):"–"}</b><div class="muted small">Ø pro Tag</div></div>`
     : rankMode==="streak"
-    ? `<div style="text-align:right"><div class="st" style="justify-content:flex-end"><svg class="${r.s.streak?"":"flame off"}"><use href="#flame"/></svg>${r.s.streak}</div>${avgAll(r)!=null?`<div class="muted small">Ø ${fmtHM(Math.round(avgAll(r)))}</div>`:""}</div>`
+    ? `<div style="text-align:right"><div class="st" style="justify-content:flex-end"><svg class="${r.s.streak?"":"flame off"}"><use href="#flame"/></svg>${r.s.streak}</div><div class="muted small">Ø ${avgAll(r)!=null ? fmtHM(Math.round(avgAll(r))) : "– Min."}</div></div>`
     : `<div style="text-align:right"><b style="font-size:17px">${r.s.validDays}</b><div class="muted small">${fmtHM(r.s.minutes)}</div></div>`;
   const medal = k => k===1?"🥇":k===2?"🥈":k===3?"🥉":k;
   const hasData = r => VT ? r.s.validDays > 0 : (r.s.streak > 0 || r.s.total > 0);
@@ -1427,7 +1453,7 @@ function renderGroup(){
       <div class="merow">
         <div class="bigrank"><small>Platz</small>${mine.rank}<small>von ${n}</small></div>
         <div class="av big">${avatarHtml(mine.m)}</div>
-        <div class="who" style="flex:1;min-width:0"><b style="font-size:19px">${esc(mine.m.name)}</b><span>${statusOf(mine) || (today < START ? "Start am 15. November" : "")}</span></div>
+        <div class="who" style="flex:1;min-width:0"><b style="font-size:19px">${esc(mine.m.name)}</b><span>${statusOf(mine) || (today < START ? "Start am 15. November" : "")}</span>${!VT && avgAll(mine)!=null ? `<span class="muted small">Ø ${fmtHM(Math.round(avgAll(mine)))} pro Tag</span>` : ""}</div>
       </div>
       <div class="mestats">
         ${VT ? `<div><b>${avgOfStats(mine.s)!=null?fmtHM(avgOfStats(mine.s)):"–"}</b><span>Ø pro Tag</span></div>
@@ -1577,9 +1603,74 @@ async function reviewSheet(item, back){
 /* ---------- Admin ---------- */
 async function loadAdmin(){
   if (!acc?.admin) { adminData = null; return; }
-  try { [adminData, cwMsgs] = await Promise.all([rpc("sf_admin_overview",{p_token:T()}), rpc("sf_cw_messages",{p_token:T()}).catch(()=>[])]); } catch(err){ toast(err.message); }
+  try { [adminData, cwMsgs, chatThreads] = await Promise.all([rpc("sf_admin_overview",{p_token:T()}), rpc("sf_cw_messages",{p_token:T()}).catch(()=>[]), rpc("sf_chat_threads",{p_token:T()}).catch(()=>[])]); chatThreads ||= []; } catch(err){ toast(err.message); }
 }
 let accSearch = ""; const accOpen = new Set();
+/* ---------- Chat mit den Admins ---------- */
+function chatTime(t){ const d = new Date(t); return d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}); }
+function chatDay(t){ const d = new Date(t), td = new Date(); const y = new Date(td); y.setDate(td.getDate()-1);
+  return d.toDateString()===td.toDateString() ? "Heute" : d.toDateString()===y.toDateString() ? "Gestern" : d.toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short"}); }
+function bubblesHtml(list, meIsAdmin){
+  if (!list.length) return `<div class="muted small" style="text-align:center;padding:18px 8px;line-height:1.5">${meIsAdmin ? "Noch keine Nachrichten." : "Noch keine Nachrichten. Schreib den Admins einfach – z. B. wenn du die Challenge wechseln willst oder eine Frage hast. 👋"}</div>`;
+  let last = "";
+  return list.map(c=>{ const dk = chatDay(c.at), sep = dk!==last ? `<div class="chatday">${dk}</div>` : ""; last = dk;
+    const mine = meIsAdmin ? c.admin : !c.admin;
+    return sep + `<div class="bub ${mine?"me":"them"}${c.new?" new":""}">${!mine && c.admin ? `<b class="bub-by">🛡️ ${esc(c.by||"Admin")}</b>` : mine && meIsAdmin && c.by ? `<b class="bub-by">${esc(c.by)}</b>` : ""}${esc(c.text)}<small>${chatTime(c.at)}</small></div>`; }).join("");
+}
+function scrollChat(el){ if (el) el.scrollTop = el.scrollHeight; }
+async function loadMyChat(){
+  const box = $("#chatBox"); if (!box) return;
+  try{ const list = await rpc("sf_chat_mine",{p_token:T()}) || []; if (!$("#chatBox")) return; $("#chatBox").innerHTML = bubblesHtml(list, false); scrollChat($("#chatBox")); chatUnread.mine = 0; chatBadges(); }
+  catch(err){ box.innerHTML = `<p class="muted small">${esc(err.message)}</p>`; }
+}
+function bindMyChat(){
+  const send = $("#chatSend"); if (!send) return;
+  const ta = $("#chatTxt"); ta.oninput = ()=>{ ta.style.height = "auto"; ta.style.height = Math.min(140, ta.scrollHeight)+"px"; };
+  send.onclick = async ()=>{ const t = ta.value.trim(); if (!t) return; send.disabled = true;
+    try{ await rpc("sf_chat_send",{p_token:T(),p_text:t}); ta.value = ""; ta.style.height = "auto"; await loadMyChat(); toast("💬 An die Admins geschickt"); }catch(err){ toast(err.message); }
+    send.disabled = false; };
+}
+async function checkChat(){
+  if (!auth?.token || !acc) return;
+  try{ const u = await rpc("sf_chat_unread",{p_token:T()}); if (u){ chatUnread = u; chatBadges(); } }catch{}
+}
+function chatBadges(){
+  const set = (btn, n)=>{ if (!btn) return; let d = btn.querySelector(".tdot"); if (n>0){ if (!d){ d = document.createElement("span"); d.className = "tdot"; btn.appendChild(d); } d.textContent = n>9?"9+":n; } else d?.remove(); };
+  set(document.querySelector('#tabbar [data-t="info"]'), chatUnread.mine||0);
+  set($("#tabAdmin"), acc?.admin ? (chatUnread.admin||0) : 0);
+  const sm = $("#kontoSub"); if (sm) sm.innerHTML = chatUnread.mine ? `<span style="color:var(--flame2);font-weight:800">💬 ${chatUnread.mine} neue Nachricht${chatUnread.mine===1?"":"en"} von den Admins</span>` : "Chat mit den Admins, Challenge, Passwort";
+}
+function threadsHtml(){
+  const q = chatSearch.trim().toLowerCase();
+  let list = chatThreads.filter(t=>!q || (t.name+" "+(t.email||"")).toLowerCase().includes(q));
+  const openN = chatThreads.filter(t=>t.waiting).length;
+  if (chatFilter==="open") list = list.filter(t=>t.waiting);
+  const rows = list.map(t=>`<div class="row thr${t.unread?" unread":""}" data-thr="${t.id}"><div class="thr-av">${esc(t.emoji||"🙂")}</div>
+      <div class="thr-mid"><div class="thr-top"><b>${esc(t.name)}</b><span class="muted small">${esc(chatDay(t.last_at))} ${chatTime(t.last_at)}</span></div>
+      <div class="thr-last">${t.last_admin?"<span class=\"muted\">Du/Admin: </span>":""}${esc(t.last)}</div>
+      ${t.waiting ? `<span class="thr-st wait">⏳ wartet auf Antwort</span>` : `<span class="thr-st ok">✓ beantwortet</span>`}</div>
+      ${t.unread?`<span class="thr-cnt">${t.unread}</span>`:""}</div>`);
+  return `<div class="seg" id="chatSeg" style="margin:8px 0"><button data-f="open" class="${chatFilter==="open"?"on":""}">⏳ Offen · ${openN}</button><button data-f="all" class="${chatFilter==="all"?"on":""}">Alle · ${chatThreads.length}</button></div>
+    ${chatThreads.length > 6 ? `<input class="input" id="chatSearch" placeholder="Name suchen" value="${esc(chatSearch)}" style="margin-bottom:4px">` : ""}
+    <div class="daylist">${rows.length ? moreList(rows, "chats") : `<p class="muted small" style="margin:10px 4px">${chatFilter==="open" ? "Alles beantwortet 👍" : "Noch keine Chats."}</p>`}</div>`;
+}
+function bindThreads(root, rerender){
+  root.querySelector("#chatSeg")?.addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return; chatFilter = b.dataset.f; rerender(); });
+  const si = root.querySelector("#chatSearch"); if (si) si.oninput = ()=>{ chatSearch = si.value; const pos = si.selectionStart; rerender(); const n = $("#chatSearch"); n?.focus(); n?.setSelectionRange(pos,pos); };
+  root.querySelectorAll("[data-thr]").forEach(el=>el.onclick=()=>chatSheet(chatThreads.find(t=>t.id===el.dataset.thr)));
+}
+async function chatSheet(t){
+  sheet(`<div class="sectionhead" style="margin-bottom:8px"><h3>${esc(t.emoji||"🙂")} ${esc(t.name)}</h3><span class="muted small" style="word-break:break-all">${esc(t.email||"")}</span></div>
+    <div class="chat" id="thrBox"><div class="loader"></div></div>
+    <div class="chatin"><textarea class="input" id="thrTxt" rows="1" maxlength="1000" placeholder="Antwort schreiben …"></textarea><button class="btn btn-flame" id="thrSend">➤</button></div>`, async r=>{
+    const load = async ()=>{ const list = await rpc("sf_chat_thread",{p_token:T(),p_account:t.id}) || []; const b = r.querySelector("#thrBox"); if (!b) return; b.innerHTML = bubblesHtml(list, true); scrollChat(b); };
+    try{ await load(); }catch(err){ toast(err.message); }
+    const ta = r.querySelector("#thrTxt"); ta.oninput = ()=>{ ta.style.height = "auto"; ta.style.height = Math.min(140, ta.scrollHeight)+"px"; };
+    r.querySelector("#thrSend").onclick = async ()=>{ const txt = ta.value.trim(); if (!txt) return;
+      try{ await rpc("sf_chat_reply",{p_token:T(),p_account:t.id,p_text:txt}); ta.value = ""; ta.style.height = "auto"; await load(); toast("↩️ Gesendet"); }catch(err){ toast(err.message); } };
+    loadAdmin().then(()=>{ checkChat(); if (tab==="admin") renderAdmin(); });
+  });
+}
 function dayShort(d){ return toDate(d).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}); }
 function askAdminSheet(ctx, after){
   sheet(`<h3 style="margin-bottom:6px">💬 Frage an die Admins</h3>
@@ -1655,14 +1746,18 @@ function renderAdmin(){
   const accRows = accs.map(a=>`<details class="accd" data-acc="${a.id}" ${accOpen.has(a.id)?"open":""} style="padding:10px 0">
       <summary style="align-items:center;gap:10px"><b style="min-width:0;flex:1">${esc(a.emoji)} ${esc(a.name)}${a.admin?" 🛡️":""}${a.reviewer&&!a.admin?" 🧑‍⚖️":""}${a.hidden?" 🕶️":""}${a.status==="paused"?" ⏸️":a.status==="banned"?" ⛔":""}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)} · vorher ${a.baseline!=null?fmtHM(a.baseline)+"/Tag":"–"}</div></b></summary>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
-      <button class="pill" data-bl="${a.id}">Ausgangswert</button>
+      ${acc.owner ? `<div class="trkset" style="flex:1 1 100%;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="muted small" style="font-weight:700">Challenge:</span>${[["social","📵 30 Min."],["both","🔥 Beides"],["total","📱 Handyzeit"]].map(([t,l])=>`<button class="pill${(a.track||"social")===t?" on":""}" data-trk="${t}" data-acct="${a.id}" style="${(a.track||"social")===t?"background:var(--ink);color:var(--bg)":""}">${l}</button>`).join("")}</div>
+      <button class="pill" data-bl="${a.id}">Ausgangswert</button>` : `<span class="muted small" style="flex:1 1 100%">Challenge: ${a.track==="total"?"📱 Handyzeit":a.track==="both"?"🔥 Beides":"📵 30 Min."} · Konto-Änderungen macht der Haupt-Admin.</span>`}
       ${acc.owner && a.id!==acc.id ? `<button class="pill" data-adm="${a.id}" data-v="${a.admin?0:1}">${a.admin?"Admin entziehen":"Zum Admin"}</button>` : ""}
-      <button class="pill" data-pw="${a.id}">Passwort neu</button>${acc.can_grant && !a.admin ? `<button class="pill" data-cw="${a.id}" data-v="${a.reviewer?0:1}">${a.reviewer?"🧑‍⚖️ Co-Worker entfernen":"🧑‍⚖️ Zum Co-Worker"}</button>` : ""}${acc.owner && a.id!==acc.id ? (a.status==="paused"||a.status==="banned"
+      ${acc.owner ? `<button class="pill" data-pw="${a.id}">Passwort neu</button>` : ""}${acc.can_grant && !a.admin ? `<button class="pill" data-cw="${a.id}" data-v="${a.reviewer?0:1}">${a.reviewer?"🧑‍⚖️ Co-Worker entfernen":"🧑‍⚖️ Zum Co-Worker"}</button>` : ""}${acc.owner && a.id!==acc.id ? (a.status==="paused"||a.status==="banned"
         ? `<button class="pill" data-st="${a.id}" data-v="active">▶️ ${a.status==="banned"?"Wieder zulassen":"Fortsetzen"}</button>`
-        : `<button class="pill" data-st="${a.id}" data-v="paused">⏸️ Pausieren</button><button class="pill" style="color:var(--no)" data-st="${a.id}" data-v="banned">⛔ Ausschließen</button>`) : ""}${a.has_avatar?`<button class="pill" data-rmav="${a.id}">Bild entfernen</button>`:""}</div></details>`).join("");
+        : `<button class="pill" data-st="${a.id}" data-v="paused">⏸️ Pausieren</button><button class="pill" style="color:var(--no)" data-st="${a.id}" data-v="banned">⛔ Ausschließen</button>`) : ""}${a.has_avatar && acc.owner?`<button class="pill" data-rmav="${a.id}">Bild entfernen</button>`:""}</div></details>`).join("");
   v.innerHTML = `
     <div class="card"><div class="sectionhead"><h3>🛡️ Admin-Bereich</h3><span class="muted small">${d.accounts.length} Konten · ${d.stats?.uploads ?? 0} Uploads</span></div>
       <p class="muted small" style="margin:6px 0 0">Nur Admins sehen diesen Bereich.</p></div>
+    <div class="card" id="admChats" style="${chatThreads.some(t=>t.waiting)?"border:2px solid var(--flame2)":""}"><div class="sectionhead"><h3 style="font-size:17px">💬 Chats</h3><span class="muted small">${chatThreads.filter(t=>t.waiting).length} offen</span></div>
+      <p class="muted small" style="margin:4px 0 0;line-height:1.45">Direkte Nachrichten der Teilnehmenden. Unbeantwortete stehen oben, neue sind orange umrandet.</p>
+      ${threadsHtml()}</div>
     <div class="card" style="${acc.hidden?"border:2px solid var(--ink)":""}"><div class="sectionhead"><h3 style="font-size:17px">🕶️ Unsichtbar-Modus</h3>
         <input type="checkbox" id="hidToggle" style="width:26px;height:26px" ${acc.hidden?"checked":""}></div>
       <p class="muted small" style="margin:6px 0 0;line-height:1.5">${acc.hidden ? "<b>Aktiv:</b> Du tauchst nirgends in der Rangliste auf und zählst bei „dabei“ nicht mit. Du kannst trotzdem alles beobachten und als Admin prüfen." : "Schalte ihn ein, wenn du nicht mitmachen, sondern nur still beobachten willst. Niemand sieht dich dann in der Rangliste."}</p></div>
@@ -1733,6 +1828,7 @@ function renderAdmin(){
     });
   });
   bindMore(v, ()=>{ const y = window.scrollY; renderAdmin(); window.scrollTo({top:y}); });
+  bindThreads($("#admChats"), ()=>{ const y = window.scrollY; renderAdmin(); window.scrollTo({top:y}); });
   if ($("#allUp")) bindAllUploads($("#allUp"));
   if ($("#msgList")) bindMsgAdmin($("#msgList"), cwMsgs, ()=>{ if (tab==="admin") renderAdmin(); });
   v.querySelectorAll("[data-cw]").forEach(b=>b.onclick=()=>{
@@ -1767,6 +1863,11 @@ function renderAdmin(){
         try{ await rpc("sf_admin_set_baseline",{p_token:T(),p_account:a.id,p_minutes:parseInt(r.querySelector("#admBl").value,10)}); closeSheet(); await refresh(); await loadAdmin(); show(); toast("Gespeichert"); }catch(err){ toast(err.message); } }; }); });
   v.querySelectorAll("[data-rmav]").forEach(b=>b.onclick=()=>{ const a=d.accounts.find(x=>x.id===b.dataset.rmav);
     confirmSheet(`Profilbild von ${a.name} entfernen?`, async ()=>{ try{ await rpc("sf_admin_remove_avatar",{p_token:T(),p_account:a.id}); await refresh(); await loadAdmin(); show(); toast("Bild entfernt"); }catch(err){ toast(err.message); } }); });
+  v.querySelectorAll("[data-trk]").forEach(b=>b.onclick=()=>{ const a = d.accounts.find(x=>x.id===b.dataset.acct), t = b.dataset.trk;
+    if ((a.track||"social")===t) return;
+    const nm = {social:"nur noch die 30-Minuten-Challenge", both:"Beides (30 Min. + Handyzeit)", total:"nur noch die Handyzeit-Challenge"}[t];
+    confirmSheet(`${a.name} auf „${nm}“ umstellen? Bisherige Tage bleiben erhalten und werden neu gewertet.`, async ()=>{
+      try{ await rpc("sf_admin_set_track",{p_token:T(),p_account:a.id,p_track:t}); await refresh(); await loadAdmin(); show(); toast("✅ Challenge geändert"); }catch(err){ toast(err.message); } }); });
   v.querySelectorAll("[data-pw]").forEach(b=>b.onclick=()=>{
     const a = d.accounts.find(x=>x.id===b.dataset.pw);
     confirmSheet(`Neues Passwort für ${a.name} (${a.email}) erzeugen? Das alte gilt dann nicht mehr.`, async ()=>{
@@ -1877,6 +1978,13 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"45", date:"12. November", items:[
+    "💬 Neu: Chat mit den Admins – unter Einstellungen → Mein Konto. Neue Antworten zeigt ein roter Punkt",
+    "🗂️ Admins: Chat-Übersicht mit „Offen“ und „Alle“, Suche, ungelesene Nachrichten oben",
+    "⭐ Challenge-Auswahl: Die 30-Minuten-Challenge steht jetzt groß als Haupt-Challenge vorne",
+    "🔒 Konten ändern (Challenge, Ausgangswert, Passwort, Bild) kann nur noch der Haupt-Admin – jederzeit, z. B. auf Anfrage im Chat",
+    "⏱️ Rangliste: Bei jedem Platz steht immer der Durchschnitt pro Tag"
+  ]},
   { v:"44", date:"12. November", items:[
     "🔥📱 Neu: „Beides zusammen“ – 30-Min-Challenge und Handyzeit-Challenge auf einmal",
     "📸 Trotzdem nur ein Screenshot am Tag: Die KI liest Social-Media-Minuten und gesamte Handyzeit aus",
@@ -2053,6 +2161,7 @@ function maybeShowWhatsNew(){
 const infoOpen = new Set();
 function renderInfo(){
   const look = getLook();
+  if (chatUnread.mine) infoOpen.add("konto");
   $("#vInfo").innerHTML = `
     <div class="card">
       <div style="display:flex;align-items:center;gap:14px">
@@ -2065,11 +2174,15 @@ function renderInfo(){
       </div>
     </div>
     <div class="card setacc">
-      <details data-sec="konto" ${infoOpen.has("konto")?"open":""}><summary><span class="sa-t"><span class="sa-i">👤</span><span><b>Mein Konto</b><small>Challenge, Passwort, Abmelden</small></span></span></summary>
+      <details data-sec="konto" ${infoOpen.has("konto")?"open":""}><summary><span class="sa-t"><span class="sa-i">👤</span><span><b>Mein Konto</b><small id="kontoSub">Chat mit den Admins, Challenge, Passwort</small></span></span></summary>
         <div class="accbody">
+    <div class="card" id="cardChat"><div class="sectionhead"><h3 style="font-size:17px">💬 Chat mit den Admins</h3><span class="muted small">nur du & die Admins</span></div>
+      <p class="muted small" style="margin:4px 0 8px;line-height:1.45">Fragen, Probleme oder Challenge wechseln? Schreib einfach – die Antwort kommt hier rein.</p>
+      <div class="chat" id="chatBox"><div class="loader"></div></div>
+      <div class="chatin"><textarea class="input" id="chatTxt" rows="1" maxlength="1000" placeholder="Nachricht an die Admins …"></textarea><button class="btn btn-flame" id="chatSend">➤</button></div></div>
     <div class="card"><div class="sectionhead"><div><div class="muted small" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em">Dein Ausgangswert</div>
         <b style="font-size:18px">${fmtHM(acc.baseline)} ${TRACKS[trackOf()].word} pro Tag</b><div class="muted small">vor der Fastenzeit · ${TRACKS[trackOf()].icon} ${isTotal()?"Handyzeit-Challenge (ohne Limit)":`Social-Media-Challenge (max. ${LIMIT} Min.)`}</div></div>
-        ${acc.can_switch?`<button class="pill" id="btnTrack">Ändern</button>`:""}</div></div>
+        ${acc.can_switch?`<button class="pill" id="btnTrack">Ändern</button>`:""}</div>${acc.can_switch?"":`<p class="muted small" style="margin:8px 0 0">Challenge wechseln? Schreib den Admins oben im Chat.</p>`}</div>
     <div class="card">
       <h3 style="font-size:17px;margin-bottom:12px">Konto</h3>
       <button class="btn btn-ghost" id="btnPw" style="margin-bottom:10px">🔒 Passwort ändern</button>
@@ -2167,6 +2280,8 @@ ${acc.admin || PUBLIC_UPDATES.length ? `      <details data-sec="news" ${infoOpe
   $("#chSize").onclick = e=>{ const b=e.target.closest("button"); if(b) setLook("size", b.dataset.v); };
   $("#clAll")?.addEventListener("click", ()=>{ $("#clBox").innerHTML = changelogHtml(true); $("#clAll").remove(); });
   $("#btnPw").onclick = changePw;
+  bindMyChat(); if (infoOpen.has("konto")) loadMyChat(); chatBadges();
+  document.querySelector('#vInfo details[data-sec="konto"]')?.addEventListener("toggle", e=>{ if (e.target.open) loadMyChat(); });
   $("#btnInstall")?.addEventListener("click", installSheet);
   $("#btnExport").onclick = async ()=>{
     try{ const data = await rpc("sf_export_me",{p_token:T()});
@@ -2341,7 +2456,7 @@ async function ping(sec){
     if (r){ if (appTime && r.seconds < appTime.seconds) appShown = 0;   // wurde zurückgesetzt
       appTime = r; appTimeAt = Date.now(); paintAppTime(); } }catch{}
 }
-function startPing(){ if (pingTimer) return; ping(0); pingTimer = setInterval(()=>{ if (!document.hidden) ping(30); }, 30000); }
+function startPing(){ if (pingTimer) return; ping(0); checkChat(); pingTimer = setInterval(()=>{ if (!document.hidden){ ping(30); checkChat(); } }, 30000); }
 document.addEventListener("visibilitychange", ()=>{ if (!document.hidden && pingTimer) ping(0); });
 function appTimeNow(){ if (!appTime) return 0; appShown = Math.max(appShown, appTime.seconds + (Date.now()-appTimeAt)/1000 * Math.max(1, appTime.online||0)); return appShown; }
 function fmtHMS(sec){ sec = Math.max(0, Math.floor(sec)); const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), x = sec%60;
