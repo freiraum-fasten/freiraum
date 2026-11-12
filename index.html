@@ -416,7 +416,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "35";
+const APP_VERSION = "36";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -509,7 +509,7 @@ function confetti(){
 let auth = load();          // {token}
 let acc = null;             // Konto: {id,email,name,emoji,admin,member_id,group_code,limit}
 let group = null;           // {name, code, members:[...]}
-let adminData = null, reviewData = null;
+let adminData = null, reviewData = null, cwMsgs = null;
 let tab = "group";
 let mode = "join", authMode = "login";
 let pickedEmoji = EMOJIS[0];
@@ -1466,7 +1466,9 @@ async function reviewSheet(item, back){
       ${sus!=null?`<div class="status bad" style="display:block;margin:10px 0 0;line-height:1.5">🕵️ <b>Die KI vermutet einen Fake.</b>${sus?`<br>${esc(sus)}`:""}<br><b>Liegt die KI richtig?</b></div>`:""}
       <div class="choice"><button class="yes" data-v="1"><span class="ic">✓</span>${sus!=null?"Echt – freigeben":"Freigeben"}</button><button class="no" data-v="0"><span class="ic">✕</span>${sus!=null?"Fake – ablehnen":"Ablehnen"}</button></div>
       <button class="btn btn-ghost" id="backBtn" style="margin-top:10px">Zurück</button>
+      ${isCoWorker() ? `<button class="btn btn-ghost" id="askDay" style="margin-top:10px">💬 Frage an die Admins zu diesem Tag</button>` : ""}
       ${acc?.admin ? `<button class="btn btn-ghost" id="delShot" style="margin-top:10px;color:var(--no)">🗑️ Screenshot löschen</button>` : ""}`;
+    if ($("#askDay")) $("#askDay").onclick = ()=>askAdminSheet({member:item.member,name:item.name,day:item.day}, ()=>{ if (tab==="review") renderReview(); });
     if ($("#delShot")) $("#delShot").onclick = ()=>confirmSheet(`Screenshot von ${item.name} für ${fmtDate(item.day)} löschen? Der Tag zählt dann nicht mehr.`, async ()=>{
       try{ await rpc("sf_admin_delete_checkin",{p_token:T(),p_member:item.member,p_day:item.day}); await refresh(); await loadAdmin(); show(); toast("🗑️ Screenshot gelöscht"); }catch(err){ toast(err.message); }
     });
@@ -1485,14 +1487,47 @@ async function reviewSheet(item, back){
 /* ---------- Admin ---------- */
 async function loadAdmin(){
   if (!acc?.admin) { adminData = null; return; }
-  try { adminData = await rpc("sf_admin_overview",{p_token:T()}); } catch(err){ toast(err.message); }
+  try { [adminData, cwMsgs] = await Promise.all([rpc("sf_admin_overview",{p_token:T()}), rpc("sf_cw_messages",{p_token:T()}).catch(()=>[])]); } catch(err){ toast(err.message); }
 }
 let accSearch = ""; const accOpen = new Set();
+function dayShort(d){ return toDate(d).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}); }
+function askAdminSheet(ctx, after){
+  sheet(`<h3 style="margin-bottom:6px">💬 Frage an die Admins</h3>
+    <p class="muted small" style="margin:0 0 12px;line-height:1.5">${ctx ? `Zu <b>${esc(ctx.name)} · ${esc(fmtDate(ctx.day))}</b>. ` : "Allgemeine Frage oder Hinweis. "}Nur die Admins sehen das – die Antwort findest du im Reiter „Prüfen“.</p>
+    <textarea class="input" id="askTxt" rows="4" maxlength="500" style="font:inherit;resize:vertical" placeholder="${ctx ? "z. B. Ich bin unsicher, ob das Datum stimmt – kannst du mal schauen?" : "z. B. Wie soll ich mit YouTube-Musik im Hintergrund umgehen?"}"></textarea>
+    <button class="btn btn-primary" id="askSend" style="margin-top:12px">Senden</button>`, r=>{
+    r.querySelector("#askTxt").focus();
+    r.querySelector("#askSend").onclick = async ()=>{ const t = r.querySelector("#askTxt").value.trim(); if (!t) return toast("Bitte etwas schreiben");
+      const b = r.querySelector("#askSend"); b.disabled = true;
+      try{ await rpc("sf_cw_message",{p_token:T(),p_member:ctx?.member||null,p_day:ctx?.day||null,p_text:t}); closeSheet(); cwMsgs = null; toast("💬 An die Admins geschickt"); after?.(); }
+      catch(err){ toast(err.message); b.disabled = false; } };
+  });
+}
+function msgHtml(g, admin){
+  const ctx = g.member ? `<span class="muted small">zu <b>${esc(g.emoji||"")} ${esc(g.name||"?")}</b> · ${esc(dayShort(g.day))}</span>` : `<span class="muted small">allgemein</span>`;
+  return `<div class="row ${g.done?"rv-ok":"rv-open"}" style="flex-wrap:wrap;display:flex">
+    <div style="flex:1 1 100%"><b>${admin ? `${esc(g.from_emoji||"")} ${esc(g.from)}` : "Du"}</b> ${ctx} <span class="muted small">· ${esc(new Date(g.created).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))}</span></div>
+    <div style="flex:1 1 100%;margin-top:6px;line-height:1.45;white-space:pre-wrap">${esc(g.text)}</div>
+    ${g.answer ? `<div class="status ok" style="display:block;flex:1 1 100%;margin:8px 0 0;line-height:1.45;white-space:pre-wrap">↩️ <b>${esc(g.answered_by||"Admin")}:</b> ${esc(g.answer)}</div>` : g.done ? `<div class="muted small" style="flex:1 1 100%;margin-top:6px">✓ erledigt</div>` : (admin ? "" : `<div class="muted small" style="flex:1 1 100%;margin-top:6px">⏳ noch keine Antwort</div>`)}
+    ${admin ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${g.member && g.minutes!=null ? `<button class="pill" data-mopen="${g.id}">Tag ansehen</button>` : ""}<button class="pill" data-mans="${g.id}">${g.answer?"Neu antworten":"Antworten"}</button>${g.done?"":`<button class="pill" data-mdone="${g.id}">✓ Erledigt</button>`}</div>` : ""}
+  </div>`;
+}
+function bindMsgAdmin(root, list, rerender){
+  root.querySelectorAll("[data-mopen]").forEach(b=>b.onclick=()=>{ const g=list.find(x=>x.id===b.dataset.mopen);
+    reviewSheet({member:g.member,name:g.name,day:g.day,minutes:g.minutes,ocr:g.ocr,edited:g.edited,date_ok:g.date_ok,suspect:g.suspect,track:g.track}, null); });
+  root.querySelectorAll("[data-mdone]").forEach(b=>b.onclick=async ()=>{ try{ await rpc("sf_cw_answer",{p_token:T(),p_id:b.dataset.mdone,p_answer:null}); await loadAdmin(); rerender(); toast("✓ Erledigt"); }catch(err){ toast(err.message); } });
+  root.querySelectorAll("[data-mans]").forEach(b=>b.onclick=()=>{ const g=list.find(x=>x.id===b.dataset.mans);
+    sheet(`<h3 style="margin-bottom:6px">Antwort an ${esc(g.from)}</h3><div class="status warn" style="display:block;margin:0 0 10px;white-space:pre-wrap">${esc(g.text)}</div>
+      <textarea class="input" id="ansTxt" rows="4" maxlength="500" style="font:inherit;resize:vertical" placeholder="Deine Antwort"></textarea>
+      <button class="btn btn-primary" id="ansSend" style="margin-top:12px">Antwort senden</button>`, r=>{ r.querySelector("#ansTxt").focus();
+      r.querySelector("#ansSend").onclick = async ()=>{ const t=r.querySelector("#ansTxt").value.trim(); if(!t) return toast("Bitte etwas schreiben");
+        try{ await rpc("sf_cw_answer",{p_token:T(),p_id:g.id,p_answer:t}); closeSheet(); await loadAdmin(); rerender(); toast("↩️ Antwort gesendet"); }catch(err){ toast(err.message); } }; }); });
+}
 function isCoWorker(){ return !!(acc && acc.reviewer && !acc.admin); }
 function renderReview(){
   const v = $("#vReview");
-  if (!reviewData){ v.innerHTML = `<div class="loader"></div>`;
-    rpc("sf_review_queue",{p_token:T()}).then(q=>{ reviewData = q || []; if (tab==="review") renderReview(); }).catch(err=>{ toast(err.message); v.innerHTML = `<p class="muted">${esc(err.message)}</p>`; }); return; }
+  if (!reviewData || !cwMsgs){ v.innerHTML = `<div class="loader"></div>`;
+    Promise.all([rpc("sf_review_queue",{p_token:T()}), rpc("sf_cw_messages",{p_token:T()})]).then(([q,mm])=>{ reviewData = q || []; cwMsgs = mm || []; if (tab==="review") renderReview(); }).catch(err=>{ toast(err.message); v.innerHTML = `<p class="muted">${esc(err.message)}</p>`; }); return; }
   const q = reviewData;
   const rows = q.slice(0,80).map((x,i)=>`<div class="row rv-open" style="flex-wrap:wrap"><b>${esc(x.emoji)} ${esc(x.name)} <span class="muted small">· ${trackBadge(x.group)} · ${esc(toDate(x.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
       <span>${fmtHM(x.minutes)}</span>${x.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${x.edited?`<span class="flag">✏️ KI: ${x.ocr==null?"–":fmtHM(x.ocr)}</span>`:""}${x.date_ok===false?`<span class="flag">📅?</span>`:""}${x.suspect?`<span class="flag bad">🕵️ Fake?</span>`:""}
@@ -1503,9 +1538,14 @@ function renderReview(){
       <p class="muted small" style="margin:6px 0 0;line-height:1.5">Du bist Co-Worker und hilfst beim Prüfen. Schau dir den Screenshot an und sag <b>Freigeben</b> oder <b>Ablehnen</b>. Löschen und alles andere machen die Admins. Deine eigenen Tage prüft jemand anderes.</p></div>
     <div class="card"><p class="muted small" style="margin:0 0 8px">✏️ = Zeit von Hand geändert · 📅? = Datum nicht erkannt · 🕵️ = KI vermutet einen Fake · 💬 = Kommentar/Einspruch</p>
       <div class="daylist">${rows}</div>
-      <button class="btn btn-ghost" id="rqReload" style="margin-top:10px">🔄 Aktualisieren</button></div>`;
+      <button class="btn btn-ghost" id="rqReload" style="margin-top:10px">🔄 Aktualisieren</button></div>
+    <div class="card"><div class="sectionhead"><h3 style="font-size:17px">💬 Fragen an die Admins</h3>${cwMsgs.filter(g=>g.answer).length?`<span class="muted small">${cwMsgs.filter(g=>g.answer).length} beantwortet</span>`:""}</div>
+      <p class="muted small" style="margin:6px 0 10px;line-height:1.5">Unsicher bei einem Tag? Beim Prüfen gibt's unten „Frage zu diesem Tag“. Hier kannst du auch allgemein etwas fragen.</p>
+      <button class="btn btn-primary" id="askGen">💬 Allgemeine Frage stellen</button>
+      ${cwMsgs.length ? `<div class="daylist" style="margin-top:10px">${cwMsgs.map(g=>msgHtml(g,false)).join("")}</div>` : ""}</div>`;
+  $("#askGen").onclick = ()=>askAdminSheet(null, ()=>{ if (tab==="review") renderReview(); });
   v.querySelectorAll("[data-rq]").forEach(b=>b.onclick=()=>reviewSheet({...q[+b.dataset.rq], track:q[+b.dataset.rq].group}, null));
-  $("#rqReload").onclick = ()=>{ reviewData = null; renderReview(); };
+  $("#rqReload").onclick = ()=>{ reviewData = null; cwMsgs = null; renderReview(); };
 }
 function renderAdmin(){
   const v = $("#vAdmin");
@@ -1541,6 +1581,9 @@ function renderAdmin(){
       <button class="btn btn-flame" id="btnTest">📵 Test: Social-Media-Screenshot</button>
       <button class="btn btn-primary" id="btnTestT" style="margin-top:8px">📱 Test: Handyzeit-Screenshot (gesamt)</button>
       <div class="daylist" style="margin-top:10px">${tests}</div></div>
+    ${(cwMsgs||[]).length ? `<div class="card" style="${(cwMsgs||[]).some(g=>!g.done)?"border:2px solid var(--flame2)":""}"><div class="sectionhead"><h3 style="font-size:17px">💬 Nachrichten von Helfern</h3><span class="muted small">${cwMsgs.filter(g=>!g.done).length} offen</span></div>
+      <p class="muted small" style="margin:6px 0 8px">Fragen und Hinweise der Co-Worker – zu einem Tag oder allgemein. Deine Antwort sehen sie im Reiter „Prüfen“.</p>
+      <div class="daylist" id="msgList">${cwMsgs.slice(0,40).map(g=>msgHtml(g,true)).join("")}</div></div>` : ""}
     <div class="card"><div class="sectionhead"><h3 style="font-size:17px">📋 Zu prüfen</h3><span class="muted small">${d.queue.length} offen</span></div>
       <p class="muted small" style="margin:6px 0 8px">🤖 Die KI hat ${d.stats?.auto ?? 0} Uploads automatisch freigegeben. Hier landen nur Einsprüche 💬 und auffällige Uploads: ✏️ = Minuten von Hand geändert · 📅? = Datum nicht erkannt · 🕵️ = KI vermutet einen Fake. Alle anderen kannst du über die Rangliste prüfen (Person antippen).</p>
       ${(d.stats?.fake_right||d.stats?.fake_wrong) ? `<p class="muted small" style="margin:0 0 8px">🕵️ Fake-Verdacht der KI bisher: <b>${d.stats.fake_right||0}× richtig</b> · ${d.stats.fake_wrong||0}× falsch</p>` : ""}
@@ -1594,6 +1637,7 @@ function renderAdmin(){
         toast(to==="paused"?"⏸️ Pausiert":to==="banned"?"⛔ Ausgeschlossen":"▶️ Ist wieder dabei"); }catch(err){ toast(err.message); }
     });
   });
+  if ($("#msgList")) bindMsgAdmin($("#msgList"), cwMsgs, ()=>{ if (tab==="admin") renderAdmin(); });
   v.querySelectorAll("[data-cw]").forEach(b=>b.onclick=()=>{
     const a = d.accounts.find(x=>x.id===b.dataset.cw), make = b.dataset.v==="1";
     confirmSheet(make ? `${a.name} (${a.email}) zum Co-Worker machen? Die Person kann dann beim Prüfen helfen.` : `${a.name} als Co-Worker entfernen?`, async ()=>{
@@ -1736,6 +1780,11 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"36", date:"12. November", items:[
+    "💬 Co-Worker können den Admins eine Frage oder einen Kommentar schicken – zu einem bestimmten Tag oder allgemein",
+    "↩️ Admins sehen die Nachrichten im Admin-Bereich, können antworten oder sie als erledigt markieren",
+    "📥 Die Antworten sehen die Co-Worker im Reiter „Prüfen“"
+  ]},
   { v:"35", date:"12. November", items:[
     "⏱️ Rangliste: Bei allen steht jetzt, wie viele Minuten sie gestern hatten – und ihr Durchschnitt pro Tag (Ø)"
   ]},
