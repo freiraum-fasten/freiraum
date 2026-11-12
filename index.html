@@ -394,7 +394,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "26";
+const APP_VERSION = "27";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -1008,15 +1008,15 @@ function impulseCard(i, tag){
 /* Wochenchallenges – Freiraum zum Weitergeben (für alle, besonders für die Konfis) */
 const WEEKLY = [
   { n:1, icon:"🕯️", title:"Weihnachtslicht", task:"Gestalte ein leeres Glas weihnachtlich und stell ein Teelicht hinein.",
-    tips:["Transparentpapier oder Servietten aufkleben","Sterne, Schneeflocken oder einen Bibelvers aufmalen","Schleife oder Tannenzweig um den Rand binden"], bring:"dein Glas mit Teelicht" },
+    tips:["Transparentpapier oder Servietten aufkleben","Sterne, Schneeflocken oder einen Bibelvers aufmalen","Schleife oder Tannenzweig um den Rand binden"], bring:"dein Glas mit Teelicht", share:"Verschenk dein Licht an jemanden, dem ein bisschen Wärme guttut." },
   { n:2, icon:"✍️", title:"Weihnachtsmomente", task:"Schreib auf, welche Gefühle, Gerüche und Erinnerungen Weihnachten für dich besonders machen.",
-    tips:["Woran riechst du, dass Weihnachten ist?","Welches Lied, welches Ritual, welcher Mensch gehört für dich dazu?","Gern auf eine schöne Karte oder in Stichworten"], bring:"deinen Zettel oder deine Karte" },
+    tips:["Woran riechst du, dass Weihnachten ist?","Welches Lied, welches Ritual, welcher Mensch gehört für dich dazu?","Gern auf eine schöne Karte oder in Stichworten"], bring:"deinen Zettel oder deine Karte", share:"Erzähl deiner Familie davon oder schreib es auf eine Karte für jemanden." },
   { n:3, icon:"🍫", title:"Bruchschokolade", task:"Mach deine eigene Bruchschokolade und teile sie mit anderen.",
-    tips:["Schokolade schmelzen und dünn auf Backpapier streichen","Mit Nüssen, Streuseln, Marshmallows oder Trockenobst bestreuen","Fest werden lassen, in Stücke brechen, hübsch verpacken – an Allergien denken!"], bring:"ein Tütchen zum Teilen" },
+    tips:["Schokolade schmelzen und dünn auf Backpapier streichen","Mit Nüssen, Streuseln, Marshmallows oder Trockenobst bestreuen","Fest werden lassen, in Stücke brechen, hübsch verpacken – an Allergien denken!"], bring:"ein Tütchen zum Teilen", share:"Verschenk Tütchen an Nachbarn, Freunde oder deine Familie." },
   { n:4, icon:"📝", title:"Weihnachtsgedicht", task:"Schreib ein eigenes Weihnachtsgedicht oder einen Weihnachtsspruch.",
-    tips:["Tipp „Elfchen“: 11 Wörter in 5 Zeilen (1–2–3–4–1)","Muss sich nicht reimen – Hauptsache ehrlich","Für wen könnte dein Gedicht ein Geschenk sein?"], bring:"dein Gedicht oder deinen Spruch" },
+    tips:["Tipp „Elfchen“: 11 Wörter in 5 Zeilen (1–2–3–4–1)","Muss sich nicht reimen – Hauptsache ehrlich","Für wen könnte dein Gedicht ein Geschenk sein?"], bring:"dein Gedicht oder deinen Spruch", share:"Lies es jemandem vor, schick es als Nachricht oder leg es auf den Frühstückstisch." },
   { n:5, icon:"✂️", title:"Weihnachtsbasteln", task:"Werde kreativ und bastle etwas Weihnachtliches. Lass deiner Fantasie freien Lauf!",
-    tips:["Sterne aus Papier falten","Anhänger aus Salzteig oder Holz","Eine Weihnachtskarte für jemanden, der sich darüber freut"], bring:"dein Bastelwerk" }
+    tips:["Sterne aus Papier falten","Anhänger aus Salzteig oder Holz","Eine Weihnachtskarte für jemanden, der sich darüber freut"], bring:"dein Bastelwerk", share:"Verschenk dein Werk oder schmück damit euer Zuhause." }
 ];
 const weekStart = n => addDays(START, (n-1)*7), weekEnd = n => addDays(START, (n-1)*7+6);
 const shortD = d => toDate(d).toLocaleDateString("de-DE",{day:"numeric",month:"numeric",timeZone:"UTC"});
@@ -1026,9 +1026,9 @@ function weeklyHtml(){
   const today = berlinToday(), done = wcDone();
   const cur = WEEKLY.find(w=>today>=weekStart(w.n) && today<=weekEnd(w.n))?.n || (today<START ? 1 : 0);
   return `<div class="card wc-hero">
-      <span class="konfi-tag">⛪ Für die Konfis</span>
+      <span class="konfi-tag">🎁 Für alle – allein oder gemeinsam</span>
       <div style="font-size:38px;line-height:1;margin-top:10px">🎁</div>
-      <h2 style="font-size:23px;line-height:1.2;margin:8px 0 6px">Konfi-Wochenchallenges – <span class="grad">Freiraum zum Weitergeben</span></h2>
+      <h2 style="font-size:23px;line-height:1.2;margin:8px 0 6px">Wochenchallenges – <span class="grad">Freiraum zum Weitergeben</span></h2>
       <p class="muted" style="margin:0;line-height:1.55;font-size:15px">Alle können mitmachen. Jede Woche gibt es eine Challenge, bei der du etwas <b>gestalten, verschenken oder mit anderen teilen</b> kannst.</p>
       <div class="stats3" style="margin:14px 0 0"><div><b>${done.length}</b><span>erledigt</span></div><div><b>${cur||"–"}</b><span>aktuelle Woche</span></div><div><b>${WEEKLY.length}</b><span>Challenges</span></div></div>
     </div>
@@ -1040,19 +1040,19 @@ function weeklyHtml(){
     ${WEEKLY.map(w=>{ const isCur = w.n===cur, past = today>weekEnd(w.n), isDone = done.includes(w.n);
       return `<div class="card wc ${isCur?"cur":""} ${isDone?"done":""}">
         <div class="wc-head"><div class="wc-ico">${w.icon}</div>
-          <div style="flex:1;min-width:0"><div class="wc-week">⛪ Konfi-Woche ${w.n} · ${shortD(weekStart(w.n))}–${shortD(weekEnd(w.n))}</div>
+          <div style="flex:1;min-width:0"><div class="wc-week">Woche ${w.n} · ${shortD(weekStart(w.n))}–${shortD(weekEnd(w.n))}</div>
           <b style="font-size:19px">${esc(w.title)}</b></div>
           ${isCur?`<span class="pill wc-now">Diese Woche</span>`:past?`<span class="pill muted">vorbei</span>`:`<span class="pill muted">ab ${shortD(weekStart(w.n))}</span>`}</div>
         <p style="margin:10px 0 8px;line-height:1.5">${esc(w.task)}</p>
         <details class="wc-tips"><summary>💡 Ideen dazu</summary><ul>${w.tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></details>
-        <div class="wc-bring">⛪ <b>Mitbringen zum Konfi-Treffen in Woche ${w.n}:</b> ${esc(w.bring)}</div>
+        <div class="wc-bring">🎁 <b>Weitergeben:</b> ${esc(w.share)}<div class="muted small" style="margin-top:6px">⛪ Konfis bringen mit: ${esc(w.bring)}</div></div>
         <button class="btn ${isDone?"btn-ghost":"btn-flame"}" data-wc="${w.n}" style="margin-top:12px">${isDone?"✓ Erledigt – rückgängig":"Erledigt ✓"}</button>
       </div>`; }).join("")}`;
 }
 let ideasView = "ideas";
 function renderIdeas(){
   const today = berlinToday(), done = frDone(today);
-  const seg = `<div class="seg" id="segIdeas"><button data-v="ideas" class="${ideasView==="ideas"?"on":""}">💡 Ideen</button><button data-v="weekly" class="${ideasView==="weekly"?"on":""}">⛪ Konfi-Challenges</button></div>`;
+  const seg = `<div class="seg" id="segIdeas"><button data-v="ideas" class="${ideasView==="ideas"?"on":""}">💡 Ideen</button><button data-v="weekly" class="${ideasView==="weekly"?"on":""}">🎁 Wochenchallenges</button></div>`;
   if (ideasView === "weekly"){
     $("#vIdeas").innerHTML = seg + weeklyHtml();
     document.querySelectorAll("#vIdeas [data-wc]").forEach(b=>b.onclick=()=>{ const on = wcToggle(+b.dataset.wc); if (on){ navigator.vibrate?.(30); flameCelebrate("Challenge geschafft!", "Bring's mit und teil es mit den anderen 🎁"); } renderIdeas(); });
@@ -1649,6 +1649,8 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"27", date:"12. November", items:[
+    "🎁 Die <b>Wochenchallenges</b> sind jetzt für alle – allein, mit Familie oder Freunden. Zu jeder Woche gibt's eine Idee zum Weitergeben. Die Konfis bringen ihren Beitrag wie gewohnt mit."]},
   { v:"26", date:"12. November", items:[
     "⏱️ Die KI versteht jetzt <b>Stunden und Minuten</b> in allen Schreibweisen (z. B. „2 Std. 5 Min.“, „1h 9m“, „1,5 Std.“, „125 Minuten“) und korrigiert typische Lesefehler.",
     "🕐 Zeiten werden überall in <b>Stunden und Minuten</b> angezeigt – und beim Hochladen gibst du sie auch so ein.",
