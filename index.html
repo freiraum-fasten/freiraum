@@ -114,6 +114,9 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .daystrip{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px}
 .daystrip .label{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 .daystrip .day{font-size:30px;font-weight:800;letter-spacing:-.03em}
+.daystrip .pill{white-space:nowrap;flex:none;display:inline-flex;align-items:center;gap:6px;font-weight:800}.daystrip .pill svg{width:18px;height:18px}
+.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}.btnrow .btn{margin:0;padding-left:8px;padding-right:8px}
+.todaynote{text-align:center;margin:-2px 8px 18px;line-height:1.5}
 .progress{height:8px;background:var(--soft);border-radius:99px;overflow:hidden;margin-bottom:18px}
 .progress i{display:block;height:100%;background:linear-gradient(90deg,var(--flame1),var(--flame2));border-radius:99px;transition:width .6s ease}
 .streak{display:flex;align-items:center;gap:16px}
@@ -417,7 +420,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "39";
+const APP_VERSION = "40";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -646,19 +649,13 @@ function renderToday(){
   let html = acc?.status==="paused" ? `<div class="card"><div class="status warn" style="display:block;margin:0;line-height:1.5">⏸️ <b>Dein Konto ist gerade pausiert.</b> Du tauchst im Moment nicht in der Rangliste auf und kannst nichts hochladen. Bei Fragen melde dich bei einem Admin.</div></div>` : "";
   if (today < START){
     const left = diffDays(START, today);
-    html += `<div class="card" style="text-align:center">
-      <div class="daystrip" style="justify-content:center"><div class="label">Start am Sonntag, 15. November</div></div>
-      <svg class="flame off" style="width:64px;height:64px"><use href="#flame"/></svg>
-      <div class="countdown"><div><b>${left}</b><span>${left===1?"Tag":"Tage"}</span></div></div>
-      <p class="muted" style="margin:10px 0 0;line-height:1.5">Noch bis zum Start. Ab dem 15. lädst du jeden Tag den Screenshot vom Vortag hoch. Nutze die Zeit: Freunde einladen und dein ${LIMIT}-Minuten-Limit einstellen.</p>
-    </div>
-    <div class="card"><h3 style="font-size:17px;margin-bottom:6px">🧪 Probe-Upload</h3>
-      <p class="muted small" style="margin:0 0 12px;line-height:1.5">Bis zum Start kannst du schon üben: Lade den Screenshot von <b>gestern</b> hoch. Die KI prüft ihn, ein Admin schaut drüber – gezählt wird aber erst ab dem 15. November.</p>
-      <button class="btn btn-primary" id="goProbe">📷 Probe-Screenshot hochladen</button>
+    html += `<div class="daystrip"><div><div class="label">Start · So., 15. November</div><div class="day">Noch ${left} <span class="muted" style="font-weight:600">${left===1?"Tag":"Tage"}</span></div></div>
+      <div class="pill">🧪 Probezeit</div></div>
+    <div class="card"><h3 style="font-size:18px;margin-bottom:6px">📷 Probe-Upload</h3>
+      <p class="muted small" style="margin:0 0 14px;line-height:1.5">Üb schon mal: Lade den Screenshot von <b>gestern</b> hoch und schau, was die KI erkennt. Gezählt wird ab dem 15. November – dann jeden Tag der Screenshot vom Vortag.</p>
+      <button class="btn btn-flame" id="goProbe">📷 Probe-Screenshot hochladen</button>
       <div id="myTests"></div></div>
-    ${acc?.admin ? `<button class="btn btn-ghost" id="goAdmin" style="margin-bottom:14px">🛡️ Tests im Admin-Bereich prüfen</button>` : ""}
-    <button class="btn btn-flame" id="goInvite" style="margin-bottom:14px">Freunde einladen</button>
-    <button class="btn btn-ghost" id="goSetup" style="margin-bottom:14px">📸 So machst du den Screenshot</button>`;
+    <div class="btnrow"><button class="btn btn-primary" id="goInvite">👋 Einladen</button><button class="btn btn-ghost" id="goSetup">📸 So geht's</button></div>`;
     html += impulseCard(diffDays(today, START) + 400, "");
   } else if (today > lastUpload){
     html += `<div class="card" style="text-align:center">
@@ -675,12 +672,8 @@ function renderToday(){
     const idx = Math.min(dayIndex(today), DAYS), running = today <= END;
     const pct = Math.round(Math.min(dayIndex(today), DAYS)/DAYS*100);
     html += `<div class="daystrip"><div><div class="label">${esc(fmtDate(today))}</div><div class="day">${running?`Tag ${idx} <span class="muted" style="font-weight:600">von ${DAYS}</span>`:"Endspurt 🎄"}</div></div>
-      <div class="pill">🎄 ${running?`noch ${DAYS-idx+1}`:"geschafft"}</div></div>
+      <div class="pill">${isTotal() ? `📱 ${s.validDays} ${s.validDays===1?"Tag":"Tage"}` : `<svg class="flame ${s.streak? "":"off"}" id="bigFlame"><use href="#flame"/></svg>${s.streak} in Folge`}</div></div>
       <div class="progress"><i style="width:${pct}%"></i></div>`;
-    html += `<div class="card"><div class="streak">
-      <svg class="flame ${s.streak? "":"off"}" id="bigFlame"><use href="#flame"/></svg>
-      <div><div class="num">${s.streak}</div><div class="sub">${s.streak===1?"Tag in Folge":"Tage in Folge"} · ${s.total} 🔥 geschafft</div></div>
-    </div>${acc.baseline!=null?`<div class="status ok" style="margin-top:14px;display:block">⏱️ Schon <b>${fmtHM(s.saved)}</b> Social Media gespart (vorher ${fmtHM(acc.baseline)} am Tag)</div>`:""}</div>`;
     if (acc.hidden) html += `<div class="hint" style="display:block;margin-bottom:14px"><b>🕶️ Unsichtbar-Modus aktiv</b><br><span class="muted small">Du machst nicht mit und beobachtest nur. Zum Mitmachen im Admin-Bereich ausschalten.</span></div>`;
     else {
       if (inWindow(y)) html += checkinCard(s, y, today);
@@ -692,7 +685,7 @@ function renderToday(){
         if (!ek) html += `<div class="card" style="padding:16px 20px;border:2px solid var(--no)"><div class="sectionhead"><div><b>${esc(fmtDate(dk))} fehlt</b><div class="muted small">${left===0?"Heute letzte Chance zum Nachtragen!":`Noch ${left===1?"bis morgen":left+" Tage"} Zeit zum Nachtragen.`}</div></div><button class="pill" data-up="${dk}">Nachtragen</button></div></div>`;
         else if (canJoker(ek)) html += jokerOffer(dk, ek);
       }
-      if (running) html += `<div class="card" style="padding:16px 20px"><b>Heute läuft:</b> <span class="muted">${goalText()}. Den Screenshot von heute lädst du morgen hoch.</span></div>`;
+      if (running && inWindow(y)) html += `<p class="muted small todaynote">Heute läuft: ${goalText()} · den Screenshot von heute lädst du morgen hoch.</p>`;
     }
     if (running) html += impulseCard(idx-1, `Impuls · Tag ${idx}`);
     html += calendarCard(s, today);
@@ -813,8 +806,8 @@ function checkinCard(s, day, today){
     <div style="display:flex;gap:16px;flex-wrap:wrap"><button class="linkbtn" data-up="${day}">Screenshot nochmal hochladen</button>${e.disputed?"":`<button class="linkbtn" data-dispute="${day}">Stimmt nicht? Einspruch</button>`}<button class="linkbtn" data-delday="${day}" style="color:var(--no)">Löschen</button></div></div>`;
   }
   return `<div class="card" style="border:2px solid var(--flame2)">
-    <p class="q">📸 Lade den Screenshot von ${label} hoch</p>
-    <div class="muted small" style="line-height:1.5">Mach einen Screenshot deiner Bildschirmzeit <b>von gestern</b> – mit Datum und der Liste der Apps. Die Minuten werden direkt auf deinem Handy ausgelesen.</div>
+    <p class="q" style="margin-bottom:4px">📸 Screenshot von ${label}</p>
+    <div class="muted small" style="line-height:1.5">Bildschirmzeit von gestern – mit Datum und App-Liste. Die KI liest die Minuten aus.</div>
     <button class="btn btn-flame" data-up="${day}" style="margin-top:16px">📷 Screenshot hochladen</button>
     <div class="muted small" style="text-align:center;margin-top:10px">${isTotal()?"Zählt die gesamte Bildschirmzeit":`Max. ${LIMIT} Min. = 🔥`} · Vergessen? Du hast bis zu ${GRACE} Tage Zeit zum Nachtragen.</div>
   </div>`;
@@ -1831,6 +1824,11 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"40", date:"12. November", items:[
+    "🧹 „Heute“ aufgeräumt: keine doppelten Infos mehr (Countdown, Flammen-Karte, „gespart“ stehen schon in der Rangliste)",
+    "🔥 Oben nur noch eine kompakte Zeile: Tag X von 40 und deine Flammen in Folge",
+    "📷 Vor dem Start: Probe-Upload im Mittelpunkt, „Freunde einladen“ und „So geht's“ nebeneinander"
+  ]},
   { v:"39", date:"12. November", items:[
     "📅 Admins: neue Übersicht „Alle Uploads nach Tagen“ – nach Wochen geordnet, jeder Tag zusammengefasst, offene oben",
     "🔽 Lange Listen zeigen erst 10 Einträge – der Rest mit „Alle anzeigen“ (Uploads pro Tag, Zu prüfen, KI-Tests, Personen-Ansicht)",
