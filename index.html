@@ -63,6 +63,7 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .row.rv-ok{background:rgba(20,160,107,.13);box-shadow:inset 0 0 0 2px rgba(20,160,107,.55),0 0 14px rgba(20,160,107,.25)}
 .row.rv-no{background:rgba(229,72,77,.11);box-shadow:inset 0 0 0 2px rgba(229,72,77,.5)}
 .row.rv-open{background:rgba(255,170,0,.10);box-shadow:inset 0 0 0 1.5px rgba(255,170,0,.45)}
+.more-hide{display:none!important}.row.rv-over,.daylist .row.rv-over{border-radius:16px;padding:12px 14px;margin:10px 0;border-bottom:0;row-gap:8px;background:rgba(220,70,70,.07);box-shadow:inset 0 0 0 2px rgba(220,70,70,.3)}.rv-over .rv-tag{color:var(--no)}.wk{border-radius:18px;background:var(--soft);margin:10px 0;padding:4px 14px}.wk>summary{font-weight:800;padding:10px 0;cursor:pointer}.dayh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:14px 0 2px;font-weight:800}.dayh span{font-weight:600}
 .row.rv-auto{background:rgba(20,160,107,.11);box-shadow:inset 0 0 0 2px rgba(20,160,107,.4)}
 .rv-tag{flex:1 1 100%;font-size:12.5px;font-weight:800;letter-spacing:.02em}
 .rv-tag:has(+ .tbadge){flex:0 1 auto;margin-right:2px}
@@ -416,7 +417,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "38";
+const APP_VERSION = "39";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -1417,18 +1418,63 @@ async function invite(){
   if (navigator.share){ try{ await navigator.share({title:"Freiraum",text,url:link}); return; }catch(e){ if(e.name==="AbortError") return; } }
   copy(text+"\n"+link, "Einladung kopiert – jetzt in WhatsApp einfügen");
 }
+/* Lange Listen: erst 10 zeigen, Rest per Knopf */
+const moreOpen = new Set();
+function moreList(rows, key, n=10){
+  if (rows.length <= n || moreOpen.has(key)) return rows.join("") + (rows.length > n ? `<button class="linkbtn" data-less="${key}" style="margin:8px 4px">Weniger anzeigen</button>` : "");
+  return rows.slice(0,n).join("") + rows.slice(n).map(r=>r.replace('class="row', 'class="more-hide row')).join("") +
+    `<button class="btn btn-ghost" data-more="${key}" style="margin-top:8px">Alle ${rows.length} anzeigen (${rows.length-n} weitere)</button>`;
+}
+function bindMore(root, rerender){
+  root.querySelectorAll("[data-more]").forEach(b=>b.onclick=()=>{ moreOpen.add(b.dataset.more); rerender(); });
+  root.querySelectorAll("[data-less]").forEach(b=>b.onclick=()=>{ moreOpen.delete(b.dataset.more||b.dataset.less); rerender(); });
+}
+const rvState = c => c.reviewed ? (c.valid===false ? "no" : "ok") : (c.valid===false ? "no" : (c.edited || c.date_ok!==true || c.suspect || c.disputed) ? "open" : c.success ? "auto" : "over");
+const rvText = { ok:"✅ freigegeben", no:"❌ abgelehnt", open:"⏳ prüfen", auto:"🤖 von der KI freigegeben", over:"🤖 KI: über dem Limit" };
+function weekOf(day){ return Math.floor(diffDays(day, START)/7); }
+function weekLabel(w){ const a = addDays(START, w*7), b = addDays(START, Math.min(DAYS-1, w*7+6));
+  const f = d => toDate(d).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}); return `Woche ${w+1} · ${f(a)} – ${f(b)}`; }
+const wkOpen = new Set();
+/* Admin: alle Uploads nach Wochen und Tagen */
+function allUploadsHtml(){
+  const items = []; group.members.forEach(m=>(m.checkins||[]).forEach(c=>items.push({m,c})));
+  if (!items.length) return `<p class="muted small">Noch keine Uploads.</p>`;
+  const byDay = {}; items.forEach(x=>(byDay[x.c.day] ||= []).push(x));
+  const days = Object.keys(byDay).sort().reverse();
+  const weeks = []; days.forEach(d=>{ const w = weekOf(d); let g = weeks.find(x=>x.w===w); if (!g) weeks.push(g = {w, days:[]}); g.days.push(d); });
+  const order = { open:0, no:1, over:2, ok:3, auto:4 };
+  return weeks.map((g,gi)=>{
+    const all = g.days.flatMap(d=>byDay[d]), openN = all.filter(x=>rvState(x.c)==="open").length;
+    const open = wkOpen.has(g.w) || (gi===0 && !wkOpen.has(-1-g.w));
+    return `<details class="wk" data-wk="${g.w}" ${open?"open":""}><summary>${weekLabel(g.w)} <span class="muted small" style="font-weight:600">· ${all.length} Uploads${openN?` · <span style="color:#C27C00">${openN} offen</span>`:""}</span></summary>
+      ${g.days.map(d=>{ const list = byDay[d].sort((a,b)=>order[rvState(a.c)]-order[rvState(b.c)] || a.m.name.localeCompare(b.m.name));
+        const cnt = k => list.filter(x=>rvState(x.c)===k).length;
+        const rows = list.map(({m,c})=>{ const k = rvState(c); return `<div class="row rv-${k}" style="flex-wrap:wrap"><span class="rv-tag">${rvText[k]}</span><b style="flex:1 1 100%;min-width:0">${esc(m.emoji)} ${esc(m.name)} <span class="muted small" style="font-weight:600" title="${m.track==="total"?"Handyzeit":"30 Min."}">${m.track==="total"?"📱":"📵"}</span></b>
+          <span>${fmtHM(c.minutes)}</span>${c.edited?`<span class="flag">✏️ ${c.ocr==null?"–":fmtHM(c.ocr)}</span>`:""}${c.date_ok===false?`<span class="flag">📅?</span>`:""}${c.suspect?`<span class="flag bad">🕵️</span>`:""}${c.disputed?`<span class="flag bad">💬</span>`:""}${c.joker?`<span class="flag">🃏</span>`:""}
+          <button class="pill" style="margin-left:auto" data-up-m="${m.id}" data-up-d="${c.day}">Ansehen</button></div>`; });
+        return `<div class="dayh">${esc(toDate(d).toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long",timeZone:"UTC"}))}<span class="muted small">${list.length} · ✅ ${cnt("ok")+cnt("auto")}${cnt("open")?` · ⏳ ${cnt("open")}`:""}${cnt("no")+cnt("over")?` · ❌ ${cnt("no")+cnt("over")}`:""}</span></div>
+          <div class="daylist">${moreList(rows, "day-"+d)}</div>`; }).join("")}
+    </details>`; }).join("");
+}
+function bindAllUploads(root){
+  root.querySelectorAll("[data-up-m]").forEach(b=>b.onclick=()=>{ const m = group.members.find(x=>x.id===b.dataset.upM), c = m?.checkins.find(x=>x.day===b.dataset.upD); if (!c) return;
+    reviewSheet({member:m.id,name:m.name,day:c.day,minutes:c.minutes,ocr:c.ocr,edited:c.edited,date_ok:c.date_ok,suspect:c.suspect,track:m.track}, null); });
+  root.querySelectorAll("details.wk").forEach(el=>el.addEventListener("toggle", ()=>{ const w=+el.dataset.wk; if (el.open){ wkOpen.add(w); wkOpen.delete(-1-w); } else { wkOpen.delete(w); wkOpen.add(-1-w); } }));
+}
 function memberSheet(mid){
   const m = group.members.find(x=>x.id===mid); if (!m) return;
   const s = statsFor(m);
-  const st = c => c.reviewed ? (c.valid===false ? "no" : "ok") : (c.valid===false ? "no" : (c.edited || c.date_ok!==true || c.suspect || c.disputed) ? "open" : "auto");
-  const stTxt = { ok:"✅ freigegeben", no:"❌ abgelehnt", open:"⏳ prüfen", auto:"🤖 von der KI freigegeben" };
-  const rows = [...(m.checkins||[])].sort((a,b)=>a.day<b.day?1:-1).map(c=>`<div class="row rv-${st(c)}" style="flex-wrap:wrap"><span class="rv-tag">${stTxt[st(c)]}</span><b>${esc(toDate(c.day).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"}))}</b>
+  const st = rvState, stTxt = rvText;
+  const mkRow = c=>`<div class="row rv-${st(c)}" style="flex-wrap:wrap"><span class="rv-tag">${stTxt[st(c)]}</span><b>${esc(toDate(c.day).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"}))}</b>
       <span>${fmtHM(c.minutes)}</span>
       ${c.valid===false?`<span class="flag bad">ungültig</span>`:""}${c.edited?`<span class="flag">✏️ ${c.ocr ?? "–"}→${c.minutes}</span>`:""}${c.date_ok===false?`<span class="flag">📅?</span>`:""}${c.disputed?`<span class="flag bad">💬</span>`:""}${c.suspect?`<span class="flag bad">🕵️</span>`:""}${c.joker?`<span class="flag">🃏</span>`:""}${c.reviewed?`<span class="flag">✓</span>`:""}
-      <button class="pill" data-day="${c.day}">Ansehen</button></div>`).join("") || `<p class="muted">Noch keine Screenshots.</p>`;
+      <button class="pill" data-day="${c.day}">Ansehen</button></div>`;
+  const sorted = [...(m.checkins||[])].sort((a,b)=>a.day<b.day?1:-1), wks = [...new Set(sorted.map(c=>weekOf(c.day)))];
+  const rows = wks.map(w=>`<div class="dayh">${weekLabel(w)}<span class="muted small">${sorted.filter(c=>weekOf(c.day)===w).length} Tage</span></div>${moreList(sorted.filter(c=>weekOf(c.day)===w).map(mkRow), "m-"+m.id+"-"+w)}`).join("") || `<p class="muted">Noch keine Screenshots.</p>`;
   sheet(`<h3 style="margin-bottom:6px">${esc(m.emoji)} ${esc(m.name)} ${trackBadge(m.track)}</h3>
     <p class="muted small" style="margin:0 0 10px">${s.validDays} Tage · ${fmtHM(s.minutes)} · ✏️ = Minuten von Hand geändert · 📅? = Datum nicht erkannt · 🕵️ = KI-Verdacht · 🃏 = Joker · ✓ = geprüft</p>
     <div class="daylist">${rows}</div>`, root=>{
+    bindMore(root, ()=>memberSheet(m.id));
     root.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>{ const c=m.checkins.find(x=>x.day===b.dataset.day); reviewSheet({member:m.id,name:m.name,day:c.day,minutes:c.minutes,ocr:c.ocr,edited:c.edited,date_ok:c.date_ok,suspect:c.suspect,track:m.track}, ()=>memberSheet(m.id)); });
   });
 }
@@ -1551,16 +1597,16 @@ function renderAdmin(){
   const v = $("#vAdmin");
   if (!adminData){ v.innerHTML = `<div class="loader"></div>`; loadAdmin().then(()=>{ if(tab==="admin") renderAdmin(); }); return; }
   const d = adminData, st = d.settings || {};
-  const tests = d.tests.map(t=>`<div class="row ${t.verdict===true?"rv-ok":t.verdict===false?"rv-no":"rv-open"}" style="flex-wrap:wrap">${t.verdict===true?`<span class="rv-tag">✅ geprüft – KI lag richtig</span>`:t.verdict===false?`<span class="rv-tag">❌ geprüft – KI lag falsch</span>`:`<span class="rv-tag">⏳ noch prüfen</span>`}${trackBadge(t.track)}<b style="flex:1 1 100%">${esc(new Date(t.created).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))} · ${esc(t.by)}</b>
+  const tests = moreList(d.tests.map(t=>`<div class="row ${t.verdict===true?"rv-ok":t.verdict===false?"rv-no":"rv-open"}" style="flex-wrap:wrap">${t.verdict===true?`<span class="rv-tag">✅ geprüft – KI lag richtig</span>`:t.verdict===false?`<span class="rv-tag">❌ geprüft – KI lag falsch</span>`:`<span class="rv-tag">⏳ noch prüfen</span>`}${trackBadge(t.track)}<b style="flex:1 1 100%">${esc(new Date(t.created).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))} · ${esc(t.by)}</b>
       <span>${fmtHM(t.minutes)}${t.ocr!==t.minutes?` <span class="flag">KI: ${t.ocr==null ? "–" : fmtHM(t.ocr)}</span>`:""}</span>
       ${t.suspect?`<span class="flag bad">🕵️</span>`:""}${t.note?`<span class="flag">💬</span>`:""}${t.verdict===true?`<span class="flag" style="color:var(--ok)">KI ✓</span>`:t.verdict===false?`<span class="flag bad">KI ✕</span>`:""}
-      <button class="pill" data-test="${t.id}">Prüfen</button><button class="pill" style="color:var(--no)" data-deltest="${t.id}">🗑️</button></div>`).join("") || `<p class="muted small">Noch keine Tests.</p>`;
-  const queue = d.queue.slice(0,60).map((q,i)=>`<div class="row" style="flex-wrap:wrap"><b>${esc(q.emoji)} ${esc(q.name)} <span class="muted small">· ${trackBadge(q.group)} · ${esc(toDate(q.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
+      <button class="pill" data-test="${t.id}">Prüfen</button><button class="pill" style="color:var(--no)" data-deltest="${t.id}">🗑️</button></div>`), "tests") || `<p class="muted small">Noch keine Tests.</p>`;
+  const queue = moreList(d.queue.map((q,i)=>`<div class="row" style="flex-wrap:wrap"><b>${esc(q.emoji)} ${esc(q.name)} <span class="muted small">· ${trackBadge(q.group)} · ${esc(toDate(q.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
       <span>${q.minutes}</span>${q.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${q.edited?`<span class="flag">✏️</span>`:""}${q.date_ok===false?`<span class="flag">📅?</span>`:""}${q.suspect?`<span class="flag bad">🕵️ Fake?</span>`:""}
       ${q.suspect?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">🕵️ ${esc(q.suspect)}</div>`:""}
       ${q.note?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">💬 Kommentar: „${esc(q.note)}“</div>`:""}
       ${q.dispute?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">💬 „${esc(q.dispute)}“</div>`:""}
-      <button class="pill" data-q="${i}">Prüfen</button></div>`).join("") || `<p class="muted small">Alles geprüft 👍</p>`;
+      <button class="pill" data-q="${i}">Prüfen</button></div>`), "queue") || `<p class="muted small">Alles geprüft 👍</p>`;
   const accs = d.accounts.filter(a=>!accSearch || (a.email+" "+a.name).toLowerCase().includes(accSearch.toLowerCase()));
   const accRows = accs.map(a=>`<details class="accd" data-acc="${a.id}" ${accOpen.has(a.id)?"open":""} style="padding:10px 0">
       <summary style="align-items:center;gap:10px"><b style="min-width:0;flex:1">${esc(a.emoji)} ${esc(a.name)}${a.admin?" 🛡️":""}${a.reviewer&&!a.admin?" 🧑‍⚖️":""}${a.hidden?" 🕶️":""}${a.status==="paused"?" ⏸️":a.status==="banned"?" ⛔":""}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)} · vorher ${a.baseline!=null?fmtHM(a.baseline)+"/Tag":"–"}</div></b></summary>
@@ -1588,6 +1634,9 @@ function renderAdmin(){
       <p class="muted small" style="margin:6px 0 8px">🤖 Die KI hat ${d.stats?.auto ?? 0} Uploads automatisch freigegeben. Hier landen nur Einsprüche 💬 und auffällige Uploads: ✏️ = Minuten von Hand geändert · 📅? = Datum nicht erkannt · 🕵️ = KI vermutet einen Fake. Alle anderen kannst du über die Rangliste prüfen (Person antippen).</p>
       ${(d.stats?.fake_right||d.stats?.fake_wrong) ? `<p class="muted small" style="margin:0 0 8px">🕵️ Fake-Verdacht der KI bisher: <b>${d.stats.fake_right||0}× richtig</b> · ${d.stats.fake_wrong||0}× falsch</p>` : ""}
       <div class="daylist">${queue}</div></div>
+    <div class="card" id="allUp"><div class="sectionhead"><h3 style="font-size:17px">📅 Alle Uploads nach Tagen</h3><span class="muted small">${group ? group.members.reduce((a,m)=>a+(m.checkins||[]).length,0) : 0} gesamt</span></div>
+      <p class="muted small" style="margin:6px 0 4px">Nach Wochen geordnet, jeder Tag für sich. Pro Tag erst 10 – der Rest mit „Alle anzeigen“. ⏳ Offene stehen immer oben. 📵 = 30-Min-Challenge · 📱 = Handyzeit</p>
+      ${group ? allUploadsHtml() : ""}</div>
     <div class="card"><h3 style="font-size:17px;margin-bottom:6px">🛡️ Admins</h3>
       <p class="muted small" style="margin:0 0 10px">Admins sehen alle Screenshots, können prüfen, Konten verwalten und Einstellungen ändern. ${acc.owner ? "Die Person muss sich vorher in der App registriert haben." : "Admins hinzufügen oder entfernen kann nur David."}</p>
       ${acc.owner ? `<div style="display:flex;gap:8px"><input class="input" id="admEmail" type="email" inputmode="email" placeholder="E-Mail der Person" style="flex:1"><button class="btn btn-primary" id="admAdd" style="width:auto;padding:0 18px">Hinzufügen</button></div>` : ""}
@@ -1637,6 +1686,8 @@ function renderAdmin(){
         toast(to==="paused"?"⏸️ Pausiert":to==="banned"?"⛔ Ausgeschlossen":"▶️ Ist wieder dabei"); }catch(err){ toast(err.message); }
     });
   });
+  bindMore(v, ()=>{ const y = window.scrollY; renderAdmin(); window.scrollTo({top:y}); });
+  if ($("#allUp")) bindAllUploads($("#allUp"));
   if ($("#msgList")) bindMsgAdmin($("#msgList"), cwMsgs, ()=>{ if (tab==="admin") renderAdmin(); });
   v.querySelectorAll("[data-cw]").forEach(b=>b.onclick=()=>{
     const a = d.accounts.find(x=>x.id===b.dataset.cw), make = b.dataset.v==="1";
@@ -1780,6 +1831,11 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"39", date:"12. November", items:[
+    "📅 Admins: neue Übersicht „Alle Uploads nach Tagen“ – nach Wochen geordnet, jeder Tag zusammengefasst, offene oben",
+    "🔽 Lange Listen zeigen erst 10 Einträge – der Rest mit „Alle anzeigen“ (Uploads pro Tag, Zu prüfen, KI-Tests, Personen-Ansicht)",
+    "🗓️ In der Ansicht einer Person sind die Screenshots jetzt nach Wochen gruppiert"
+  ]},
   { v:"38", date:"12. November", items:[
     "🤖 Von der KI automatisch freigegebene Tage leuchten bei Admins jetzt auch grün („von der KI freigegeben“)"
   ]},
