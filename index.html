@@ -59,12 +59,13 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .helpbtn{position:relative;width:36px;height:36px;border-radius:50%;border:0;background:var(--soft);color:var(--ink);font:800 18px/36px Georgia,serif;font-style:italic;cursor:pointer;flex:none}
 .helpdot{position:absolute;top:-2px;right:-2px;width:13px;height:13px;border-radius:50%;background:#FF3B30;border:2px solid var(--bg);animation:helppulse 1.6s ease-in-out infinite}
 @keyframes helppulse{0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,.6)}50%{box-shadow:0 0 0 7px rgba(255,59,48,0)}}
-.row.rv-ok,.row.rv-no,.row.rv-open,.row.rv-auto{border-radius:14px;padding:10px 10px;margin:6px 0;border-bottom:0}
+.row.rv-ok,.row.rv-no,.row.rv-open,.row.rv-auto,.daylist .row.rv-ok,.daylist .row.rv-no,.daylist .row.rv-open,.daylist .row.rv-auto{border-radius:16px;padding:12px 14px;margin:10px 0;border-bottom:0;row-gap:8px}
 .row.rv-ok{background:rgba(20,160,107,.13);box-shadow:inset 0 0 0 2px rgba(20,160,107,.55),0 0 14px rgba(20,160,107,.25)}
 .row.rv-no{background:rgba(229,72,77,.11);box-shadow:inset 0 0 0 2px rgba(229,72,77,.5)}
 .row.rv-open{background:rgba(255,170,0,.10);box-shadow:inset 0 0 0 1.5px rgba(255,170,0,.45)}
 .row.rv-auto{background:rgba(20,160,107,.06)}
-.rv-tag{flex:1 1 100%;font-size:12px;font-weight:800;letter-spacing:.02em}
+.rv-tag{flex:1 1 100%;font-size:12.5px;font-weight:800;letter-spacing:.02em}
+.rv-tag:has(+ .tbadge){flex:0 1 auto;margin-right:2px}
 .rv-ok .rv-tag{color:var(--ok)}.rv-no .rv-tag{color:var(--no)}.rv-open .rv-tag{color:#C27C00}.rv-auto .rv-tag{color:var(--muted)}
 .rvflash{position:fixed;inset:0;z-index:120;display:grid;place-items:center;pointer-events:none;animation:fxin .2s ease-out}
 .rvflash.out{animation:fxout .4s ease-in forwards}
@@ -412,7 +413,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "30";
+const APP_VERSION = "31";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -1675,6 +1676,8 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"31", date:"12. November", items:[
+    "🛡️ Admin: Die farbig markierten Einträge haben jetzt Luft zum Rand und sind kompakter."]},
   { v:"30", date:"12. November", items:[
     "🔒 „Was ist neu“ sehen jetzt nur noch Admins. Für alle sichtbar wird ein Update erst, wenn David es freigibt."]},
   { v:"29", date:"12. November", items:[
