@@ -91,6 +91,7 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .field{display:block;margin-bottom:12px}
 .field span{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:0 0 6px 4px}
 .input{width:100%;padding:15px 16px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);font-size:16px;outline:none;transition:border-color .2s}
+input,textarea,select{color:var(--ink);caret-color:var(--flame1)}input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}.bub.them{color:var(--ink)}
 .input:focus{border-color:var(--flame1)}
 .code-input{text-transform:uppercase;letter-spacing:.3em;font-weight:800;text-align:center;font-size:22px}
 .emojis{display:flex;gap:8px;flex-wrap:wrap;max-height:300px;overflow-y:auto;padding:2px 2px 6px;-webkit-overflow-scrolling:touch}.emojis .emogrp{flex:1 1 100%;font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:8px 2px 0}.emojis .emogrp:first-child{margin-top:0}
@@ -440,7 +441,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "47";
+const APP_VERSION = "48";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1996,6 +1997,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"48", date:"12. November", items:[
+    "🎨 Schrift in Eingabefeldern passt sich jetzt immer dem Design an – kein Schwarz auf Schwarz mehr (Chat, Kommentare, Antworten)"
+  ]},
   { v:"47", date:"12. November", items:[
     "🔴 Rangliste: Zeiten, die noch nicht bestätigt sind (KI unsicher oder Zeit geändert), stehen rot mit ⏳ – so weiß jeder: das wird noch geprüft",
     "✅ Sobald ein Admin freigibt, wird die Zeit wieder normal angezeigt"
