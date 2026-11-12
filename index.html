@@ -63,7 +63,7 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .row.rv-ok{background:rgba(20,160,107,.13);box-shadow:inset 0 0 0 2px rgba(20,160,107,.55),0 0 14px rgba(20,160,107,.25)}
 .row.rv-no{background:rgba(229,72,77,.11);box-shadow:inset 0 0 0 2px rgba(229,72,77,.5)}
 .row.rv-open{background:rgba(255,170,0,.10);box-shadow:inset 0 0 0 1.5px rgba(255,170,0,.45)}
-.more-hide{display:none!important}.row.rv-over,.daylist .row.rv-over{border-radius:16px;padding:12px 14px;margin:10px 0;border-bottom:0;row-gap:8px;background:rgba(220,70,70,.07);box-shadow:inset 0 0 0 2px rgba(220,70,70,.3)}.rv-over .rv-tag{color:var(--no)}.wk{border-radius:18px;background:var(--soft);margin:10px 0;padding:4px 14px}.wk>summary{font-weight:800;padding:10px 0;cursor:pointer}.dayh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:14px 0 2px;font-weight:800}.dayh span{font-weight:600}
+.more-hide{display:none!important}.pill.qok{background:var(--ok);color:#fff;font-weight:800}.row.rv-over,.daylist .row.rv-over{border-radius:16px;padding:12px 14px;margin:10px 0;border-bottom:0;row-gap:8px;background:rgba(220,70,70,.07);box-shadow:inset 0 0 0 2px rgba(220,70,70,.3)}.rv-over .rv-tag{color:var(--no)}.wk{border-radius:18px;background:var(--soft);margin:10px 0;padding:4px 14px}.wk>summary{font-weight:800;padding:10px 0;cursor:pointer}.dayh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:14px 0 2px;font-weight:800}.dayh span{font-weight:600}
 .row.rv-auto{background:rgba(20,160,107,.11);box-shadow:inset 0 0 0 2px rgba(20,160,107,.4)}
 .rv-tag{flex:1 1 100%;font-size:12.5px;font-weight:800;letter-spacing:.02em}
 .rv-tag:has(+ .tbadge){flex:0 1 auto;margin-right:2px}
@@ -440,7 +440,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "45";
+const APP_VERSION = "46";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1516,7 +1516,7 @@ function allUploadsHtml(){
         const cnt = k => list.filter(x=>rvState(x.c)===k).length;
         const rows = list.map(({m,c})=>{ const k = rvState(c); return `<div class="row rv-${k}" style="flex-wrap:wrap"><span class="rv-tag">${rvText[k]}</span><b style="flex:1 1 100%;min-width:0">${esc(m.emoji)} ${esc(m.name)} <span class="muted small" style="font-weight:600" title="${m.track==="total"?"Handyzeit":"30 Min."}">${m.track==="total"?"📱":"📵"}</span></b>
           <span>${fmtHM(c.minutes)}${c.total!=null?` · 📱 ${fmtHM(c.total)}`:""}</span>${c.edited?`<span class="flag">✏️ ${c.ocr==null?"–":fmtHM(c.ocr)}</span>`:""}${c.date_ok===false?`<span class="flag">📅?</span>`:""}${c.suspect?`<span class="flag bad">🕵️</span>`:""}${c.disputed?`<span class="flag bad">💬</span>`:""}${c.joker?`<span class="flag">🃏</span>`:""}
-          <button class="pill" style="margin-left:auto" data-up-m="${m.id}" data-up-d="${c.day}">Ansehen</button></div>`; });
+          <span style="margin-left:auto;display:flex;gap:6px">${k==="open" ? `<button class="pill qok" data-qok-m="${m.id}" data-qok-d="${c.day}">✓ Freigeben</button>` : ""}<button class="pill" data-up-m="${m.id}" data-up-d="${c.day}">Ansehen</button></span></div>`; });
         return `<div class="dayh">${esc(toDate(d).toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long",timeZone:"UTC"}))}<span class="muted small">${list.length} · ✅ ${cnt("ok")+cnt("auto")}${cnt("open")?` · ⏳ ${cnt("open")}`:""}${cnt("no")+cnt("over")?` · ❌ ${cnt("no")+cnt("over")}`:""}</span></div>
           <div class="daylist">${moreList(rows, "day-"+d)}</div>`; }).join("")}
     </details>`; }).join("");
@@ -1526,14 +1526,16 @@ function bindAllUploads(root){
     reviewSheet({member:m.id,name:m.name,day:c.day,minutes:c.minutes,ocr:c.ocr,edited:c.edited,date_ok:c.date_ok,suspect:c.suspect,track:m.track,total:c.total}, null); });
   root.querySelectorAll("details.wk").forEach(el=>el.addEventListener("toggle", ()=>{ const w=+el.dataset.wk; if (el.open){ wkOpen.add(w); wkOpen.delete(-1-w); } else { wkOpen.delete(w); wkOpen.add(-1-w); } }));
 }
+let msOpen = null;
 function memberSheet(mid){
+  msOpen = mid;
   const m = group.members.find(x=>x.id===mid); if (!m) return;
   const s = statsFor(m);
   const st = rvState, stTxt = rvText;
   const mkRow = c=>`<div class="row rv-${st(c)}" style="flex-wrap:wrap"><span class="rv-tag">${stTxt[st(c)]}</span><b>${esc(toDate(c.day).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"}))}</b>
       <span>${fmtHM(c.minutes)}${c.total!=null?` · 📱 ${fmtHM(c.total)}`:""}</span>
       ${c.valid===false?`<span class="flag bad">ungültig</span>`:""}${c.edited?`<span class="flag">✏️ ${c.ocr ?? "–"}→${c.minutes}</span>`:""}${c.date_ok===false?`<span class="flag">📅?</span>`:""}${c.disputed?`<span class="flag bad">💬</span>`:""}${c.suspect?`<span class="flag bad">🕵️</span>`:""}${c.joker?`<span class="flag">🃏</span>`:""}${c.reviewed?`<span class="flag">✓</span>`:""}
-      <button class="pill" data-day="${c.day}">Ansehen</button></div>`;
+      <span style="margin-left:auto;display:flex;gap:6px">${st(c)==="open" ? `<button class="pill qok" data-qok-m="${m.id}" data-qok-d="${c.day}">✓ Freigeben</button>` : ""}<button class="pill" data-day="${c.day}">Ansehen</button></span></div>`;
   const sorted = [...(m.checkins||[])].sort((a,b)=>a.day<b.day?1:-1), wks = [...new Set(sorted.map(c=>weekOf(c.day)))];
   const rows = wks.map(w=>`<div class="dayh">${weekLabel(w)}<span class="muted small">${sorted.filter(c=>weekOf(c.day)===w).length} Tage</span></div>${moreList(sorted.filter(c=>weekOf(c.day)===w).map(mkRow), "m-"+m.id+"-"+w)}`).join("") || `<p class="muted">Noch keine Screenshots.</p>`;
   sheet(`<h3 style="margin-bottom:6px">${esc(m.emoji)} ${esc(m.name)} ${trackBadge(m.track)}</h3>
@@ -1704,6 +1706,18 @@ function bindMsgAdmin(root, list, rerender){
       r.querySelector("#ansSend").onclick = async ()=>{ const t=r.querySelector("#ansTxt").value.trim(); if(!t) return toast("Bitte etwas schreiben");
         try{ await rpc("sf_cw_answer",{p_token:T(),p_id:g.id,p_answer:t}); closeSheet(); await loadAdmin(); rerender(); toast("↩️ Antwort gesendet"); }catch(err){ toast(err.message); } }; }); });
 }
+document.addEventListener("click", async e=>{
+  const b = e.target.closest("[data-qok-m]"); if (!b || b.disabled) return;
+  e.stopPropagation(); b.disabled = true; b.textContent = "…";
+  try{
+    await rpc("sf_review",{p_token:T(),p_member:b.dataset.qokM,p_day:b.dataset.qokD,p_valid:true,p_minutes:null});
+    reviewFlash(true);
+    const inSheet = !!b.closest(".sheet");
+    await refresh(); if (acc?.admin) await loadAdmin(); else reviewData = null;
+    const y = window.scrollY; show(); window.scrollTo({top:y});
+    if (inSheet && msOpen) memberSheet(msOpen);
+  }catch(err){ toast(err.message); b.disabled = false; b.textContent = "✓ Freigeben"; }
+});
 function isCoWorker(){ return !!(acc && acc.reviewer && !acc.admin); }
 function renderReview(){
   const v = $("#vReview");
@@ -1714,7 +1728,7 @@ function renderReview(){
       <span>${fmtHM(x.minutes)}${x.total!=null?` · 📱 ${fmtHM(x.total)}`:""}</span>${x.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${x.edited?`<span class="flag">✏️ KI: ${x.ocr==null?"–":fmtHM(x.ocr)}</span>`:""}${x.date_ok===false?`<span class="flag">📅?</span>`:""}${x.suspect?`<span class="flag bad">🕵️ Fake?</span>`:""}
       ${x.note?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">💬 Kommentar: „${esc(x.note)}“</div>`:""}
       ${x.dispute?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">💬 Einspruch: „${esc(x.dispute)}“</div>`:""}
-      <button class="pill" data-rq="${i}">Prüfen</button></div>`).join("") || `<p class="muted small">Alles geprüft 👍 Danke fürs Helfen!</p>`;
+      <span style="margin-left:auto;display:flex;gap:6px"><button class="pill qok" data-qok-m="${x.member}" data-qok-d="${x.day}">✓ Freigeben</button><button class="pill" data-rq="${i}">Ansehen</button></span></div>`).join("") || `<p class="muted small">Alles geprüft 👍 Danke fürs Helfen!</p>`;
   v.innerHTML = `<div class="card"><div class="sectionhead"><h3>🧑‍⚖️ Prüfen</h3><span class="muted small">${q.length} offen</span></div>
       <p class="muted small" style="margin:6px 0 0;line-height:1.5">Du bist Co-Worker und hilfst beim Prüfen. Schau dir den Screenshot an und sag <b>Freigeben</b> oder <b>Ablehnen</b>. Löschen und alles andere machen die Admins. Deine eigenen Tage prüft jemand anderes.</p></div>
     <div class="card"><p class="muted small" style="margin:0 0 8px">✏️ = Zeit von Hand geändert · 📅? = Datum nicht erkannt · 🕵️ = KI vermutet einen Fake · 💬 = Kommentar/Einspruch</p>
@@ -1741,7 +1755,7 @@ function renderAdmin(){
       ${q.suspect?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">🕵️ ${esc(q.suspect)}</div>`:""}
       ${q.note?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">💬 Kommentar: „${esc(q.note)}“</div>`:""}
       ${q.dispute?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">💬 „${esc(q.dispute)}“</div>`:""}
-      <button class="pill" data-q="${i}">Prüfen</button></div>`), "queue") || `<p class="muted small">Alles geprüft 👍</p>`;
+      <span style="margin-left:auto;display:flex;gap:6px"><button class="pill qok" data-qok-m="${q.member}" data-qok-d="${q.day}">✓ Freigeben</button><button class="pill" data-q="${i}">Ansehen</button></span></div>`), "queue") || `<p class="muted small">Alles geprüft 👍</p>`;
   const accs = d.accounts.filter(a=>!accSearch || (a.email+" "+a.name).toLowerCase().includes(accSearch.toLowerCase()));
   const accRows = accs.map(a=>`<details class="accd" data-acc="${a.id}" ${accOpen.has(a.id)?"open":""} style="padding:10px 0">
       <summary style="align-items:center;gap:10px"><b style="min-width:0;flex:1">${esc(a.emoji)} ${esc(a.name)}${a.admin?" 🛡️":""}${a.reviewer&&!a.admin?" 🧑‍⚖️":""}${a.hidden?" 🕶️":""}${a.status==="paused"?" ⏸️":a.status==="banned"?" ⛔":""}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)} · vorher ${a.baseline!=null?fmtHM(a.baseline)+"/Tag":"–"}</div></b></summary>
@@ -1978,6 +1992,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"46", date:"12. November", items:[
+    "✅ Neuer Knopf „✓ Freigeben“ direkt in der Liste bei offenen Screenshots – ohne den Screenshot erst öffnen zu müssen (Zu prüfen, Alle Uploads, Personen-Ansicht, Co-Worker-Reiter)"
+  ]},
   { v:"45", date:"12. November", items:[
     "💬 Neu: Chat mit den Admins – unter Einstellungen → Mein Konto. Neue Antworten zeigt ein roter Punkt",
     "🗂️ Admins: Chat-Übersicht mit „Offen“ und „Alle“, Suche, ungelesene Nachrichten oben",
@@ -2539,7 +2556,7 @@ function sheet(html, init){
   bg.addEventListener("click", e=>{ if(e.target===bg) closeSheet(); });
   document.body.appendChild(bg); init && init(bg);
 }
-function closeSheet(){ $("#sheetBg")?.remove(); }
+function closeSheet(){ $("#sheetBg")?.remove(); msOpen = null; }
 async function copy(t,msg){ try{ await navigator.clipboard.writeText(t); toast(msg); } catch { sheet(`<h3 style="margin-bottom:10px">Zum Kopieren</h3><textarea class="input" rows="4" readonly>${esc(t)}</textarea>`, r=>r.querySelector("textarea").select()); } }
 
 /* ---------- Navigation ---------- */
