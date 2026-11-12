@@ -124,6 +124,35 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 @keyframes fxtext{from{opacity:0;transform:translateY(12px)}}
 @keyframes spark{0%{opacity:1;transform:rotate(var(--a)) translateY(0)}100%{opacity:0;transform:rotate(var(--a)) translateY(calc(-1 * var(--d)))}}
 .wc-hero{text-align:left}
+.konfi-tag{display:inline-block;background:linear-gradient(90deg,var(--flame1),var(--flame2));color:#fff;font-weight:800;font-size:13px;letter-spacing:.04em;padding:6px 12px;border-radius:999px}
+.wc-week{font-weight:800;font-size:12.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--flame2)}
+.hero2{position:relative;overflow:hidden;border-radius:24px;padding:20px 20px 18px;margin-bottom:16px;color:#fff;background:radial-gradient(120% 90% at 100% 0%,#ff7a2f 0%,#ff3d5a 38%,#2a1530 100%);box-shadow:0 14px 40px rgba(255,61,90,.28)}
+.hero2 .h2-glow{position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(255,220,120,.55),transparent 70%);pointer-events:none}
+.hero2 .h2-top{position:relative;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.hero2 .h2-hi{font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.hero2 .h2-line{font-size:14.5px;opacity:.92;margin-top:4px;line-height:1.4}
+.hero2 .h2-flame{display:flex;flex-direction:column;align-items:center;flex:none}
+.hero2 .h2-flame svg{width:46px;height:46px;filter:drop-shadow(0 0 12px rgba(255,200,80,.8));animation:flicker 1.4s ease-in-out infinite alternate}
+.hero2 .h2-flame b{font-size:20px;margin-top:-2px}
+.hero2 .h2-bar{position:relative;height:8px;border-radius:99px;background:rgba(255,255,255,.22);margin:14px 0 4px;overflow:hidden}
+.hero2 .h2-bar i{display:block;height:100%;border-radius:99px;background:#fff}
+.hero2 .h2-stats{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.hero2 .h2-stats div{background:rgba(255,255,255,.14);border-radius:14px;padding:10px 6px;text-align:center;backdrop-filter:blur(6px)}
+.hero2 .h2-stats b{display:block;font-size:20px}.hero2 .h2-stats span{font-size:12px;opacity:.9}
+.hero2 .h2-cta{position:relative;margin-top:14px;background:#fff;color:#1C1B19;font-weight:800}
+.podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;align-items:end;gap:8px;margin:4px 0 16px}
+.pod{display:flex;flex-direction:column;align-items:center;text-align:center;min-width:0;cursor:default}
+.pod-av{position:relative;width:58px;height:58px;border-radius:20px;background:var(--soft);display:grid;place-items:center;font-size:30px;overflow:visible}
+.pod-av img{width:100%;height:100%;border-radius:20px;object-fit:cover}
+.pod.p1 .pod-av{width:72px;height:72px;font-size:38px;box-shadow:0 0 0 3px #FFC83D}
+.pod-medal{position:absolute;bottom:-8px;right:-8px;font-size:22px}
+.pod b{margin-top:10px;font-size:14.5px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pod span{font-size:12.5px;color:var(--muted);font-weight:600}
+.pod-step{width:100%;margin-top:8px;border-radius:14px 14px 6px 6px;display:grid;place-items:center;font-weight:800;font-size:22px;color:#fff}
+.pod.p1 .pod-step{height:78px;background:linear-gradient(180deg,#FFC83D,#FF8A1F)}
+.pod.p2 .pod-step{height:58px;background:linear-gradient(180deg,#C9CED6,#9AA1AC)}
+.pod.p3 .pod-step{height:44px;background:linear-gradient(180deg,#E3A06B,#B86B34)}
+.pod.me b{color:var(--flame2)}
 .konfi{background:linear-gradient(135deg,rgba(255,138,31,.14),rgba(255,61,90,.14));border:1.5px solid rgba(255,90,60,.35)}
 .wc .wc-head{display:flex;gap:12px;align-items:center}
 .wc .wc-ico{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:28px;background:var(--soft);flex:none}
@@ -355,7 +384,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "22";
+const APP_VERSION = "23";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -449,7 +478,7 @@ let auth = load();          // {token}
 let acc = null;             // Konto: {id,email,name,emoji,admin,member_id,group_code,limit}
 let group = null;           // {name, code, members:[...]}
 let adminData = null;
-let tab = "today";
+let tab = "group";
 let mode = "join", authMode = "login";
 let pickedEmoji = EMOJIS[0];
 let rankMode = "streak";
@@ -506,7 +535,7 @@ $("#btnAuth").addEventListener("click", async ()=>{
     }
     auth = { token:r.token }; save(auth);
     $("#inPw").value = "";
-    await refresh(); tab = "today"; show();
+    await refresh(); tab = "group"; show();
     toast(authMode==="login" ? `Hallo ${acc?.name || ""} 👋` : "Konto erstellt – willkommen! 🔥");
   }catch(err){ toast(err.message); }
   btn.disabled = false;
@@ -569,7 +598,7 @@ function renderNoGroup(){
   $("#blSave").onclick = async ()=>{
     const v = blPick;
     if (v == null) return toast("Bitte einen Wert auswählen");
-    try{ await rpc("sf_set_baseline",{p_token:T(),p_minutes:v}); await refresh(); tab="today"; show(); toast("Gespeichert – los geht's! 🔥"); }
+    try{ await rpc("sf_set_baseline",{p_token:T(),p_minutes:v}); await refresh(); tab="group"; groupView="rank"; show(); window.scrollTo({top:0}); toast("Gespeichert – los geht's! 🔥"); }
     catch(err){ toast(err.message); }
   };
 }
@@ -975,8 +1004,9 @@ function weeklyHtml(){
   const today = berlinToday(), done = wcDone();
   const cur = WEEKLY.find(w=>today>=weekStart(w.n) && today<=weekEnd(w.n))?.n || (today<START ? 1 : 0);
   return `<div class="card wc-hero">
-      <div style="font-size:38px;line-height:1">🎁</div>
-      <h2 style="font-size:23px;line-height:1.2;margin:8px 0 6px">Wochenchallenges – <span class="grad">Freiraum zum Weitergeben</span></h2>
+      <span class="konfi-tag">⛪ Für die Konfis</span>
+      <div style="font-size:38px;line-height:1;margin-top:10px">🎁</div>
+      <h2 style="font-size:23px;line-height:1.2;margin:8px 0 6px">Konfi-Wochenchallenges – <span class="grad">Freiraum zum Weitergeben</span></h2>
       <p class="muted" style="margin:0;line-height:1.55;font-size:15px">Alle können mitmachen. Jede Woche gibt es eine Challenge, bei der du etwas <b>gestalten, verschenken oder mit anderen teilen</b> kannst.</p>
       <div class="stats3" style="margin:14px 0 0"><div><b>${done.length}</b><span>erledigt</span></div><div><b>${cur||"–"}</b><span>aktuelle Woche</span></div><div><b>${WEEKLY.length}</b><span>Challenges</span></div></div>
     </div>
@@ -988,19 +1018,19 @@ function weeklyHtml(){
     ${WEEKLY.map(w=>{ const isCur = w.n===cur, past = today>weekEnd(w.n), isDone = done.includes(w.n);
       return `<div class="card wc ${isCur?"cur":""} ${isDone?"done":""}">
         <div class="wc-head"><div class="wc-ico">${w.icon}</div>
-          <div style="flex:1;min-width:0"><div class="muted small" style="font-weight:700;letter-spacing:.04em;text-transform:uppercase">Woche ${w.n} · ${shortD(weekStart(w.n))}–${shortD(weekEnd(w.n))}</div>
+          <div style="flex:1;min-width:0"><div class="wc-week">⛪ Konfi-Woche ${w.n} · ${shortD(weekStart(w.n))}–${shortD(weekEnd(w.n))}</div>
           <b style="font-size:19px">${esc(w.title)}</b></div>
           ${isCur?`<span class="pill wc-now">Diese Woche</span>`:past?`<span class="pill muted">vorbei</span>`:`<span class="pill muted">ab ${shortD(weekStart(w.n))}</span>`}</div>
         <p style="margin:10px 0 8px;line-height:1.5">${esc(w.task)}</p>
         <details class="wc-tips"><summary>💡 Ideen dazu</summary><ul>${w.tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></details>
-        <div class="wc-bring">⛪ <b>Mitbringen:</b> ${esc(w.bring)}</div>
+        <div class="wc-bring">⛪ <b>Mitbringen zum Konfi-Treffen in Woche ${w.n}:</b> ${esc(w.bring)}</div>
         <button class="btn ${isDone?"btn-ghost":"btn-flame"}" data-wc="${w.n}" style="margin-top:12px">${isDone?"✓ Erledigt – rückgängig":"Erledigt ✓"}</button>
       </div>`; }).join("")}`;
 }
 let ideasView = "ideas";
 function renderIdeas(){
   const today = berlinToday(), done = frDone(today);
-  const seg = `<div class="seg" id="segIdeas"><button data-v="ideas" class="${ideasView==="ideas"?"on":""}">💡 Ideen</button><button data-v="weekly" class="${ideasView==="weekly"?"on":""}">🎁 Wochenchallenges</button></div>`;
+  const seg = `<div class="seg" id="segIdeas"><button data-v="ideas" class="${ideasView==="ideas"?"on":""}">💡 Ideen</button><button data-v="weekly" class="${ideasView==="weekly"?"on":""}">⛪ Konfi-Challenges</button></div>`;
   if (ideasView === "weekly"){
     $("#vIdeas").innerHTML = seg + weeklyHtml();
     document.querySelectorAll("#vIdeas [data-wc]").forEach(b=>b.onclick=()=>{ const on = wcToggle(+b.dataset.wc); if (on){ navigator.vibrate?.(30); flameCelebrate("Challenge geschafft!", "Bring's mit und teil es mit den anderen 🎁"); } renderIdeas(); });
@@ -1250,7 +1280,10 @@ function renderGroup(){
     ? `<div class="st"><svg class="${r.s.streak?"":"flame off"}"><use href="#flame"/></svg>${r.s.streak}</div>`
     : `<div style="text-align:right"><b style="font-size:17px">${r.s.validDays}</b><div class="muted small">${r.s.minutes} Min.</div></div>`;
   const medal = k => k===1?"🥇":k===2?"🥈":k===3?"🥉":k;
-  const list = rows.filter(r=>r!==mine).map(r=>{
+  const hasData = r => VT ? r.s.validDays > 0 : (r.s.streak > 0 || r.s.total > 0);
+  const podium = rows.filter(hasData).slice(0,3);
+  const podIds = new Set(podium.length===3 ? podium.map(r=>r.m.id) : []);
+  const list = rows.filter(r=>r!==mine && !podIds.has(r.m.id)).map(r=>{
     const flags = canReview ? (r.m.checkins||[]).filter(c=>!c.reviewed && (c.edited || c.date_ok===false)).length : 0;
     return `<li class="${canReview?"tap":""}" data-mid="${r.m.id}"><div class="rank">${medal(r.rank)}</div><div class="av">${avatarHtml(r.m)}</div>
       <div class="who"><b>${esc(r.m.name)}</b><span>${statusOf(r) || (r.s.total+" 🔥 gesamt")}${flags?` · <span class="flag">⚠️ ${flags}</span>`:""}</span></div>${valueOf(r)}</li>`;
@@ -1258,13 +1291,32 @@ function renderGroup(){
   // eigene 40-Tage-Leiste
   let strip = "";
   for (let i=0;i<DAYS;i++){ const d=addDays(START,i), e=mine?.s.map[d]; strip += `<i class="${e?(e.success?"ok":"no"):""} ${d===today?"t":""}"></i>`; }
+  // Begrüßung oben: Tag/Countdown + was als Nächstes zu tun ist
+  const dayNo = Math.min(DAYS, diffDays(today, START) + 1), myM = myMember(), myMap = myM ? statsFor(myM).map : {};
+  const needShot = !acc.hidden && active && !myMap[yd] && (myM?.track||"social")===trackOf();
+  const hour = new Date().getHours(), hi = hour<11 ? "Guten Morgen" : hour<18 ? "Hey" : "Guten Abend";
+  const heroLine = today < START ? `Noch <b>${diffDays(START,today)} ${diffDays(START,today)===1?"Tag":"Tage"}</b> bis zum Start · 15. November`
+    : today <= END ? `<b>Tag ${dayNo}</b> von ${DAYS} · noch ${diffDays(END,today)+1} ${diffDays(END,today)===0?"Tag":"Tage"} bis Heiligabend 🎄` : `40 Tage geschafft – frohe Weihnachten! 🎄`;
+  const hero = `<div class="hero2">
+      <div class="h2-glow"></div>
+      <div class="h2-top"><div><div class="h2-hi">${hi}, ${esc(acc.name)} 👋</div><div class="h2-line">${heroLine}</div></div>
+        <div class="h2-flame"><svg class="${mine?.s.streak||VT?"":"flame off"}"><use href="#flame"/></svg>${VT ? "" : `<b>${mine?.s.streak||0}</b>`}</div></div>
+      ${today>=START && today<=END ? `<div class="h2-bar"><i style="width:${Math.round(dayNo/DAYS*100)}%"></i></div>` : ""}
+      <div class="h2-stats">
+        <div><b>${n}</b><span>dabei</span></div>
+        <div><b>${active?succToday:"–"}</b><span>${VT?"gestern hochgeladen":"gestern 🔥"}</span></div>
+        <div><b>${flamesAll}</b><span>${VT?"Uploads gesamt":"🔥 gesamt"}</span></div>
+      </div>
+      ${needShot ? `<button class="btn h2-cta" id="heroUp">📸 Screenshot von gestern hochladen</button>`
+        : today < START ? `<button class="btn h2-cta" id="heroProbe">🧪 Probe-Upload ausprobieren</button>` : ""}
+    </div>`;
+  const podHtml = podium.length===3 ? `<div class="podium">${[1,0,2].map(i=>{ const r = podium[i];
+      return `<div class="pod p${i+1} ${r===mine?"me":""}" data-mid="${r.m.id}"><div class="pod-av">${avatarHtml(r.m)}<span class="pod-medal">${["🥇","🥈","🥉"][i]}</span></div>
+        <b>${esc(r.m.name)}</b><span>${VT ? (avgOfStats(r.s)!=null?fmtHM(avgOfStats(r.s))+" Ø":"–") : rankMode==="streak" ? r.s.streak+" 🔥" : r.s.validDays+" Tage"}</span><div class="pod-step">${r.rank}</div></div>`; }).join("")}</div>` : "";
   $("#vGroup").innerHTML = `
+    ${hero}
     ${head}
-    <div class="stats3">
-      <div><b>${n}</b><span>dabei</span></div>
-      <div><b>${active?succToday:"–"}</b><span>${VT?"gestern hochgeladen":"gestern 🔥"}</span></div>
-      <div><b>${flamesAll}</b><span>${VT?"Uploads gesamt":"🔥 gesamt"}</span></div>
-    </div>
+    ${podHtml}
     ${acc.hidden ? `<div class="hint" style="display:block;margin-bottom:16px"><b>🕶️ Unsichtbar-Modus aktiv</b><br><span class="muted small">Du beobachtest nur – niemand sieht dich in der Rangliste. Ausschalten im Admin-Bereich.</span></div>` : ""}
     ${mine ? `<div class="mecard">
       <div class="mehead"><span class="youtag">DU</span><span class="muted small">${VT?"📱 Handyzeit":rankMode==="streak"?"🔥 Flammen":"🏆 Wettbewerb"}</span></div>
@@ -1287,6 +1339,9 @@ function renderGroup(){
     <button class="btn btn-flame" id="btnInvite" style="margin-bottom:14px">Freunde einladen</button>`;
   $("#btnInvite").onclick = invite;
   bindHead();
+  $("#heroUp")?.addEventListener("click", ()=>uploadFlow(yd));
+  $("#heroProbe")?.addEventListener("click", ()=>uploadFlow(yd, true));
+  if (canReview) document.querySelectorAll("#vGroup .pod[data-mid]").forEach(el=>el.onclick=()=>memberSheet(el.dataset.mid));
   if ($("#segRank")) $("#segRank").onclick = e => { const b=e.target.closest("button"); if(!b) return; rankMode=b.dataset.r; renderGroup(); };
 
   if (canReview) document.querySelectorAll("#vGroup .lb li[data-mid]").forEach(li=>li.onclick=()=>memberSheet(li.dataset.mid));
@@ -1559,6 +1614,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"23", date:"12. November", items:[
+    "🏆 Neuer Startbildschirm: Nach dem Öffnen landest du direkt in der <b>Rangliste</b> – mit Begrüßung, Countdown und Siegertreppchen für die Top 3.",
+    "📸 Fehlt dein Screenshot von gestern, kannst du ihn direkt oben hochladen.",
+    "⛪ Die Wochenchallenges heißen jetzt <b>Konfi-Challenges</b> – mit Konfi-Woche und was du zum Treffen mitbringst."]},
   { v:"22", date:"11. November", items:[
     "🔒 Neu: <b>Datenschutz-Info</b> unter Einstellungen – zum Lesen oder als PDF. Dort kannst du auch <b>alle deine Daten herunterladen</b>.",
     "🛡️ Mehr Sicherheit: Hochgeladene Bilder werden auf dem Server streng geprüft, Namen und Symbole werden bereinigt, die Datenbank ist noch stärker abgeschottet.",
@@ -1820,7 +1879,7 @@ function changePw(){
     };
   });
 }
-function logoutLocal(){ try{ localStorage.removeItem("freiraum"); }catch{} auth=null; acc=null; group=null; adminData=null; tab="today"; show(); }
+function logoutLocal(){ try{ localStorage.removeItem("freiraum"); }catch{} auth=null; acc=null; group=null; adminData=null; tab="group"; show(); }
 
 /* ---------- Statistik ---------- */
 function dayRange(a,b){ const out=[]; for (let d=a; d<=b; d=addDays(d,1)) if (inWindow(d)) out.push(d); return out; }
