@@ -93,7 +93,7 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .input{width:100%;padding:15px 16px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);font-size:16px;outline:none;transition:border-color .2s}
 .input:focus{border-color:var(--flame1)}
 .code-input{text-transform:uppercase;letter-spacing:.3em;font-weight:800;text-align:center;font-size:22px}
-.emojis{display:flex;gap:8px;flex-wrap:wrap}
+.emojis{display:flex;gap:8px;flex-wrap:wrap;max-height:300px;overflow-y:auto;padding:2px 2px 6px;-webkit-overflow-scrolling:touch}.emojis .emogrp{flex:1 1 100%;font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:8px 2px 0}.emojis .emogrp:first-child{margin-top:0}
 .emojis button{width:44px;height:44px;border-radius:12px;background:var(--soft);font-size:22px;border:2px solid transparent}
 .emojis button.on{border-color:var(--flame1);background:var(--card)}
 .seg{display:flex;background:var(--soft);border-radius:14px;padding:4px;margin-bottom:16px}
@@ -421,10 +421,21 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "42";
+const APP_VERSION = "43";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
-const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
+const EMOJI_GROUPS = [
+  ["Gesichter", ["🙂","😎","😄","🤩","😇","🥳","🤓","😜","🤠","🤗","👻","🤖","👽","🦸","🧙","🥷"]],
+  ["Tiere", ["🦊","🐻","🐼","🦁","🐯","🐸","🐶","🐱","🐰","🐨","🐧","🦉","🦄","🐬","🐢","🦋","🐝","🐙","🦖","🐺"]],
+  ["Natur", ["🌻","🌸","🌼","🍀","🌵","🌲","🍁","🌙","⭐","☀️","🌈","❄️","🔥","⚡","🌊","🌍"]],
+  ["Sport & Hobby", ["⚽","🏀","🏐","🎾","⛷️","🛹","🚴","🏊","🎧","🎸","🥁","🎹","🎮","🎨","📷","📚","✏️","🎲"]],
+  ["Essen", ["☕","🍕","🍔","🍟","🍩","🍪","🍦","🍓","🍉","🍎","🥨","🧁"]],
+  ["Sonstiges", ["🎄","🎁","🕯️","✨","💎","🚀","🎯","👑","❤️","💪","🙏","⛪","🕊️","🏕️","🎈","🧩"]]
+];
+const EMOJIS = EMOJI_GROUPS.flatMap(g=>g[1]);
+function emojiPickHtml(sel){
+  return EMOJI_GROUPS.map(([t,l])=>`<div class="emogrp">${t}</div>${l.map(e=>`<button type="button" class="${e===sel?"on":""}" data-e="${e}">${e}</button>`).join("")}`).join("");
+}
 
 /* 40 Impulse – je ein Gedanke + eine Offline-Mini-Challenge */
 const IMPULSES = [
@@ -546,7 +557,7 @@ const myMember = () => group?.members.find(m => m.id === acc?.member_id);
 
 /* ---------- Anmelden / Registrieren ---------- */
 function renderOnboard(){
-  $("#emojiPick").innerHTML = EMOJIS.map(e=>`<button type="button" class="${e===pickedEmoji?"on":""}" data-e="${e}">${e}</button>`).join("");
+  $("#emojiPick").innerHTML = emojiPickHtml(pickedEmoji);
   $("#regFields").classList.toggle("hidden", authMode!=="register");
   document.querySelectorAll("#segAuth button").forEach(b=>b.classList.toggle("on", b.dataset.a===authMode));
   $("#btnAuth").textContent = authMode==="login" ? "Anmelden" : "Konto erstellen";
@@ -1838,6 +1849,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"43", date:"12. November", items:[
+    "😎 Viel mehr Symbole zur Auswahl (fast 100) – sortiert nach Gesichter, Tiere, Natur, Sport & Hobby, Essen und Sonstiges"
+  ]},
   { v:"42", date:"12. November", items:[
     "📱 „So geht's“: Die App erkennt dein Handy (iPhone, Samsung, Xiaomi, Huawei, Pixel & Co.) und zeigt sofort die passende Anleitung",
     "🔍 Bessere Erkennung bei neueren Android-Handys – falsch erkannt? Einfach anderes Handy antippen"
@@ -2156,7 +2170,7 @@ function editProfile(){
   let em = acc.emoji;
   sheet(`<h3 style="margin-bottom:14px">Name & Symbol</h3>
     <label class="field"><span>Spitzname</span><input class="input" id="eName" maxlength="24" value="${esc(acc.name)}"></label>
-    <div class="field"><span>Symbol (wird gezeigt, wenn du kein Profilbild hast)</span><div class="emojis" id="eEmo">${EMOJIS.map(e=>`<button type="button" class="${e===em?"on":""}" data-e="${e}">${e}</button>`).join("")}</div></div>
+    <div class="field"><span>Symbol (wird gezeigt, wenn du kein Profilbild hast)</span><div class="emojis" id="eEmo">${emojiPickHtml(em)}</div></div>
     <button class="btn btn-primary" id="eSave">Speichern</button>`, r=>{
     r.querySelector("#eEmo").onclick = e=>{ const b=e.target.closest("button"); if(!b) return; em=b.dataset.e; r.querySelectorAll("#eEmo button").forEach(x=>x.classList.toggle("on",x===b)); };
     r.querySelector("#eSave").onclick = async ()=>{
