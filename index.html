@@ -397,6 +397,8 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
   <section id="vIdeas" class="hidden"></section>
   <!-- ADMIN -->
   <section id="vAdmin" class="hidden"></section>
+  <!-- PRÜFEN (Co-Worker) -->
+  <section id="vReview" class="hidden"></section>
 </div>
 
 <nav class="tabbar hidden" id="tabbar">
@@ -404,6 +406,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
   <button data-t="group"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.7-3.4 3.3-5.5 6.5-5.5s5.8 2.1 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M17.5 14.5c2.2.3 3.6 1.9 4 4.5"/></svg>Rangliste</button>
   <button data-t="ideas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg>Freiräume</button>
   <button data-t="admin" id="tabAdmin" class="hidden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4 5.5v6c0 5 3.4 8.8 8 10 4.6-1.2 8-5 8-10v-6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Admin</button>
+  <button data-t="review" id="tabReview" class="hidden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Prüfen</button>
   <button data-t="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Einstellungen</button>
 </nav>
 
@@ -413,7 +416,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "32";
+const APP_VERSION = "33";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -506,7 +509,7 @@ function confetti(){
 let auth = load();          // {token}
 let acc = null;             // Konto: {id,email,name,emoji,admin,member_id,group_code,limit}
 let group = null;           // {name, code, members:[...]}
-let adminData = null;
+let adminData = null, reviewData = null;
 let tab = "group";
 let mode = "join", authMode = "login";
 let pickedEmoji = EMOJIS[0];
@@ -1457,15 +1460,15 @@ async function reviewSheet(item, back){
       ${sus!=null?`<div class="status bad" style="display:block;margin:10px 0 0;line-height:1.5">🕵️ <b>Die KI vermutet einen Fake.</b>${sus?`<br>${esc(sus)}`:""}<br><b>Liegt die KI richtig?</b></div>`:""}
       <div class="choice"><button class="yes" data-v="1"><span class="ic">✓</span>${sus!=null?"Echt – freigeben":"Freigeben"}</button><button class="no" data-v="0"><span class="ic">✕</span>${sus!=null?"Fake – ablehnen":"Ablehnen"}</button></div>
       <button class="btn btn-ghost" id="backBtn" style="margin-top:10px">Zurück</button>
-      <button class="btn btn-ghost" id="delShot" style="margin-top:10px;color:var(--no)">🗑️ Screenshot löschen</button>`;
-    $("#delShot").onclick = ()=>confirmSheet(`Screenshot von ${item.name} für ${fmtDate(item.day)} löschen? Der Tag zählt dann nicht mehr.`, async ()=>{
+      ${acc?.admin ? `<button class="btn btn-ghost" id="delShot" style="margin-top:10px;color:var(--no)">🗑️ Screenshot löschen</button>` : ""}`;
+    if ($("#delShot")) $("#delShot").onclick = ()=>confirmSheet(`Screenshot von ${item.name} für ${fmtDate(item.day)} löschen? Der Tag zählt dann nicht mehr.`, async ()=>{
       try{ await rpc("sf_admin_delete_checkin",{p_token:T(),p_member:item.member,p_day:item.day}); await refresh(); await loadAdmin(); show(); toast("🗑️ Screenshot gelöscht"); }catch(err){ toast(err.message); }
     });
     box.querySelectorAll("[data-v]").forEach(b=>b.onclick=async ()=>{
       const hv = $("#revH").value, mm = $("#revM").value; const mv = (hv==="" && mm==="") ? NaN : Math.min(1440, (parseInt(hv,10)||0)*60 + (parseInt(mm,10)||0));
       try{
         await rpc("sf_review",{p_token:T(),p_member:item.member,p_day:item.day,p_valid:b.dataset.v==="1",p_minutes:Number.isNaN(mv)?null:mv});
-        await refresh(); if (acc?.admin) await loadAdmin(); show(); back ? back() : closeSheet(); reviewFlash(b.dataset.v==="1");
+        await refresh(); if (acc?.admin) await loadAdmin(); else reviewData = null; show(); back ? back() : closeSheet(); reviewFlash(b.dataset.v==="1");
         toast(b.dataset.v==="1" ? (sus!=null?"Freigegeben – die KI lag falsch":`✅ Freigegeben – ${Number.isNaN(mv)?"":fmtHM(mv)+" "}zählt jetzt`) : (sus!=null?"Als Fake markiert – die KI lag richtig":"Abgelehnt"));
       }catch(err){ toast(err.message); }
     });
@@ -1479,6 +1482,25 @@ async function loadAdmin(){
   try { adminData = await rpc("sf_admin_overview",{p_token:T()}); } catch(err){ toast(err.message); }
 }
 let accSearch = ""; const accOpen = new Set();
+function isCoWorker(){ return !!(acc && acc.reviewer && !acc.admin); }
+function renderReview(){
+  const v = $("#vReview");
+  if (!reviewData){ v.innerHTML = `<div class="loader"></div>`;
+    rpc("sf_review_queue",{p_token:T()}).then(q=>{ reviewData = q || []; if (tab==="review") renderReview(); }).catch(err=>{ toast(err.message); v.innerHTML = `<p class="muted">${esc(err.message)}</p>`; }); return; }
+  const q = reviewData;
+  const rows = q.slice(0,80).map((x,i)=>`<div class="row rv-open" style="flex-wrap:wrap"><b>${esc(x.emoji)} ${esc(x.name)} <span class="muted small">· ${trackBadge(x.group)} · ${esc(toDate(x.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
+      <span>${fmtHM(x.minutes)}</span>${x.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${x.edited?`<span class="flag">✏️ KI: ${x.ocr==null?"–":fmtHM(x.ocr)}</span>`:""}${x.date_ok===false?`<span class="flag">📅?</span>`:""}${x.suspect?`<span class="flag bad">🕵️ Fake?</span>`:""}
+      ${x.note?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">💬 Kommentar: „${esc(x.note)}“</div>`:""}
+      ${x.dispute?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">💬 Einspruch: „${esc(x.dispute)}“</div>`:""}
+      <button class="pill" data-rq="${i}">Prüfen</button></div>`).join("") || `<p class="muted small">Alles geprüft 👍 Danke fürs Helfen!</p>`;
+  v.innerHTML = `<div class="card"><div class="sectionhead"><h3>🧑‍⚖️ Prüfen</h3><span class="muted small">${q.length} offen</span></div>
+      <p class="muted small" style="margin:6px 0 0;line-height:1.5">Du bist Co-Worker und hilfst beim Prüfen. Schau dir den Screenshot an und sag <b>Freigeben</b> oder <b>Ablehnen</b>. Löschen und alles andere machen die Admins. Deine eigenen Tage prüft jemand anderes.</p></div>
+    <div class="card"><p class="muted small" style="margin:0 0 8px">✏️ = Zeit von Hand geändert · 📅? = Datum nicht erkannt · 🕵️ = KI vermutet einen Fake · 💬 = Kommentar/Einspruch</p>
+      <div class="daylist">${rows}</div>
+      <button class="btn btn-ghost" id="rqReload" style="margin-top:10px">🔄 Aktualisieren</button></div>`;
+  v.querySelectorAll("[data-rq]").forEach(b=>b.onclick=()=>reviewSheet({...q[+b.dataset.rq], track:q[+b.dataset.rq].group}, null));
+  $("#rqReload").onclick = ()=>{ reviewData = null; renderReview(); };
+}
 function renderAdmin(){
   const v = $("#vAdmin");
   if (!adminData){ v.innerHTML = `<div class="loader"></div>`; loadAdmin().then(()=>{ if(tab==="admin") renderAdmin(); }); return; }
@@ -1495,11 +1517,11 @@ function renderAdmin(){
       <button class="pill" data-q="${i}">Prüfen</button></div>`).join("") || `<p class="muted small">Alles geprüft 👍</p>`;
   const accs = d.accounts.filter(a=>!accSearch || (a.email+" "+a.name).toLowerCase().includes(accSearch.toLowerCase()));
   const accRows = accs.map(a=>`<details class="accd" data-acc="${a.id}" ${accOpen.has(a.id)?"open":""} style="padding:10px 0">
-      <summary style="align-items:center;gap:10px"><b style="min-width:0;flex:1">${esc(a.emoji)} ${esc(a.name)}${a.admin?" 🛡️":""}${a.hidden?" 🕶️":""}${a.status==="paused"?" ⏸️":a.status==="banned"?" ⛔":""}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)} · vorher ${a.baseline!=null?fmtHM(a.baseline)+"/Tag":"–"}</div></b></summary>
+      <summary style="align-items:center;gap:10px"><b style="min-width:0;flex:1">${esc(a.emoji)} ${esc(a.name)}${a.admin?" 🛡️":""}${a.reviewer&&!a.admin?" 🧑‍⚖️":""}${a.hidden?" 🕶️":""}${a.status==="paused"?" ⏸️":a.status==="banned"?" ⛔":""}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)} · vorher ${a.baseline!=null?fmtHM(a.baseline)+"/Tag":"–"}</div></b></summary>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
       <button class="pill" data-bl="${a.id}">Ausgangswert</button>
       <button class="pill" data-adm="${a.id}" data-v="${a.admin?0:1}">${a.admin?"Admin entziehen":"Zum Admin"}</button>
-      <button class="pill" data-pw="${a.id}">Passwort neu</button>${acc.owner && a.id!==acc.id ? (a.status==="paused"||a.status==="banned"
+      <button class="pill" data-pw="${a.id}">Passwort neu</button>${acc.can_grant && !a.admin ? `<button class="pill" data-cw="${a.id}" data-v="${a.reviewer?0:1}">${a.reviewer?"🧑‍⚖️ Co-Worker entfernen":"🧑‍⚖️ Zum Co-Worker"}</button>` : ""}${acc.owner && a.id!==acc.id ? (a.status==="paused"||a.status==="banned"
         ? `<button class="pill" data-st="${a.id}" data-v="active">▶️ ${a.status==="banned"?"Wieder zulassen":"Fortsetzen"}</button>`
         : `<button class="pill" data-st="${a.id}" data-v="paused">⏸️ Pausieren</button><button class="pill" style="color:var(--no)" data-st="${a.id}" data-v="banned">⛔ Ausschließen</button>`) : ""}${a.has_avatar?`<button class="pill" data-rmav="${a.id}">Bild entfernen</button>`:""}</div></details>`).join("");
   v.innerHTML = `
@@ -1521,6 +1543,10 @@ function renderAdmin(){
       <p class="muted small" style="margin:0 0 10px">Admins sehen alle Screenshots, können prüfen, Konten verwalten und Einstellungen ändern. Die Person muss sich vorher in der App registriert haben.</p>
       <div style="display:flex;gap:8px"><input class="input" id="admEmail" type="email" inputmode="email" placeholder="E-Mail der Person" style="flex:1"><button class="btn btn-primary" id="admAdd" style="width:auto;padding:0 18px">Hinzufügen</button></div>
       <div class="daylist" style="margin-top:8px">${d.accounts.filter(a=>a.admin).map(a=>`<div class="row"><b style="min-width:0">${esc(a.emoji)} ${esc(a.name)}${a.id===acc.id?" (du)":""}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)}</div></b><button class="pill" style="color:var(--no)" data-adm="${a.id}" data-v="0">Entfernen</button></div>`).join("")}</div></div>
+    <div class="card"><h3 style="font-size:17px;margin-bottom:6px">🧑‍⚖️ Co-Worker</h3>
+      <p class="muted small" style="margin:0 0 10px;line-height:1.5">Co-Worker helfen nur beim Prüfen: Sie sehen die offenen Screenshots mit Kommentaren und können <b>freigeben oder ablehnen</b> – nichts löschen, keine Konten verwalten, keine Rechte vergeben. Ernennen können nur David und Patrick.</p>
+      ${acc.can_grant ? `<div style="display:flex;gap:8px"><input class="input" id="cwEmail" type="email" inputmode="email" placeholder="E-Mail der Person" style="flex:1"><button class="btn btn-primary" id="cwAdd" style="width:auto;padding:0 18px">Hinzufügen</button></div>` : ""}
+      <div class="daylist" style="margin-top:8px">${d.accounts.filter(a=>a.reviewer && !a.admin).map(a=>`<div class="row"><b style="min-width:0">${esc(a.emoji)} ${esc(a.name)}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)}</div></b>${acc.can_grant?`<button class="pill" style="color:var(--no)" data-cw="${a.id}" data-v="0">Entfernen</button>`:""}</div>`).join("") || `<p class="muted small">Noch keine Co-Worker.</p>`}</div></div>
     <div class="card"><h3 style="font-size:17px;margin-bottom:10px">👥 Alle Konten</h3>
       <input class="input" id="accSearch" placeholder="Suchen (Name oder E-Mail)" value="${esc(accSearch)}" style="margin-bottom:6px">
       <div class="daylist">${accRows || `<p class="muted small">Keine Treffer.</p>`}</div></div>
@@ -1560,6 +1586,22 @@ function renderAdmin(){
     confirmSheet(q, async ()=>{
       try{ await rpc("sf_admin_set_status",{p_token:T(),p_account:a.id,p_status:to}); await refresh(); await loadAdmin(); show();
         toast(to==="paused"?"⏸️ Pausiert":to==="banned"?"⛔ Ausgeschlossen":"▶️ Ist wieder dabei"); }catch(err){ toast(err.message); }
+    });
+  });
+  v.querySelectorAll("[data-cw]").forEach(b=>b.onclick=()=>{
+    const a = d.accounts.find(x=>x.id===b.dataset.cw), make = b.dataset.v==="1";
+    confirmSheet(make ? `${a.name} (${a.email}) zum Co-Worker machen? Die Person kann dann beim Prüfen helfen.` : `${a.name} als Co-Worker entfernen?`, async ()=>{
+      try{ await rpc("sf_admin_set_reviewer",{p_token:T(),p_account:a.id,p_on:make}); await loadAdmin(); show(); toast(make?"🧑‍⚖️ Ist jetzt Co-Worker":"Co-Worker entfernt"); }catch(err){ toast(err.message); }
+    });
+  });
+  $("#cwAdd")?.addEventListener("click", ()=>{
+    const em = $("#cwEmail").value.trim().toLowerCase(), a = d.accounts.find(x=>(x.email||"").toLowerCase()===em);
+    if (!em) return toast("Bitte eine E-Mail eingeben");
+    if (!a) return toast("Kein Konto mit dieser E-Mail – die Person muss sich zuerst registrieren");
+    if (a.admin) return toast("Ist schon Admin – kann sowieso prüfen");
+    if (a.reviewer) return toast("Ist schon Co-Worker");
+    confirmSheet(`${a.name} (${a.email}) zum Co-Worker machen? Die Person kann dann beim Prüfen helfen.`, async ()=>{
+      try{ await rpc("sf_admin_set_reviewer",{p_token:T(),p_account:a.id,p_on:true}); await loadAdmin(); show(); toast("🧑‍⚖️ Ist jetzt Co-Worker"); }catch(err){ toast(err.message); }
     });
   });
   $("#admAdd").onclick = ()=>{
@@ -1688,6 +1730,12 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"33", date:"12. November", items:[
+    "🧑‍⚖️ Co-Worker: David und Patrick können vertrauenswürdige Helfer ernennen, die beim Prüfen mithelfen",
+    "✅ Co-Worker bekommen einen eigenen Reiter „Prüfen“ – mit Screenshot, Kommentaren und den Knöpfen Freigeben / Ablehnen",
+    "🔒 Co-Worker können nichts löschen, keine Rechte vergeben und ihre eigenen Tage nicht prüfen",
+    "🛡️ Admins sehen im Admin-Bereich, wer Co-Worker ist"
+  ]},
   { v:"32", date:"12. November", items:[
     "✏️ Zeit geändert? Deine eigene Zeit (Std. & Min.) wird gespeichert – der Tag zählt aber erst, wenn ein Admin freigibt",
     "🤖 Stimmt die Zeit der KI, wird der Tag wie bisher automatisch freigegeben – ohne Admin",
@@ -2190,25 +2238,28 @@ function closeSheet(){ $("#sheetBg")?.remove(); }
 async function copy(t,msg){ try{ await navigator.clipboard.writeText(t); toast(msg); } catch { sheet(`<h3 style="margin-bottom:10px">Zum Kopieren</h3><textarea class="input" rows="4" readonly>${esc(t)}</textarea>`, r=>r.querySelector("textarea").select()); } }
 
 /* ---------- Navigation ---------- */
-document.querySelectorAll("#tabbar button").forEach(b=>b.addEventListener("click", ()=>{ tab=b.dataset.t; show(); window.scrollTo({top:0}); if(tab==="admin") loadAdmin().then(()=>{ if(tab==="admin") renderAdmin(); }); }));
+document.querySelectorAll("#tabbar button").forEach(b=>b.addEventListener("click", ()=>{ tab=b.dataset.t; show(); window.scrollTo({top:0}); if(tab==="admin") loadAdmin().then(()=>{ if(tab==="admin") renderAdmin(); }); if(tab==="review"){ reviewData=null; renderReview(); } }));
 function show(){
   const logged = !!(auth?.token && acc);
   const hasGroup = logged && !!acc.member_id && acc.baseline != null && (acc.track_chosen !== false || !acc.can_switch);
   if (logged && tab==="admin" && !acc.admin) tab = "today";
+  if (logged && tab==="review" && !isCoWorker()) tab = "today";
   $("#vOnboard").classList.toggle("hidden", logged);
   $("#tabbar").classList.toggle("hidden", !logged);
   $("#tabAdmin").classList.toggle("hidden", !(logged && acc.admin));
+  $("#tabReview").classList.toggle("hidden", !(logged && isCoWorker()));
   $("#topPill").textContent = "bis Weihnachten 🎄";
   $("#btnHelp").classList.toggle("hidden", tutSeen());
   const needGroup = logged && !hasGroup && (tab==="today" || tab==="group");
   $("#vNoGroup").classList.toggle("hidden", !needGroup);
-  ["today","group","ideas","info","admin"].forEach(t=>$("#v"+t[0].toUpperCase()+t.slice(1)).classList.toggle("hidden", !logged || needGroup || tab!==t));
+  ["today","group","ideas","info","admin","review"].forEach(t=>$("#v"+t[0].toUpperCase()+t.slice(1)).classList.toggle("hidden", !logged || needGroup || tab!==t));
   document.querySelectorAll("#tabbar button").forEach(b=>b.classList.toggle("on", b.dataset.t===tab));
   if (!logged){ renderOnboard(); return; }
   if (needGroup){ renderNoGroup(); return; }
   if (tab==="info") return renderInfo();
   if (tab==="ideas") return renderIdeas();
   if (tab==="admin") return renderAdmin();
+  if (tab==="review") return renderReview();
   if (!group){ $("#v"+tab[0].toUpperCase()+tab.slice(1)).innerHTML = `<div class="loader"></div>`; return; }
   if (tab==="today") renderToday(); else renderGroup();
 }
