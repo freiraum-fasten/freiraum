@@ -416,7 +416,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "36";
+const APP_VERSION = "37";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -1566,7 +1566,7 @@ function renderAdmin(){
       <summary style="align-items:center;gap:10px"><b style="min-width:0;flex:1">${esc(a.emoji)} ${esc(a.name)}${a.admin?" 🛡️":""}${a.reviewer&&!a.admin?" 🧑‍⚖️":""}${a.hidden?" 🕶️":""}${a.status==="paused"?" ⏸️":a.status==="banned"?" ⛔":""}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)} · vorher ${a.baseline!=null?fmtHM(a.baseline)+"/Tag":"–"}</div></b></summary>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
       <button class="pill" data-bl="${a.id}">Ausgangswert</button>
-      <button class="pill" data-adm="${a.id}" data-v="${a.admin?0:1}">${a.admin?"Admin entziehen":"Zum Admin"}</button>
+      ${acc.owner && a.id!==acc.id ? `<button class="pill" data-adm="${a.id}" data-v="${a.admin?0:1}">${a.admin?"Admin entziehen":"Zum Admin"}</button>` : ""}
       <button class="pill" data-pw="${a.id}">Passwort neu</button>${acc.can_grant && !a.admin ? `<button class="pill" data-cw="${a.id}" data-v="${a.reviewer?0:1}">${a.reviewer?"🧑‍⚖️ Co-Worker entfernen":"🧑‍⚖️ Zum Co-Worker"}</button>` : ""}${acc.owner && a.id!==acc.id ? (a.status==="paused"||a.status==="banned"
         ? `<button class="pill" data-st="${a.id}" data-v="active">▶️ ${a.status==="banned"?"Wieder zulassen":"Fortsetzen"}</button>`
         : `<button class="pill" data-st="${a.id}" data-v="paused">⏸️ Pausieren</button><button class="pill" style="color:var(--no)" data-st="${a.id}" data-v="banned">⛔ Ausschließen</button>`) : ""}${a.has_avatar?`<button class="pill" data-rmav="${a.id}">Bild entfernen</button>`:""}</div></details>`).join("");
@@ -1589,9 +1589,9 @@ function renderAdmin(){
       ${(d.stats?.fake_right||d.stats?.fake_wrong) ? `<p class="muted small" style="margin:0 0 8px">🕵️ Fake-Verdacht der KI bisher: <b>${d.stats.fake_right||0}× richtig</b> · ${d.stats.fake_wrong||0}× falsch</p>` : ""}
       <div class="daylist">${queue}</div></div>
     <div class="card"><h3 style="font-size:17px;margin-bottom:6px">🛡️ Admins</h3>
-      <p class="muted small" style="margin:0 0 10px">Admins sehen alle Screenshots, können prüfen, Konten verwalten und Einstellungen ändern. Die Person muss sich vorher in der App registriert haben.</p>
-      <div style="display:flex;gap:8px"><input class="input" id="admEmail" type="email" inputmode="email" placeholder="E-Mail der Person" style="flex:1"><button class="btn btn-primary" id="admAdd" style="width:auto;padding:0 18px">Hinzufügen</button></div>
-      <div class="daylist" style="margin-top:8px">${d.accounts.filter(a=>a.admin).map(a=>`<div class="row"><b style="min-width:0">${esc(a.emoji)} ${esc(a.name)}${a.id===acc.id?" (du)":""}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)}</div></b><button class="pill" style="color:var(--no)" data-adm="${a.id}" data-v="0">Entfernen</button></div>`).join("")}</div></div>
+      <p class="muted small" style="margin:0 0 10px">Admins sehen alle Screenshots, können prüfen, Konten verwalten und Einstellungen ändern. ${acc.owner ? "Die Person muss sich vorher in der App registriert haben." : "Admins hinzufügen oder entfernen kann nur David."}</p>
+      ${acc.owner ? `<div style="display:flex;gap:8px"><input class="input" id="admEmail" type="email" inputmode="email" placeholder="E-Mail der Person" style="flex:1"><button class="btn btn-primary" id="admAdd" style="width:auto;padding:0 18px">Hinzufügen</button></div>` : ""}
+      <div class="daylist" style="margin-top:8px">${d.accounts.filter(a=>a.admin).map(a=>`<div class="row"><b style="min-width:0">${esc(a.emoji)} ${esc(a.name)}${a.id===acc.id?" (du)":""}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(a.email)}</div></b>${acc.owner && a.id!==acc.id ? `<button class="pill" style="color:var(--no)" data-adm="${a.id}" data-v="0">Entfernen</button>` : ""}</div>`).join("")}</div></div>
     <div class="card"><h3 style="font-size:17px;margin-bottom:6px">🧑‍⚖️ Co-Worker</h3>
       <p class="muted small" style="margin:0 0 10px;line-height:1.5">Co-Worker helfen nur beim Prüfen: Sie sehen die offenen Screenshots mit Kommentaren und können <b>freigeben oder ablehnen</b> – nichts löschen, keine Konten verwalten, keine Rechte vergeben. Ernennen können nur David und Patrick.</p>
       ${acc.can_grant ? `<div style="display:flex;gap:8px"><input class="input" id="cwEmail" type="email" inputmode="email" placeholder="E-Mail der Person" style="flex:1"><button class="btn btn-primary" id="cwAdd" style="width:auto;padding:0 18px">Hinzufügen</button></div>` : ""}
@@ -1654,7 +1654,7 @@ function renderAdmin(){
       try{ await rpc("sf_admin_set_reviewer",{p_token:T(),p_account:a.id,p_on:true}); await loadAdmin(); show(); toast("🧑‍⚖️ Ist jetzt Co-Worker"); }catch(err){ toast(err.message); }
     });
   });
-  $("#admAdd").onclick = ()=>{
+  if ($("#admAdd")) $("#admAdd").onclick = ()=>{
     const em = $("#admEmail").value.trim().toLowerCase();
     const a = d.accounts.find(x=>x.email===em);
     if (!em) return toast("Bitte eine E-Mail eingeben");
@@ -1780,6 +1780,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"37", date:"12. November", items:[
+    "🔒 Admins hinzufügen oder entfernen kann nur noch David – andere Admins sehen die Liste, aber keine Knöpfe dafür"
+  ]},
   { v:"36", date:"12. November", items:[
     "💬 Co-Worker können den Admins eine Frage oder einen Kommentar schicken – zu einem bestimmten Tag oder allgemein",
     "↩️ Admins sehen die Nachrichten im Admin-Bereich, können antworten oder sie als erledigt markieren",
