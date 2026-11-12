@@ -413,7 +413,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "31";
+const APP_VERSION = "32";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -513,6 +513,7 @@ let pickedEmoji = EMOJIS[0];
 let rankMode = "streak";
 const T = () => auth?.token;
 
+function isPending(e){ return !!e && e.edited && !e.reviewed && e.valid!==false && !e.joker && !e.success; }  // Zeit von Hand geändert → wartet auf Admin
 function statsFor(m){
   const map = {}; (m.checkins||[]).forEach(c => map[c.day] = c);
   const today = berlinToday();
@@ -520,17 +521,17 @@ function statsFor(m){
   // Tage, deren Frist noch läuft und die noch fehlen, unterbrechen die Serie nicht
   let d = addDays(today,-1);
   while (!map[d] && diffDays(today,d) <= GRACE && d >= START) d = addDays(d,-1);
-  while (inWindow(d) && map[d] && map[d].success) { streak++; d = addDays(d,-1); }
+  while (inWindow(d) && map[d] && (map[d].success || isPending(map[d]))) { if (map[d].success) streak++; d = addDays(d,-1); }
   const total = (m.checkins||[]).filter(c=>c.success).length;
   const okList = (m.checkins||[]).filter(c=>c.success);   // nur geschaffte Tage (max. Limit & gültig)
   const validDays = okList.length;
   const minutes = okList.reduce((a,c)=>a+(c.minutes||0),0);
   let missed = 0; // Frist abgelaufen ohne geschafften Tag (vergessen oder über dem Limit)
-  for (let i=0;i<DAYS;i++){ const dd=addDays(START,i); if (diffDays(today,dd) > GRACE && !(map[dd] && map[dd].success)) missed++; }
+  for (let i=0;i<DAYS;i++){ const dd=addDays(START,i); if (diffDays(today,dd) > GRACE && !(map[dd] && (map[dd].success || isPending(map[dd])))) missed++; }
   let best=0, run=0;
-  for (let i=0;i<DAYS;i++){ const dd=addDays(START,i); if(map[dd]&&map[dd].success){run++;best=Math.max(best,run);} else run=0; }
+  for (let i=0;i<DAYS;i++){ const dd=addDays(START,i); if(map[dd]&&map[dd].success){run++;best=Math.max(best,run);} else if(!isPending(map[dd])) run=0; }
   // Ersparnis: Ausgangswert (vorher pro Tag) minus tatsächliche Minuten, für jeden gültigen Tag
-  const saved = m.baseline != null ? (m.checkins||[]).filter(c=>c.valid!==false).reduce((a,c)=>a+Math.max(0, m.baseline-(c.minutes||0)),0) : 0;
+  const saved = m.baseline != null ? (m.checkins||[]).filter(c=>c.valid!==false && !isPending(c)).reduce((a,c)=>a+Math.max(0, m.baseline-(c.minutes||0)),0) : 0;
   return { map, streak, total, best, validDays, minutes, missed, saved, todayEntry: map[today] };
 }
 const myMember = () => group?.members.find(m => m.id === acc?.member_id);
@@ -723,7 +724,7 @@ async function loadMyTests(){
 }
 /* ---------- Joker ---------- */
 function jokersLeft(){ const m = myMember(); return Math.max(0, JOKERS - (m?.checkins||[]).filter(c=>c.joker).length); }
-function canJoker(e){ return !isTotal() && e && !e.success && e.valid!==false && !e.joker && jokersLeft() > 0; }
+function canJoker(e){ return !isTotal() && e && !isPending(e) && !e.success && e.valid!==false && !e.joker && jokersLeft() > 0; }
 function jokerCardHtml(big){
   return `<div class="jokercard${big?" big":""}"><div class="jc-corner">J</div><div class="jc-face">🃏</div><div class="jc-title">JOKER</div><div class="jc-corner br">J</div></div>`;
 }
@@ -766,9 +767,10 @@ function flameCelebrate(title="Du hast eine Flamme bekommen!", sub=""){
 function reviewLine(e){
   if (e.disputed) return `<div class="status warn" style="margin-top:12px">💬 Dein Einspruch wird von einem Admin geprüft.</div>`;
   if (e.reviewed) return `<div class="status ${e.valid?"ok":"bad"}" style="margin-top:12px">${e.valid?"✅ Von einem Admin bestätigt":"❌ Von einem Admin abgelehnt"}</div>`;
+  if (isPending(e)) return `<div class="status warn" style="margin-top:12px;display:block;line-height:1.5">⏳ <b>Wartet auf Freigabe</b> – du hast die Zeit geändert (KI: ${e.ocr==null?"nichts erkannt":fmtHM(e.ocr)} · eingetragen: ${fmtHM(e.minutes)}). Sobald ein Admin freigibt, zählt der Tag.</div>`;
   if (e.joker && e.success) return `<div class="status ok" style="margin-top:12px">🃏 Mit Joker gerettet – die Flamme zählt.</div>`;
   if (e.suspect) return `<div class="status warn" style="margin-top:12px">⏳ Zählt schon – ein Admin schaut sich deinen Screenshot noch genauer an.</div>`;
-  if (e.edited || e.date_ok !== true) return `<div class="status warn" style="margin-top:12px">⏳ Zählt schon – ein Admin schaut noch kurz drüber${e.edited?" (Minuten von Hand geändert)":" (Datum nicht erkannt)"}.</div>`;
+  if (e.date_ok !== true) return `<div class="status warn" style="margin-top:12px">⏳ Zählt schon – ein Admin schaut noch kurz drüber (Datum nicht erkannt).</div>`;
   return e.success ? `<div class="status ok" style="margin-top:12px">🤖 Von der KI geprüft und automatisch freigegeben</div>`
                    : `<div class="status bad" style="margin-top:12px">🤖 Von der KI geprüft: über dem Limit</div>`;
 }
@@ -789,6 +791,14 @@ function disputeSheet(day){
 function checkinCard(s, day, today){
   const e = s.map[day];
   const label = day===addDays(today,-1) ? `gestern (${esc(fmtDate(day))})` : esc(fmtDate(day));
+  if (e && isPending(e)){
+    return `<div class="card"><div class="done">
+      <div class="badge" style="background:var(--warnbg,#fff4d6)">⏳</div>
+      <div style="flex:1"><b style="font-size:17px">Wartet auf Freigabe</b>
+      <div class="muted small" style="margin-top:2px">${fmtHM(e.minutes)} eingetragen – ein Admin prüft deine Änderung.</div></div>
+    </div>${reviewLine(e)}
+    <div style="display:flex;gap:16px;flex-wrap:wrap"><button class="linkbtn" data-up="${day}">Screenshot nochmal hochladen</button><button class="linkbtn" data-delday="${day}" style="color:var(--no)">Löschen</button></div></div>`;
+  }
   if (e){
     const ok = e.success;
     return `<div class="card"><div class="done">
@@ -1250,7 +1260,7 @@ async function analyse(root, files, day, test){
   const autoNote = document.createElement("div"); autoNote.className = "muted small"; autoNote.style.margin = "8px 4px 0";
   root.querySelector("#limitInfo").after(autoNote);
   const upd = ()=>{ const v = parseInt(root.querySelector("#minIn").value,10); const li = root.querySelector("#limitInfo");
-    autoNote.innerHTML = (!test && (root.querySelector("#noteIn")?.value||"").trim()) ? "💬 Mit Kommentar – ein Admin schaut sich das an." : (!test && sus.length) ? "⏳ Zählt sofort – ein Admin schaut sich den Screenshot noch kurz an." : (v === ocrMin && dateOk) ? "🤖 Passt alles – die KI gibt den Tag <b>automatisch frei</b>." : "⏳ Zählt sofort – weil " + (v !== ocrMin ? "du die Minuten geändert hast" : "das Datum nicht erkannt wurde") + ", schaut ein Admin noch kurz drüber.";
+    autoNote.innerHTML = (!test && (root.querySelector("#noteIn")?.value||"").trim()) ? "💬 Mit Kommentar – ein Admin schaut sich das an." : (!test && sus.length) ? "⏳ Zählt sofort – ein Admin schaut sich den Screenshot noch kurz an." : (v === ocrMin && dateOk) ? "🤖 Passt alles – die KI gibt den Tag <b>automatisch frei</b>." : (v !== ocrMin && !test) ? "✏️ Du hast die Zeit geändert – deine Zeit wird gespeichert, der Tag <b>zählt aber erst, wenn ein Admin freigibt</b>." : "⏳ Zählt sofort – weil " + (v !== ocrMin ? "du die Minuten geändert hast" : "das Datum nicht erkannt wurde") + ", schaut ein Admin noch kurz drüber.";
     if (Number.isNaN(v)){ li.textContent=""; li.className="status"; return; }
     if (isT){ li.className="status ok"; li.textContent=`📱 ${fmtHM(v)} Handyzeit – wird so in die Rangliste eingetragen.`; }
     else if (v <= LIMIT){ li.className="status ok"; li.textContent=`✅ GÜLTIG – ${fmtHM(v)} ${TR.word}, max. ${LIMIT} Min. erlaubt. Das gibt eine Flamme! 🔥`; }
@@ -1277,6 +1287,7 @@ async function analyse(root, files, day, test){
       }
       await rpc("sf_upload",{p_token:T(),p_day:day,p_minutes:minutes,p_shot:shot,p_ocr_minutes:ocrMin,p_date_ok:dateOk,p_suspect:sus.length ? sus.join(" · ") : null,p_note:note});
       closeSheet(); done(); await refresh(); show();
+      if (minutes !== ocrMin){ toast("⏳ Gespeichert – wartet auf Freigabe durch einen Admin"); return; }
       if (isT) flameCelebrate("Eingetragen!", `${fmtHM(minutes)} Handyzeit – ab in die Rangliste 📱`);
       else if (minutes <= LIMIT){ $("#bigFlame")?.classList.add("pop"); flameCelebrate("Du hast eine Flamme bekommen!", `${fmtHM(minutes)} – stark! 🔥`); }
       else if (jokersLeft() > 0) jokerSheet(day);
@@ -1441,20 +1452,21 @@ async function reviewSheet(item, back){
       ${item.dispute?`<div class="status warn" style="margin:0 0 10px">💬 Einspruch: „${esc(item.dispute)}“</div>`:""}
       ${note?`<div class="status warn" style="display:block;margin:0 0 10px">💬 Kommentar: „${esc(note)}“</div>`:""}
       <div class="muted small" style="margin:0 0 8px">KI erkannt: <b>${item.ocr==null ? "–" : fmtHM(item.ocr)}</b> · eingetragen: <b>${fmtHM(item.minutes)}</b>${item.date_ok===false?" · 📅 Datum nicht erkannt":""}</div>
-      <div class="minutes" style="margin-top:0"><label for="revMin">Richtige Minuten (falls nötig korrigieren)</label><input id="revMin" type="number" inputmode="numeric" min="0" max="1440" value="${item.minutes}"></div>
+      ${item.ocr!==item.minutes?`<div class="status warn" style="display:block;margin:0 0 10px;line-height:1.5">✏️ <b>Zeit von Hand geändert.</b> Der Tag zählt erst nach deiner Freigabe – mit der Zeit unten.</div>`:""}
+      <div class="minutes" style="margin-top:0"><label>Zeit, die zählen soll (falls nötig korrigieren)</label><div class="hmin"><input id="revH" type="number" inputmode="numeric" min="0" max="24" value="${Math.floor(item.minutes/60)}"><span>Std.</span><input id="revM" type="number" inputmode="numeric" min="0" max="59" value="${item.minutes%60}"><span>Min.</span></div></div>
       ${sus!=null?`<div class="status bad" style="display:block;margin:10px 0 0;line-height:1.5">🕵️ <b>Die KI vermutet einen Fake.</b>${sus?`<br>${esc(sus)}`:""}<br><b>Liegt die KI richtig?</b></div>`:""}
-      <div class="choice"><button class="yes" data-v="1"><span class="ic">✓</span>${sus!=null?"Echt – freigeben":"Gültig"}</button><button class="no" data-v="0"><span class="ic">✕</span>${sus!=null?"Fake – ungültig":"Ungültig"}</button></div>
+      <div class="choice"><button class="yes" data-v="1"><span class="ic">✓</span>${sus!=null?"Echt – freigeben":"Freigeben"}</button><button class="no" data-v="0"><span class="ic">✕</span>${sus!=null?"Fake – ablehnen":"Ablehnen"}</button></div>
       <button class="btn btn-ghost" id="backBtn" style="margin-top:10px">Zurück</button>
       <button class="btn btn-ghost" id="delShot" style="margin-top:10px;color:var(--no)">🗑️ Screenshot löschen</button>`;
     $("#delShot").onclick = ()=>confirmSheet(`Screenshot von ${item.name} für ${fmtDate(item.day)} löschen? Der Tag zählt dann nicht mehr.`, async ()=>{
       try{ await rpc("sf_admin_delete_checkin",{p_token:T(),p_member:item.member,p_day:item.day}); await refresh(); await loadAdmin(); show(); toast("🗑️ Screenshot gelöscht"); }catch(err){ toast(err.message); }
     });
     box.querySelectorAll("[data-v]").forEach(b=>b.onclick=async ()=>{
-      const mv = parseInt($("#revMin").value,10);
+      const hv = $("#revH").value, mm = $("#revM").value; const mv = (hv==="" && mm==="") ? NaN : Math.min(1440, (parseInt(hv,10)||0)*60 + (parseInt(mm,10)||0));
       try{
         await rpc("sf_review",{p_token:T(),p_member:item.member,p_day:item.day,p_valid:b.dataset.v==="1",p_minutes:Number.isNaN(mv)?null:mv});
         await refresh(); if (acc?.admin) await loadAdmin(); show(); back ? back() : closeSheet(); reviewFlash(b.dataset.v==="1");
-        toast(b.dataset.v==="1" ? (sus!=null?"Freigegeben – die KI lag falsch":"Als gültig gespeichert") : (sus!=null?"Als Fake markiert – die KI lag richtig":"Als ungültig markiert"));
+        toast(b.dataset.v==="1" ? (sus!=null?"Freigegeben – die KI lag falsch":`✅ Freigegeben – ${Number.isNaN(mv)?"":fmtHM(mv)+" "}zählt jetzt`) : (sus!=null?"Als Fake markiert – die KI lag richtig":"Abgelehnt"));
       }catch(err){ toast(err.message); }
     });
     $("#backBtn").onclick = ()=> back ? back() : closeSheet();
@@ -1676,6 +1688,11 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"32", date:"12. November", items:[
+    "✏️ Zeit geändert? Deine eigene Zeit (Std. & Min.) wird gespeichert – der Tag zählt aber erst, wenn ein Admin freigibt",
+    "🤖 Stimmt die Zeit der KI, wird der Tag wie bisher automatisch freigegeben – ohne Admin",
+    "✅ Admins: klare Knöpfe „Freigeben“ / „Ablehnen“, KI-Zeit und eingetragene Zeit im Vergleich"
+  ]},
   { v:"31", date:"12. November", items:[
     "🛡️ Admin: Die farbig markierten Einträge haben jetzt Luft zum Rand und sind kompakter."]},
   { v:"30", date:"12. November", items:[
