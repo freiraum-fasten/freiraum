@@ -441,7 +441,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "48";
+const APP_VERSION = "49";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1227,7 +1227,8 @@ function guideHtml(openKind, chosen){
     <div class="devbar"><span class="devic">${GUIDES[k][0].split(" ")[0]}</span><div><small>${auto ? "Erkannt: Dein Handy" : "Anleitung für"}</small><b>${GUIDES[k][0].split(" ").slice(1).join(" ")}</b></div></div>
     <div class="devsteps">${GUIDES[k][1]}</div>
     ${`<div class="hint" style="display:block;margin-bottom:10px"><b>✅ Das muss auf dem Screenshot zu sehen sein:</b>
-      <ul class="steps" style="margin:6px 0 0;padding-left:18px"><li>der <b>Tag</b> (z. B. „Heute“, „Gestern“ oder das Datum)</li>${isBoth() ? `<li>die <b>Gesamtzeit des Tages</b> (große Zahl oben) <b>und</b> die <b>Liste der Apps mit Minuten</b> – am besten beides auf einem Bild, sonst 2 Screenshots</li>` : trackOf()==="total" ? `<li>die <b>Gesamtzeit des Tages</b> – die große Zahl oben (iPhone) bzw. in der Mitte des Kreises (Android)</li>` : `<li>die <b>Liste der Apps mit Minuten</b> – alle Social-Media-Apps, die du genutzt hast</li>`}<li>bei langer Liste: bis zu <b>5 Screenshots</b> auf einmal hochladen</li></ul></div>`}
+      <ul class="steps" style="margin:6px 0 0;padding-left:18px"><li>der <b>Tag</b> (z. B. „Heute“, „Gestern“ oder das Datum)</li>${isBoth() ? `<li>die <b>Gesamtzeit des Tages</b> (große Zahl oben) <b>und</b> die <b>Liste der Apps mit Minuten</b> – am besten beides auf einem Bild, sonst 2 Screenshots</li>` : trackOf()==="total" ? `<li>die <b>Gesamtzeit des Tages</b> – die große Zahl oben (iPhone) bzw. in der Mitte des Kreises (Android)</li>` : `<li>die <b>Liste der Apps mit Minuten</b> – alle Social-Media-Apps, die du genutzt hast</li>`}<li>bei langer Liste: bis zu <b>5 Screenshots</b> auf einmal hochladen</li></ul>
+      <p class="small" style="margin:10px 0 0;line-height:1.5">🔒 <b>Etwas Privates drauf?</b> Übermal die App einfach (Stift in der Fotos-App) und schreib in den Kommentar „keine Social-Media-App“. Wir vertrauen dir. 🤝</p></div>`}
     <div class="muted small" style="margin:12px 2px 6px;font-weight:700">${auto ? "Falsch erkannt? Anderes Handy wählen:" : "Anderes Handy:"}</div>
     <div class="devchips">${others.map(x=>`<button class="pill" data-guide="${x}">${GUIDES[x][0]}</button>`).join("")}</div>
   </div>`;
@@ -1321,7 +1322,8 @@ async function analyse(root, files, day, test){
     <div class="muted small" style="margin:8px 4px 0">${isT ? "In deiner Gruppe zählt die gesamte Bildschirmzeit des Tages – alle Apps." : "Messenger wie WhatsApp oder Telegram zählen nicht."} Änderst du die Zahl, sehen das die Prüfer.</div>
     ${test && acc?.admin ? `<details style="margin-top:8px"><summary class="small">Erkannter Text (für Admins)</summary><pre style="white-space:pre-wrap;font-size:11px;max-height:180px;overflow:auto">${esc(text)}</pre></details>` : ""}
     <div style="margin-top:14px"><label for="noteIn" class="small" style="font-weight:700;display:block;margin:0 4px 6px">💬 Kommentar für die Admins <span class="muted" style="font-weight:500">(freiwillig)</span></label>
-      <textarea id="noteIn" class="input" rows="2" maxlength="300" style="font:inherit;resize:vertical" placeholder="z. B. „KI hat TikTok nicht erkannt – waren 12 Min.“"></textarea></div>
+      <textarea id="noteIn" class="input" rows="2" maxlength="300" style="font:inherit;resize:vertical" placeholder="z. B. „Eine App übermalt – keine Social Media“ oder „KI hat TikTok nicht erkannt – waren 12 Min.“"></textarea>
+      <div class="muted small" style="margin:6px 4px 0;line-height:1.45">🔒 App übermalt? Schreib kurz dazu, dass es keine Social-Media-App ist – wir vertrauen dir.</div></div>
     <button class="btn btn-primary" id="sendShot" style="margin-top:14px">${test?"Test speichern":"Eintragen"}</button>`;
   const autoNote = document.createElement("div"); autoNote.className = "muted small"; autoNote.style.margin = "8px 4px 0";
   root.querySelector("#limitInfo").after(autoNote);
@@ -1581,6 +1583,7 @@ async function reviewSheet(item, back){
     box.innerHTML = `${img && img.startsWith("data:image/jpeg;base64,") ? `<img class="full" src="${img}" alt="Screenshot">` : `<p class="muted">Kein Bild vorhanden.</p>`}
       ${item.dispute?`<div class="status warn" style="margin:0 0 10px">💬 Einspruch: „${esc(item.dispute)}“</div>`:""}
       ${note?`<div class="status warn" style="display:block;margin:0 0 10px">💬 Kommentar: „${esc(note)}“</div>`:""}
+      <div class="muted small" style="margin:0 0 10px;line-height:1.45">🤝 Ist eine App übermalt und im Kommentar steht, dass es keine Social Media ist: <b>auf Vertrauensbasis freigeben</b>, nicht nachfragen. Privatsphäre geht vor.</div>
       <div class="muted small" style="margin:0 0 8px">${BOTH?"📵 ":""}KI erkannt: <b>${item.ocr==null ? "–" : fmtHM(item.ocr)}</b> · eingetragen: <b>${fmtHM(item.minutes)}</b>${BOTH ? `<br>📱 KI erkannt: <b>${item.ocr_total==null ? "–" : fmtHM(item.ocr_total)}</b> · eingetragen: <b>${item.total==null ? "–" : fmtHM(item.total)}</b>` : ""}${item.date_ok===false?" · 📅 Datum nicht erkannt":""}</div>
       ${(item.ocr!==item.minutes || (BOTH && item.ocr_total!==undefined && item.ocr_total!==item.total))?`<div class="status warn" style="display:block;margin:0 0 10px;line-height:1.5">✏️ <b>Zeit von Hand geändert.</b> Der Tag zählt erst nach deiner Freigabe – mit der Zeit unten.</div>`:""}
       <div class="minutes" style="margin-top:0"><label>${BOTH?"📵 Social Media":"Zeit, die zählen soll"} (falls nötig korrigieren)</label><div class="hmin"><input id="revH" type="number" inputmode="numeric" min="0" max="24" value="${Math.floor(item.minutes/60)}"><span>Std.</span><input id="revM" type="number" inputmode="numeric" min="0" max="59" value="${item.minutes%60}"><span>Min.</span></div></div>
@@ -1735,7 +1738,7 @@ function renderReview(){
       ${x.dispute?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">💬 Einspruch: „${esc(x.dispute)}“</div>`:""}
       <span style="margin-left:auto;display:flex;gap:6px"><button class="pill qok" data-qok-m="${x.member}" data-qok-d="${x.day}">✓ Freigeben</button><button class="pill" data-rq="${i}">Ansehen</button></span></div>`).join("") || `<p class="muted small">Alles geprüft 👍 Danke fürs Helfen!</p>`;
   v.innerHTML = `<div class="card"><div class="sectionhead"><h3>🧑‍⚖️ Prüfen</h3><span class="muted small">${q.length} offen</span></div>
-      <p class="muted small" style="margin:6px 0 0;line-height:1.5">Du bist Co-Worker und hilfst beim Prüfen. Schau dir den Screenshot an und sag <b>Freigeben</b> oder <b>Ablehnen</b>. Löschen und alles andere machen die Admins. Deine eigenen Tage prüft jemand anderes.</p></div>
+      <p class="muted small" style="margin:6px 0 0;line-height:1.5">Du bist Co-Worker und hilfst beim Prüfen. Schau dir den Screenshot an und sag <b>Freigeben</b> oder <b>Ablehnen</b>. Übermalte Apps mit Kommentar „keine Social Media“ gibst du auf Vertrauensbasis frei. Löschen und alles andere machen die Admins. Deine eigenen Tage prüft jemand anderes.</p></div>
     <div class="card"><p class="muted small" style="margin:0 0 8px">✏️ = Zeit von Hand geändert · 📅? = Datum nicht erkannt · 🕵️ = KI vermutet einen Fake · 💬 = Kommentar/Einspruch</p>
       <div class="daylist">${rows}</div>
       <button class="btn btn-ghost" id="rqReload" style="margin-top:10px">🔄 Aktualisieren</button></div>
@@ -1997,6 +2000,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"49", date:"12. November", items:[
+    "🔒 Privatsphäre: Apps, die man nicht zeigen will, darf man im Screenshot übermalen – mit kurzem Kommentar „keine Social-Media-App“. Das wird auf Vertrauensbasis freigegeben",
+    "📝 Der Hinweis steht bei „So funktioniert's“, in der Screenshot-Anleitung, beim Kommentar-Feld und im Datenschutz – und für Prüfer beim Prüfen"
+  ]},
   { v:"48", date:"12. November", items:[
     "🎨 Schrift in Eingabefeldern passt sich jetzt immer dem Design an – kein Schwarz auf Schwarz mehr (Chat, Kommentare, Antworten)"
   ]},
@@ -2249,6 +2256,7 @@ function renderInfo(){
         <li>Alle, die sich registrieren, sind in <b>einer gemeinsamen Rangliste</b>. Am Anfang ist jeder auf Platz 1. Du siehst dich immer ganz oben.</li>
         <li>🤖 Die <b>KI prüft und gibt automatisch frei</b>. Nur wenn du Minuten von Hand änderst oder das Datum nicht erkannt wird, schaut zusätzlich ein Admin drüber.</li>
         <li>Findest du eine Bewertung falsch, tippe auf <b>„Einspruch“</b> – ein Admin prüft dann deinen Screenshot. Ehrlich bleiben!</li>
+        <li>🔒 <b>Deine Privatsphäre zählt:</b> Wenn du eine App nicht zeigen möchtest – oder nicht, wie lange du drin warst –, <b>übermal sie einfach</b> vor dem Hochladen (z. B. mit dem Stift in deiner Fotos-App) und schreib kurz in den Kommentar, dass es <b>keine Social-Media-App</b> ist. Das läuft auf Vertrauensbasis: Wir glauben dir und geben den Tag frei – erklären musst du nichts.</li>
       </ol>
     </div>
     <div class="card"><h3 style="font-size:17px;margin-bottom:10px">📵 Was zählt als Social Media?</h3>${platformsHtml()}</div>
@@ -2282,7 +2290,7 @@ function renderInfo(){
         <li>Am 31.01.2027 werden alle Daten automatisch gelöscht.</li>
         <li>Die App spricht nur mit ihrer eigenen Datenbank (verschlüsselt über HTTPS).</li>
       </ul>
-      <p class="muted small" style="margin:8px 0 0">Tipp: Schneide Mitteilungen oder Privates vor dem Hochladen weg, wenn welche auf dem Screenshot sind.</p>
+      <p class="muted small" style="margin:8px 0 0;line-height:1.5">Tipp: Schneide Mitteilungen oder Privates vor dem Hochladen weg. Eine App, die niemand sehen soll, kannst du einfach <b>übermalen</b> – kurz im Kommentar dazuschreiben, dass es keine Social-Media-App ist. Das respektieren wir, ohne nachzufragen.</p>
     </div>
     <div class="card">
       <h3 style="font-size:17px;margin-bottom:6px">🔒 Datenschutz</h3>
