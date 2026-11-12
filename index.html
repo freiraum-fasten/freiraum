@@ -91,7 +91,7 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .field{display:block;margin-bottom:12px}
 .field span{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:0 0 6px 4px}
 .input{width:100%;padding:15px 16px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);font-size:16px;outline:none;transition:border-color .2s}
-input,textarea,select{color:var(--ink);caret-color:var(--flame1)}input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}.bub.them{color:var(--ink)}
+input,textarea,select,.input{color:var(--ink)!important;-webkit-text-fill-color:var(--ink);caret-color:var(--flame1)}input::placeholder,textarea::placeholder{-webkit-text-fill-color:var(--muted)}input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}.bub.them{color:var(--ink)}
 .input:focus{border-color:var(--flame1)}
 .code-input{text-transform:uppercase;letter-spacing:.3em;font-weight:800;text-align:center;font-size:22px}
 .emojis{display:flex;gap:8px;flex-wrap:wrap;max-height:300px;overflow-y:auto;padding:2px 2px 6px;-webkit-overflow-scrolling:touch}.emojis .emogrp{flex:1 1 100%;font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:8px 2px 0}.emojis .emogrp:first-child{margin-top:0}
@@ -123,6 +123,7 @@ input,textarea,select{color:var(--ink);caret-color:var(--flame1)}input::placehol
 .bub{max-width:82%;padding:9px 13px;border-radius:18px;line-height:1.4;white-space:pre-wrap;word-break:break-word;font-size:15px}
 .bub.me{align-self:flex-end;background:linear-gradient(135deg,var(--flame1),var(--flame2));color:#fff;border-bottom-right-radius:6px}
 .bub.them{align-self:flex-start;background:var(--soft);border-bottom-left-radius:6px}.bub.them.new{box-shadow:0 0 0 2px var(--flame2)}
+.bub[data-bid]{cursor:pointer}.bub-act{margin-top:6px;text-align:right}.bub-act button{font:inherit;font-size:13px;font-weight:800;border:0;border-radius:99px;padding:6px 12px;background:rgba(0,0,0,.25);color:inherit}.bub.them .bub-act button{background:var(--no);color:#fff}.chatclear{display:block;margin:10px auto 0;font-size:13px;color:var(--muted);background:none;border:0;text-decoration:underline;font-family:inherit}
 .bub small{display:block;font-size:11px;opacity:.7;margin-top:3px;text-align:right}.bub-by{display:block;font-size:12px;margin-bottom:2px;opacity:.85}
 .chatin{display:flex;gap:8px;align-items:flex-end;margin-top:8px}.chatin textarea{flex:1;resize:none;font:inherit;min-height:46px;max-height:140px}.chatin .btn{width:52px;min-width:52px;height:46px;padding:0;margin:0;font-size:20px}
 .thr{display:flex!important;gap:12px;align-items:center;padding:12px!important;border-radius:16px;background:var(--soft);margin:8px 0;cursor:pointer;border-bottom:0!important}
@@ -441,7 +442,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "49";
+const APP_VERSION = "50";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1625,8 +1626,21 @@ function bubblesHtml(list, meIsAdmin){
   let last = "";
   return list.map(c=>{ const dk = chatDay(c.at), sep = dk!==last ? `<div class="chatday">${dk}</div>` : ""; last = dk;
     const mine = meIsAdmin ? c.admin : !c.admin;
-    return sep + `<div class="bub ${mine?"me":"them"}${c.new?" new":""}">${!mine && c.admin ? `<b class="bub-by">🛡️ ${esc(c.by||"Admin")}</b>` : mine && meIsAdmin && c.by ? `<b class="bub-by">${esc(c.by)}</b>` : ""}${esc(c.text)}<small>${chatTime(c.at)}</small></div>`; }).join("");
+    const can = c.id && (meIsAdmin || !c.admin);
+    return sep + `<div class="bub ${mine?"me":"them"}${c.new?" new":""}"${can?` data-bid="${c.id}"`:""}>${!mine && c.admin ? `<b class="bub-by">🛡️ ${esc(c.by||"Admin")}</b>` : mine && meIsAdmin && c.by ? `<b class="bub-by">${esc(c.by)}</b>` : ""}${esc(c.text)}<small>${chatTime(c.at)}</small></div>`; }).join("");
 }
+let thrReload = null;
+document.addEventListener("click", async e=>{
+  const del = e.target.closest("[data-bdel]");
+  if (del){ e.stopPropagation(); del.disabled = true;
+    try{ await rpc("sf_chat_remove",{p_token:T(),p_id:del.dataset.bdel}); toast("🗑️ Nachricht gelöscht");
+      if (del.closest("#chatBox")) loadMyChat(); else if (thrReload) thrReload(); }catch(err){ toast(err.message); del.disabled = false; }
+    return; }
+  const bub = e.target.closest(".bub[data-bid]"); if (!bub) return;
+  const open = bub.querySelector(".bub-act");
+  document.querySelectorAll(".bub-act").forEach(x=>x.remove());
+  if (!open){ const a = document.createElement("div"); a.className = "bub-act"; a.innerHTML = `<button data-bdel="${bub.dataset.bid}">🗑️ Löschen</button>`; bub.appendChild(a); }
+});
 function scrollChat(el){ if (el) el.scrollTop = el.scrollHeight; }
 async function loadMyChat(){
   const box = $("#chatBox"); if (!box) return;
@@ -1635,6 +1649,8 @@ async function loadMyChat(){
 }
 function bindMyChat(){
   const send = $("#chatSend"); if (!send) return;
+  $("#chatClear").onclick = ()=>confirmSheet("Deinen ganzen Chat mit den Admins löschen? Das kann man nicht rückgängig machen.", async ()=>{
+    try{ await rpc("sf_chat_empty",{p_token:T(),p_account:null}); toast("🗑️ Chat gelöscht"); infoOpen.add("konto"); show(); }catch(err){ toast(err.message); } });
   const ta = $("#chatTxt"); ta.oninput = ()=>{ ta.style.height = "auto"; ta.style.height = Math.min(140, ta.scrollHeight)+"px"; };
   send.onclick = async ()=>{ const t = ta.value.trim(); if (!t) return; send.disabled = true;
     try{ await rpc("sf_chat_send",{p_token:T(),p_text:t}); ta.value = ""; ta.style.height = "auto"; await loadMyChat(); toast("💬 An die Admins geschickt"); }catch(err){ toast(err.message); }
@@ -1672,8 +1688,14 @@ function bindThreads(root, rerender){
 async function chatSheet(t){
   sheet(`<div class="sectionhead" style="margin-bottom:8px"><h3>${esc(t.emoji||"🙂")} ${esc(t.name)}</h3><span class="muted small" style="word-break:break-all">${esc(t.email||"")}</span></div>
     <div class="chat" id="thrBox"><div class="loader"></div></div>
-    <div class="chatin"><textarea class="input" id="thrTxt" rows="1" maxlength="1000" placeholder="Antwort schreiben …"></textarea><button class="btn btn-flame" id="thrSend">➤</button></div>`, async r=>{
-    const load = async ()=>{ const list = await rpc("sf_chat_thread",{p_token:T(),p_account:t.id}) || []; const b = r.querySelector("#thrBox"); if (!b) return; b.innerHTML = bubblesHtml(list, true); scrollChat(b); };
+    <div class="chatin"><textarea class="input" id="thrTxt" rows="1" maxlength="1000" placeholder="Antwort schreiben …"></textarea><button class="btn btn-flame" id="thrSend">➤</button></div>
+    <p class="muted small" style="margin:8px 2px 0;text-align:center">Tippe auf eine Nachricht, um sie zu löschen.</p>
+    <button class="chatclear" id="thrClear">🗑️ Ganzen Chat leeren</button>`, async r=>{
+    const load = async ()=>{ const list = await rpc("sf_chat_thread",{p_token:T(),p_account:t.id}) || []; const b = r.querySelector("#thrBox"); if (!b) return; b.innerHTML = bubblesHtml(list, true); scrollChat(b); loadAdmin().then(()=>{ if (tab==="admin") renderAdmin(); }); };
+    thrReload = load;
+    const clr = r.querySelector("#thrClear"); clr.onclick = async ()=>{
+      if (!clr.dataset.sure){ clr.dataset.sure = "1"; clr.textContent = "Wirklich den ganzen Chat leeren? Nochmal tippen"; clr.style.color = "var(--no)"; return; }
+      try{ await rpc("sf_chat_empty",{p_token:T(),p_account:t.id}); toast("🗑️ Chat geleert"); closeSheet(); await loadAdmin(); show(); }catch(err){ toast(err.message); } };
     try{ await load(); }catch(err){ toast(err.message); }
     const ta = r.querySelector("#thrTxt"); ta.oninput = ()=>{ ta.style.height = "auto"; ta.style.height = Math.min(140, ta.scrollHeight)+"px"; };
     r.querySelector("#thrSend").onclick = async ()=>{ const txt = ta.value.trim(); if (!txt) return;
@@ -2000,6 +2022,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"50", date:"12. November", items:[
+    "🗑️ Chat: Eigene Nachrichten antippen und löschen – oder den ganzen Chat löschen",
+    "🛡️ Admins können jede Nachricht und ganze Chats löschen"
+  ]},
   { v:"49", date:"12. November", items:[
     "🔒 Privatsphäre: Apps, die man nicht zeigen will, darf man im Screenshot übermalen – mit kurzem Kommentar „keine Social-Media-App“. Das wird auf Vertrauensbasis freigegeben",
     "📝 Der Hinweis steht bei „So funktioniert's“, in der Screenshot-Anleitung, beim Kommentar-Feld und im Datenschutz – und für Prüfer beim Prüfen"
@@ -2215,7 +2241,9 @@ function renderInfo(){
     <div class="card" id="cardChat"><div class="sectionhead"><h3 style="font-size:17px">💬 Chat mit den Admins</h3><span class="muted small">nur du & die Admins</span></div>
       <p class="muted small" style="margin:4px 0 8px;line-height:1.45">Fragen, Probleme oder Challenge wechseln? Schreib einfach – die Antwort kommt hier rein.</p>
       <div class="chat" id="chatBox"><div class="loader"></div></div>
-      <div class="chatin"><textarea class="input" id="chatTxt" rows="1" maxlength="1000" placeholder="Nachricht an die Admins …"></textarea><button class="btn btn-flame" id="chatSend">➤</button></div></div>
+      <div class="chatin"><textarea class="input" id="chatTxt" rows="1" maxlength="1000" placeholder="Nachricht an die Admins …"></textarea><button class="btn btn-flame" id="chatSend">➤</button></div>
+      <p class="muted small" style="margin:8px 2px 0;text-align:center">Tipp: Tippe auf eine eigene Nachricht, um sie zu löschen.</p>
+      <button class="chatclear" id="chatClear">🗑️ Ganzen Chat löschen</button></div>
     <div class="card"><div class="sectionhead"><div><div class="muted small" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em">Dein Ausgangswert</div>
         <b style="font-size:18px">${fmtHM(acc.baseline)} ${TRACKS[trackOf()].word} pro Tag</b><div class="muted small">vor der Fastenzeit · ${TRACKS[trackOf()].icon} ${isTotal()?"Handyzeit-Challenge (ohne Limit)":`Social-Media-Challenge (max. ${LIMIT} Min.)`}</div></div>
         ${acc.can_switch?`<button class="pill" id="btnTrack">Ändern</button>`:""}</div>${acc.can_switch?"":`<p class="muted small" style="margin:8px 0 0">Challenge wechseln? Schreib den Admins oben im Chat.</p>`}</div>
