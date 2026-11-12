@@ -416,7 +416,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "34";
+const APP_VERSION = "35";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -1332,10 +1332,16 @@ function renderGroup(){
   const n = rows.length;
   const succToday = rows.filter(r=>r.s.map[yd]?.success).length;
   const flamesAll = rows.reduce((a,r)=>a+r.s.total,0);
-  const statusOf = r => { const e=r.s.map[yd]; return !active ? "" : VT ? (e ? `<span class="dot" style="background:var(--ok)"></span>gestern ${fmtHM(e.minutes)}` : `<span class="dot" style="background:var(--line)"></span>gestern noch offen`) : e ? (e.success?`<span class="dot" style="background:var(--ok)"></span>gestern geschafft`:`<span class="dot" style="background:var(--no)"></span>gestern ungültig`) : `<span class="dot" style="background:var(--line)"></span>gestern noch offen`; };
+  const dot = c => `<span class="dot" style="background:${c}"></span>`;
+  const statusOf = r => { const e=r.s.map[yd]; if (!active) return ""; if (!e) return `${dot("var(--line)")}gestern noch offen`;
+    if (isPending(e)) return `${dot("#E0A100")}gestern ${fmtHM(e.minutes)} · ⏳ wird geprüft`;
+    if (e.valid===false) return `${dot("var(--no)")}gestern ungültig`;
+    if (VT) return `${dot("var(--ok)")}gestern ${fmtHM(e.minutes)}`;
+    return e.success ? `${dot("var(--ok)")}gestern ${fmtHM(e.minutes)} ${e.joker?"🃏":"🔥"}` : `${dot("var(--no)")}gestern ${fmtHM(e.minutes)} – über ${vLimit} Min.`; };
+  const avgAll = r => { const c = (r.m.checkins||[]).filter(x=>x.valid!==false && !isPending(x)); return c.length ? c.reduce((a,x)=>a+(x.minutes||0),0)/c.length : null; };
   const valueOf = r => VT ? `<div style="text-align:right"><b style="font-size:17px">${avgOfStats(r.s)!=null?fmtHM(avgOfStats(r.s)):"–"}</b><div class="muted small">Ø pro Tag</div></div>`
     : rankMode==="streak"
-    ? `<div class="st"><svg class="${r.s.streak?"":"flame off"}"><use href="#flame"/></svg>${r.s.streak}</div>`
+    ? `<div style="text-align:right"><div class="st" style="justify-content:flex-end"><svg class="${r.s.streak?"":"flame off"}"><use href="#flame"/></svg>${r.s.streak}</div>${avgAll(r)!=null?`<div class="muted small">Ø ${fmtHM(Math.round(avgAll(r)))}</div>`:""}</div>`
     : `<div style="text-align:right"><b style="font-size:17px">${r.s.validDays}</b><div class="muted small">${fmtHM(r.s.minutes)}</div></div>`;
   const medal = k => k===1?"🥇":k===2?"🥈":k===3?"🥉":k;
   const hasData = r => VT ? r.s.validDays > 0 : (r.s.streak > 0 || r.s.total > 0);
@@ -1370,7 +1376,7 @@ function renderGroup(){
     </div>`;
   const podHtml = podium.length===3 ? `<div class="podium">${[1,0,2].map(i=>{ const r = podium[i];
       return `<div class="pod p${i+1} ${r===mine?"me":""}" data-mid="${r.m.id}"><div class="pod-av">${avatarHtml(r.m)}<span class="pod-medal">${["🥇","🥈","🥉"][i]}</span></div>
-        <b>${esc(r.m.name)}</b><span>${VT ? (avgOfStats(r.s)!=null?fmtHM(avgOfStats(r.s))+" Ø":"–") : rankMode==="streak" ? r.s.streak+" 🔥" : r.s.validDays+" Tage"}</span><div class="pod-step">${r.rank}</div></div>`; }).join("")}</div>` : "";
+        <b>${esc(r.m.name)}</b><span>${VT ? (avgOfStats(r.s)!=null?fmtHM(avgOfStats(r.s))+" Ø":"–") : rankMode==="streak" ? r.s.streak+" 🔥" : r.s.validDays+" Tage"}${!VT && avgAll(r)!=null ? `<br><small class="muted">Ø ${fmtHM(Math.round(avgAll(r)))}</small>` : ""}</span><div class="pod-step">${r.rank}</div></div>`; }).join("")}</div>` : "";
   $("#vGroup").innerHTML = `
     ${hero}
     ${head}
@@ -1730,6 +1736,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"35", date:"12. November", items:[
+    "⏱️ Rangliste: Bei allen steht jetzt, wie viele Minuten sie gestern hatten – und ihr Durchschnitt pro Tag (Ø)"
+  ]},
   { v:"34", date:"12. November", items:[
     "📄 Datenschutzerklärung ergänzt: Verantwortlicher, kein Mindestalter, Prüfer:innen (Co-Worker)"
   ]},
