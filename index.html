@@ -63,7 +63,7 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .row.rv-ok{background:rgba(20,160,107,.13);box-shadow:inset 0 0 0 2px rgba(20,160,107,.55),0 0 14px rgba(20,160,107,.25)}
 .row.rv-no{background:rgba(229,72,77,.11);box-shadow:inset 0 0 0 2px rgba(229,72,77,.5)}
 .row.rv-open{background:rgba(255,170,0,.10);box-shadow:inset 0 0 0 1.5px rgba(255,170,0,.45)}
-.more-hide{display:none!important}.pill.qok{background:var(--ok);color:#fff;font-weight:800}.row.rv-over,.daylist .row.rv-over{border-radius:16px;padding:12px 14px;margin:10px 0;border-bottom:0;row-gap:8px;background:rgba(220,70,70,.07);box-shadow:inset 0 0 0 2px rgba(220,70,70,.3)}.rv-over .rv-tag{color:var(--no)}.wk{border-radius:18px;background:var(--soft);margin:10px 0;padding:4px 14px}.wk>summary{font-weight:800;padding:10px 0;cursor:pointer}.dayh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:14px 0 2px;font-weight:800}.dayh span{font-weight:600}
+.more-hide{display:none!important}.unsure{color:var(--no)!important;font-weight:800;white-space:nowrap}.unsure i{font-style:normal;font-size:.85em;margin-left:2px}.pill.qok{background:var(--ok);color:#fff;font-weight:800}.row.rv-over,.daylist .row.rv-over{border-radius:16px;padding:12px 14px;margin:10px 0;border-bottom:0;row-gap:8px;background:rgba(220,70,70,.07);box-shadow:inset 0 0 0 2px rgba(220,70,70,.3)}.rv-over .rv-tag{color:var(--no)}.wk{border-radius:18px;background:var(--soft);margin:10px 0;padding:4px 14px}.wk>summary{font-weight:800;padding:10px 0;cursor:pointer}.dayh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:14px 0 2px;font-weight:800}.dayh span{font-weight:600}
 .row.rv-auto{background:rgba(20,160,107,.11);box-shadow:inset 0 0 0 2px rgba(20,160,107,.4)}
 .rv-tag{flex:1 1 100%;font-size:12.5px;font-weight:800;letter-spacing:.02em}
 .rv-tag:has(+ .tbadge){flex:0 1 auto;margin-right:2px}
@@ -440,7 +440,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "46";
+const APP_VERSION = "47";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -551,6 +551,10 @@ let pickedEmoji = EMOJIS[0];
 let rankMode = "streak";
 const T = () => auth?.token;
 
+/* Noch nicht bestätigt: KI unsicher oder Zeit geändert – ein Admin muss erst freigeben */
+function isUnsure(c){ return !!c && !c.reviewed && c.valid!==false && !c.joker && !!(c.edited || c.date_ok!==true || c.suspect || c.disputed); }
+const anyUnsure = m => (m.checkins||[]).some(c=>isUnsure(c) && !isPending(c));   // nur Tage, die schon mitzählen
+const hmU = (min, u) => u ? `<span class="unsure" title="Noch nicht bestätigt – ein Admin prüft noch">${fmtHM(min)}<i>⏳</i></span>` : fmtHM(min);
 function isPending(e){ return !!e && e.edited && !e.reviewed && e.valid!==false && !e.joker && !e.success; }  // Zeit von Hand geändert → wartet auf Admin
 function statsFor(m){
   const map = {}; (m.checkins||[]).forEach(c => map[c.day] = c);
@@ -1400,15 +1404,15 @@ function renderGroup(){
   const flamesAll = rows.reduce((a,r)=>a+r.s.total,0);
   const dot = c => `<span class="dot" style="background:${c}"></span>`;
   const statusOf = r => { const e=r.s.map[yd]; if (!active) return ""; if (!e) return `${dot("var(--line)")}gestern noch offen`;
-    if (isPending(e)) return `${dot("#E0A100")}gestern ${fmtHM(e.minutes)} · ⏳ wird geprüft`;
     if (e.valid===false) return `${dot("var(--no)")}gestern ungültig`;
+    if (isUnsure(e)) return `${dot("var(--no)")}gestern ${hmU(e.minutes, true)} · <span style="color:var(--no)">noch nicht bestätigt</span>`;
     if (VT) return `${dot("var(--ok)")}gestern ${fmtHM(e.minutes)}`;
     return e.success ? `${dot("var(--ok)")}gestern ${fmtHM(e.minutes)} ${e.joker?"🃏":"🔥"}` : `${dot("var(--no)")}gestern ${fmtHM(e.minutes)} – über ${vLimit} Min.`; };
   const avgAll = r => { const c = (r.m.checkins||[]).filter(x=>x.valid!==false && !isPending(x)); return c.length ? c.reduce((a,x)=>a+(x.minutes||0),0)/c.length : null; };
-  const valueOf = r => VT ? `<div style="text-align:right"><b style="font-size:17px">${avgOfStats(r.s)!=null?fmtHM(avgOfStats(r.s)):"–"}</b><div class="muted small">Ø pro Tag</div></div>`
+  const valueOf = r => VT ? `<div style="text-align:right"><b style="font-size:17px">${avgOfStats(r.s)!=null?hmU(avgOfStats(r.s), anyUnsure(r.m)):"–"}</b><div class="muted small">Ø pro Tag</div></div>`
     : rankMode==="streak"
-    ? `<div style="text-align:right"><div class="st" style="justify-content:flex-end"><svg class="${r.s.streak?"":"flame off"}"><use href="#flame"/></svg>${r.s.streak}</div><div class="muted small">Ø ${avgAll(r)!=null ? fmtHM(Math.round(avgAll(r))) : "– Min."}</div></div>`
-    : `<div style="text-align:right"><b style="font-size:17px">${r.s.validDays}</b><div class="muted small">${fmtHM(r.s.minutes)}</div></div>`;
+    ? `<div style="text-align:right"><div class="st" style="justify-content:flex-end"><svg class="${r.s.streak?"":"flame off"}"><use href="#flame"/></svg>${r.s.streak}</div><div class="muted small">Ø ${avgAll(r)!=null ? hmU(Math.round(avgAll(r)), anyUnsure(r.m)) : "– Min."}</div></div>`
+    : `<div style="text-align:right"><b style="font-size:17px">${r.s.validDays}</b><div class="muted small">${hmU(r.s.minutes, anyUnsure(r.m))}</div></div>`;
   const medal = k => k===1?"🥇":k===2?"🥈":k===3?"🥉":k;
   const hasData = r => VT ? r.s.validDays > 0 : (r.s.streak > 0 || r.s.total > 0);
   const podium = rows.filter(hasData).slice(0,3);
@@ -1442,7 +1446,7 @@ function renderGroup(){
     </div>`;
   const podHtml = podium.length===3 ? `<div class="podium">${[1,0,2].map(i=>{ const r = podium[i];
       return `<div class="pod p${i+1} ${r===mine?"me":""}" data-mid="${r.m.id}"><div class="pod-av">${avatarHtml(r.m)}<span class="pod-medal">${["🥇","🥈","🥉"][Math.min(r.rank,3)-1]}</span></div>
-        <b>${esc(r.m.name)}</b><span>${VT ? (avgOfStats(r.s)!=null?fmtHM(avgOfStats(r.s))+" Ø":"–") : rankMode==="streak" ? r.s.streak+" 🔥" : r.s.validDays+" Tage"}${!VT && avgAll(r)!=null ? `<br><small class="muted">Ø ${fmtHM(Math.round(avgAll(r)))}</small>` : ""}</span><div class="pod-step">${r.rank}</div></div>`; }).join("")}</div>` : "";
+        <b>${esc(r.m.name)}</b><span>${VT ? (avgOfStats(r.s)!=null?hmU(avgOfStats(r.s), anyUnsure(r.m))+" Ø":"–") : rankMode==="streak" ? r.s.streak+" 🔥" : r.s.validDays+" Tage"}${!VT && avgAll(r)!=null ? `<br><small class="muted">Ø ${hmU(Math.round(avgAll(r)), anyUnsure(r.m))}</small>` : ""}</span><div class="pod-step">${r.rank}</div></div>`; }).join("")}</div>` : "";
   $("#vGroup").innerHTML = `
     ${hero}
     ${head}
@@ -1453,7 +1457,7 @@ function renderGroup(){
       <div class="merow">
         <div class="bigrank"><small>Platz</small>${mine.rank}<small>von ${n}</small></div>
         <div class="av big">${avatarHtml(mine.m)}</div>
-        <div class="who" style="flex:1;min-width:0"><b style="font-size:19px">${esc(mine.m.name)}</b><span>${statusOf(mine) || (today < START ? "Start am 15. November" : "")}</span>${!VT && avgAll(mine)!=null ? `<span class="muted small">Ø ${fmtHM(Math.round(avgAll(mine)))} pro Tag</span>` : ""}</div>
+        <div class="who" style="flex:1;min-width:0"><b style="font-size:19px">${esc(mine.m.name)}</b><span>${statusOf(mine) || (today < START ? "Start am 15. November" : "")}</span>${!VT && avgAll(mine)!=null ? `<span class="muted small">Ø ${hmU(Math.round(avgAll(mine)), anyUnsure(mine.m))} pro Tag</span>` : ""}</div>
       </div>
       <div class="mestats">
         ${VT ? `<div><b>${avgOfStats(mine.s)!=null?fmtHM(avgOfStats(mine.s)):"–"}</b><span>Ø pro Tag</span></div>
@@ -1463,8 +1467,8 @@ function renderGroup(){
       </div>
       <div class="strip">${strip}</div>
     </div>` : ""}
-    ${VT ? `<p class="muted small" style="margin:0 4px 12px;line-height:1.5">📱 <b>Handyzeit-Challenge:</b> Wer im Schnitt am wenigsten Handyzeit pro Tag hat, steht vorn. Gezählt werden alle hochgeladenen Tage.${canReview?" <b>Admin:</b> Tippe auf eine Person, um Screenshots zu prüfen.":""}</p>` : `<div class="seg" id="segRank"><button data-r="streak" class="${rankMode==="streak"?"on":""}">🔥 Flammen</button><button data-r="comp" class="${rankMode==="comp"?"on":""}">🏆 Wettbewerb</button></div>
-    <p class="muted small" style="margin:-6px 4px 12px;line-height:1.5">${rankMode==="streak" ? `Sortiert nach Flammen in Folge (Tage mit max. ${vLimit} Min. ${TRACKS[viewTrack].word}). Gleichstand = gleicher Platz.` : `Wer die meisten geschafften Tage hat, liegt vorn. Bei Gleichstand gewinnt, wer weniger Minuten hatte. Ungültige Tage zählen nicht.`}${canReview?" <b>Admin:</b> Tippe auf eine Person, um Screenshots zu prüfen.":""}</p>`}
+    ${VT ? `<p class="muted small" style="margin:0 4px 12px;line-height:1.5">📱 <b>Handyzeit-Challenge:</b> Wer im Schnitt am wenigsten Handyzeit pro Tag hat, steht vorn. Gezählt werden alle hochgeladenen Tage. <span class="unsure">Rote Zeiten⏳</span> = noch nicht bestätigt – ein Admin prüft noch.${canReview?" <b>Admin:</b> Tippe auf eine Person, um Screenshots zu prüfen.":""}</p>` : `<div class="seg" id="segRank"><button data-r="streak" class="${rankMode==="streak"?"on":""}">🔥 Flammen</button><button data-r="comp" class="${rankMode==="comp"?"on":""}">🏆 Wettbewerb</button></div>
+    <p class="muted small" style="margin:-6px 4px 12px;line-height:1.5">${rankMode==="streak" ? `Sortiert nach Flammen in Folge (Tage mit max. ${vLimit} Min. ${TRACKS[viewTrack].word}). Gleichstand = gleicher Platz.` : `Wer die meisten geschafften Tage hat, liegt vorn. Bei Gleichstand gewinnt, wer weniger Minuten hatte. Ungültige Tage zählen nicht.`} <span class="unsure">Rote Zeiten⏳</span> = noch nicht bestätigt – ein Admin prüft noch.${canReview?" <b>Admin:</b> Tippe auf eine Person, um Screenshots zu prüfen.":""}</p>`}
     <div class="card" style="padding:8px 20px"><ul class="lb">${list || `<li><div class="who"><span>Noch niemand ${mine?"sonst ":""}in dieser Gruppe – lade Freunde ein!</span></div></li>`}</ul></div>
     <button class="btn btn-flame" id="btnInvite" style="margin-bottom:14px">Freunde einladen</button>`;
   $("#btnInvite").onclick = invite;
@@ -1992,6 +1996,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"47", date:"12. November", items:[
+    "🔴 Rangliste: Zeiten, die noch nicht bestätigt sind (KI unsicher oder Zeit geändert), stehen rot mit ⏳ – so weiß jeder: das wird noch geprüft",
+    "✅ Sobald ein Admin freigibt, wird die Zeit wieder normal angezeigt"
+  ]},
   { v:"46", date:"12. November", items:[
     "✅ Neuer Knopf „✓ Freigeben“ direkt in der Liste bei offenen Screenshots – ohne den Screenshot erst öffnen zu müssen (Zu prüfen, Alle Uploads, Personen-Ansicht, Co-Worker-Reiter)"
   ]},

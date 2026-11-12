@@ -1,7 +1,7 @@
 // Freiraum Service Worker
 // App-Dateien: immer frisch vom Server (neue Versionen sofort), offline aus dem Speicher.
 // Texterkennung (ocr/…): ändert sich nie → einmal laden, danach aus dem Speicher (spart Datenvolumen).
-const CACHE = "freiraum-v46", OCR = "freiraum-ocr";
+const CACHE = "freiraum-v47", OCR = "freiraum-ocr";
 self.addEventListener("install", e => { self.skipWaiting(); });
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE && k !== OCR).map(k => caches.delete(k)))));
