@@ -132,6 +132,11 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 @keyframes glow{from{transform:scale(.85);opacity:.7}to{transform:scale(1.1);opacity:1}}
 @keyframes fxtext{from{opacity:0;transform:translateY(12px)}}
 @keyframes spark{0%{opacity:1;transform:rotate(var(--a)) translateY(0)}100%{opacity:0;transform:rotate(var(--a)) translateY(calc(-1 * var(--d)))}}
+html,body{max-width:100%;overflow-x:hidden}
+.card{min-width:0;max-width:100%}
+.wc *{min-width:0;overflow-wrap:break-word;hyphens:auto;-webkit-hyphens:auto}
+.wc .wc-week .pill{font-size:11px;padding:3px 9px;margin-left:4px;vertical-align:1px;text-transform:none;letter-spacing:0}
+.flamefx{width:100vw;height:100dvh;left:0;top:0}
 .wc-hero{text-align:left}
 .konfi-tag{display:inline-block;background:linear-gradient(90deg,var(--flame1),var(--flame2));color:#fff;font-weight:800;font-size:13px;letter-spacing:.04em;padding:6px 12px;border-radius:999px}
 .wc-week{font-weight:800;font-size:12.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--flame2)}
@@ -167,7 +172,7 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .wc .wc-ico{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:28px;background:var(--soft);flex:none}
 .wc.cur{border:2px solid var(--flame2);box-shadow:0 10px 30px rgba(255,61,90,.18)}
 .wc.cur .wc-ico{background:linear-gradient(135deg,var(--flame1),var(--flame2))}
-.wc.done .wc-ico{background:var(--okbg)}
+.wc.wc-done .wc-ico{background:var(--okbg)}
 .wc-now{background:linear-gradient(90deg,var(--flame1),var(--flame2));color:#fff;white-space:nowrap}
 .wc .wc-head .pill{align-self:flex-start;font-size:12px;padding:5px 10px;flex:none}
 .wc-tips{border:0;padding:4px 0}.wc-tips summary{font-size:14px}.wc-tips ul{margin:6px 0 0;padding-left:20px;color:var(--muted);font-size:14.5px;line-height:1.55}
@@ -394,7 +399,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "27";
+const APP_VERSION = "28";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -1038,11 +1043,10 @@ function weeklyHtml(){
       <p style="margin:4px 0 0;line-height:1.5;font-size:15px">Vor Weihnachten treffen wir uns noch <b>fünfmal</b>. Bring deinen Beitrag zur jeweiligen Wochenchallenge mit in den <b>Konfiunterricht</b>. Dort teilen wir miteinander, was wir gemacht haben.</p></div></div>
     </div>
     ${WEEKLY.map(w=>{ const isCur = w.n===cur, past = today>weekEnd(w.n), isDone = done.includes(w.n);
-      return `<div class="card wc ${isCur?"cur":""} ${isDone?"done":""}">
+      return `<div class="card wc ${isCur?"cur":""} ${isDone?"wc-done":""}">
         <div class="wc-head"><div class="wc-ico">${w.icon}</div>
-          <div style="flex:1;min-width:0"><div class="wc-week">Woche ${w.n} · ${shortD(weekStart(w.n))}–${shortD(weekEnd(w.n))}</div>
-          <b style="font-size:19px">${esc(w.title)}</b></div>
-          ${isCur?`<span class="pill wc-now">Diese Woche</span>`:past?`<span class="pill muted">vorbei</span>`:`<span class="pill muted">ab ${shortD(weekStart(w.n))}</span>`}</div>
+          <div style="flex:1;min-width:0"><div class="wc-week">Woche ${w.n} · ${shortD(weekStart(w.n))}–${shortD(weekEnd(w.n))} ${isCur?`<span class="pill wc-now">Diese Woche</span>`:past?`<span class="pill muted">vorbei</span>`:`<span class="pill muted">ab ${shortD(weekStart(w.n))}</span>`}</div>
+          <b style="font-size:19px">${esc(w.title)}</b></div></div>
         <p style="margin:10px 0 8px;line-height:1.5">${esc(w.task)}</p>
         <details class="wc-tips"><summary>💡 Ideen dazu</summary><ul>${w.tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></details>
         <div class="wc-bring">🎁 <b>Weitergeben:</b> ${esc(w.share)}<div class="muted small" style="margin-top:6px">⛪ Konfis bringen mit: ${esc(w.bring)}</div></div>
@@ -1649,6 +1653,8 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"28", date:"12. November", items:[
+    "🐞 Behoben: Nach „Erledigt“ bei einer Wochenchallenge wurde die Seite zu breit und die Flamme saß falsch."]},
   { v:"27", date:"12. November", items:[
     "🎁 Die <b>Wochenchallenges</b> sind jetzt für alle – allein, mit Familie oder Freunden. Zu jeder Woche gibt's eine Idee zum Weitergeben. Die Konfis bringen ihren Beitrag wie gewohnt mit."]},
   { v:"26", date:"12. November", items:[
