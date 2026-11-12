@@ -115,6 +115,7 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .daystrip .label{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 .daystrip .day{font-size:30px;font-weight:800;letter-spacing:-.03em}
 .daystrip .pill{white-space:nowrap;flex:none;display:inline-flex;align-items:center;gap:6px;font-weight:800}.daystrip .pill svg{width:18px;height:18px}
+.devbar{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(255,122,24,.16),rgba(255,61,104,.14));border:1.5px solid rgba(255,90,60,.35);border-radius:16px;padding:12px 14px;margin-bottom:12px}.devbar .devic{font-size:30px;line-height:1}.devbar small{display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.devbar b{font-size:18px}.devsteps .steps{margin-top:0}.devchips{display:flex;flex-wrap:wrap;gap:8px}
 .btnrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}.btnrow .btn{margin:0;padding-left:8px;padding-right:8px}
 .todaynote{text-align:center;margin:-2px 8px 18px;line-height:1.5}
 .progress{height:8px;background:var(--soft);border-radius:99px;overflow:hidden;margin-bottom:18px}
@@ -420,7 +421,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "41";
+const APP_VERSION = "42";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -696,7 +697,7 @@ function renderToday(){
   $("#goIdeas")?.addEventListener("click", ()=>{ tab="ideas"; show(); window.scrollTo({top:0}); });
   bindFr("#vToday", renderToday);
   $("#goAdmin")?.addEventListener("click", ()=>{ tab="admin"; show(); });
-  $("#goSetup")?.addEventListener("click", ()=>{ infoOpen.add("guide"); tab="info"; show(); setTimeout(()=>{ const d=$("#cardGuide"); if(d) d.scrollIntoView({behavior:"smooth"}); },60); });
+  $("#goSetup")?.addEventListener("click", guideSheet);
   document.querySelectorAll("#vToday [data-up]").forEach(b=>b.addEventListener("click", ()=>uploadFlow(b.dataset.up)));
   document.querySelectorAll("#vToday [data-dispute]").forEach(b=>b.addEventListener("click", ()=>disputeSheet(b.dataset.dispute)));
   document.querySelectorAll("#vToday [data-joker]").forEach(b=>b.addEventListener("click", ev=>{ ev.stopPropagation(); jokerSheet(b.dataset.joker); }));
@@ -1119,15 +1120,23 @@ function calendarCard(s, today){
 /* ---------- Anleitung je Handy ---------- */
 const PLATFORMS_BAD = ["Instagram","TikTok","YouTube (auch Shorts)","Snapchat","Facebook","X / Twitter","Threads","Pinterest","Reddit","BeReal","Twitch","Kick","Tumblr","LinkedIn","Bluesky","Mastodon","Discord","Lemon8","Likee","VSCO","Jodel"];
 const PLATFORMS_OK = ["WhatsApp","Telegram","Signal","Threema","iMessage / Nachrichten","Facebook Messenger","SMS","Telefon & FaceTime","E-Mail","Musik (Spotify, YouTube Music …)","Navi, Schule, Banking & Co."];
+let devModel = ""; try{ devModel = localStorage.getItem("fr_dev") || ""; }catch{}
 function deviceKind(){
-  const ua = navigator.userAgent;
-  if (/iphone|ipad|ipod/i.test(ua)) return "ios";
-  if (/SM-|samsung/i.test(ua)) return "samsung";
-  if (/xiaomi|redmi|poco|\bMi /i.test(ua)) return "xiaomi";
-  if (/huawei|honor/i.test(ua)) return "huawei";
+  const ua = navigator.userAgent, x = ua + " " + devModel;
+  if (/iphone|ipad|ipod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return "ios";
+  if (/SM-[A-Z]|samsung|SamsungBrowser|Galaxy/i.test(x)) return "samsung";
+  if (/xiaomi|redmi|poco|\bMi \d|MIUI|HyperOS|^M2\d{3}|\b2[0-4]\d{5,}[A-Z]{1,3}\b/i.test(x)) return "xiaomi";
+  if (/huawei|honor|HarmonyOS|\b(ELS|ANA|NOH|VOG|LYA|MAR|JNY|NTH|FNE|ALI|ANY|PCT|RMO|LGE)-[A-Z]{2}\d/i.test(x)) return "huawei";
   if (/android/i.test(ua)) return "android";
   return "ios";
 }
+/* Neuere Chrome-Versionen verstecken das Handy-Modell – wir fragen es (nur auf dem Gerät) nach */
+function detectDevice(){
+  try{ navigator.userAgentData?.getHighEntropyValues?.(["model"]).then(v=>{ const m = (v && v.model) || ""; if (m && m !== devModel){ devModel = m; try{ localStorage.setItem("fr_dev", m); }catch{} } }).catch(()=>{}); }catch{}
+}
+detectDevice();
+function guideSheet(){ sheet(`<h3 style="margin-bottom:10px">📸 So machst du den Screenshot</h3>${guideHtml()}<button class="btn btn-ghost" id="gsClose" style="margin-top:12px">Alles klar</button>`, r=>{ r.querySelector("#gsClose").onclick = closeSheet; }); }
+document.addEventListener("click", e=>{ const b = e.target.closest("[data-guide]"); if (!b) return; const box = b.closest(".guidebox"); if (box) box.outerHTML = guideHtml(b.dataset.guide, true); });
 const GUIDES = {
   ios: ["🍎 iPhone", `<ol class="steps">
     <li>Öffne <b>Einstellungen → Bildschirmzeit</b>.</li>
@@ -1161,12 +1170,17 @@ const GUIDES = {
     <li>Den <b>Tag</b> wählen – das Datum muss sichtbar sein.</li>
     <li>Screenshot: <b>Ein/Aus + Leiser</b> oder mit dem Fingerknöchel zweimal auf den Bildschirm klopfen.</li></ol>`]
 };
-function guideHtml(openKind){
-  const k = openKind || deviceKind();
-  const order = [k, ...Object.keys(GUIDES).filter(x=>x!==k)];
-  return `<div class="hint" style="display:block;margin-bottom:10px"><b>✅ Das muss auf dem Screenshot zu sehen sein:</b>
-      <ul class="steps" style="margin:6px 0 0;padding-left:18px"><li>der <b>Tag</b> (z. B. „Heute“, „Gestern“ oder das Datum)</li>${trackOf()==="total" ? `<li>die <b>Gesamtzeit des Tages</b> – die große Zahl oben (iPhone) bzw. in der Mitte des Kreises (Android)</li>` : `<li>die <b>Liste der Apps mit Minuten</b> – alle Social-Media-Apps, die du genutzt hast</li>`}<li>bei langer Liste: bis zu <b>5 Screenshots</b> auf einmal hochladen</li></ul></div>`
-    + order.map((key,i)=>`<details ${i===0?"open":""}><summary>${GUIDES[key][0]}</summary>${GUIDES[key][1]}</details>`).join("");
+function guideHtml(openKind, chosen){
+  const k = openKind || deviceKind(), auto = !chosen && !openKind;
+  const others = Object.keys(GUIDES).filter(x=>x!==k);
+  return `<div class="guidebox">
+    <div class="devbar"><span class="devic">${GUIDES[k][0].split(" ")[0]}</span><div><small>${auto ? "Erkannt: Dein Handy" : "Anleitung für"}</small><b>${GUIDES[k][0].split(" ").slice(1).join(" ")}</b></div></div>
+    <div class="devsteps">${GUIDES[k][1]}</div>
+    ${`<div class="hint" style="display:block;margin-bottom:10px"><b>✅ Das muss auf dem Screenshot zu sehen sein:</b>
+      <ul class="steps" style="margin:6px 0 0;padding-left:18px"><li>der <b>Tag</b> (z. B. „Heute“, „Gestern“ oder das Datum)</li>${trackOf()==="total" ? `<li>die <b>Gesamtzeit des Tages</b> – die große Zahl oben (iPhone) bzw. in der Mitte des Kreises (Android)</li>` : `<li>die <b>Liste der Apps mit Minuten</b> – alle Social-Media-Apps, die du genutzt hast</li>`}<li>bei langer Liste: bis zu <b>5 Screenshots</b> auf einmal hochladen</li></ul></div>`}
+    <div class="muted small" style="margin:12px 2px 6px;font-weight:700">${auto ? "Falsch erkannt? Anderes Handy wählen:" : "Anderes Handy:"}</div>
+    <div class="devchips">${others.map(x=>`<button class="pill" data-guide="${x}">${GUIDES[x][0]}</button>`).join("")}</div>
+  </div>`;
 }
 function platformsHtml(){
   return `<p style="margin:0 0 6px"><b>❌ Zählt als Social Media</b> (zusammen max. ${limitOf("social")} Min./Tag):</p>
@@ -1824,6 +1838,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"42", date:"12. November", items:[
+    "📱 „So geht's“: Die App erkennt dein Handy (iPhone, Samsung, Xiaomi, Huawei, Pixel & Co.) und zeigt sofort die passende Anleitung",
+    "🔍 Bessere Erkennung bei neueren Android-Handys – falsch erkannt? Einfach anderes Handy antippen"
+  ]},
   { v:"41", date:"12. November", items:[
     "🥇 Podest: Bei Gleichstand bekommen alle auf Platz 1 auch Gold"
   ]},
