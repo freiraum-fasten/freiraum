@@ -420,7 +420,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "40";
+const APP_VERSION = "41";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -1369,7 +1369,7 @@ function renderGroup(){
         : today < START ? `<button class="btn h2-cta" id="heroProbe">🧪 Probe-Upload ausprobieren</button>` : ""}
     </div>`;
   const podHtml = podium.length===3 ? `<div class="podium">${[1,0,2].map(i=>{ const r = podium[i];
-      return `<div class="pod p${i+1} ${r===mine?"me":""}" data-mid="${r.m.id}"><div class="pod-av">${avatarHtml(r.m)}<span class="pod-medal">${["🥇","🥈","🥉"][i]}</span></div>
+      return `<div class="pod p${i+1} ${r===mine?"me":""}" data-mid="${r.m.id}"><div class="pod-av">${avatarHtml(r.m)}<span class="pod-medal">${["🥇","🥈","🥉"][Math.min(r.rank,3)-1]}</span></div>
         <b>${esc(r.m.name)}</b><span>${VT ? (avgOfStats(r.s)!=null?fmtHM(avgOfStats(r.s))+" Ø":"–") : rankMode==="streak" ? r.s.streak+" 🔥" : r.s.validDays+" Tage"}${!VT && avgAll(r)!=null ? `<br><small class="muted">Ø ${fmtHM(Math.round(avgAll(r)))}</small>` : ""}</span><div class="pod-step">${r.rank}</div></div>`; }).join("")}</div>` : "";
   $("#vGroup").innerHTML = `
     ${hero}
@@ -1824,6 +1824,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"41", date:"12. November", items:[
+    "🥇 Podest: Bei Gleichstand bekommen alle auf Platz 1 auch Gold"
+  ]},
   { v:"40", date:"12. November", items:[
     "🧹 „Heute“ aufgeräumt: keine doppelten Infos mehr (Countdown, Flammen-Karte, „gespart“ stehen schon in der Rangliste)",
     "🔥 Oben nur noch eine kompakte Zeile: Tag X von 40 und deine Flammen in Folge",
