@@ -59,6 +59,19 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .helpbtn{position:relative;width:36px;height:36px;border-radius:50%;border:0;background:var(--soft);color:var(--ink);font:800 18px/36px Georgia,serif;font-style:italic;cursor:pointer;flex:none}
 .helpdot{position:absolute;top:-2px;right:-2px;width:13px;height:13px;border-radius:50%;background:#FF3B30;border:2px solid var(--bg);animation:helppulse 1.6s ease-in-out infinite}
 @keyframes helppulse{0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,.6)}50%{box-shadow:0 0 0 7px rgba(255,59,48,0)}}
+.row.rv-ok,.row.rv-no,.row.rv-open,.row.rv-auto{border-radius:14px;padding:10px 10px;margin:6px 0;border-bottom:0}
+.row.rv-ok{background:rgba(20,160,107,.13);box-shadow:inset 0 0 0 2px rgba(20,160,107,.55),0 0 14px rgba(20,160,107,.25)}
+.row.rv-no{background:rgba(229,72,77,.11);box-shadow:inset 0 0 0 2px rgba(229,72,77,.5)}
+.row.rv-open{background:rgba(255,170,0,.10);box-shadow:inset 0 0 0 1.5px rgba(255,170,0,.45)}
+.row.rv-auto{background:rgba(20,160,107,.06)}
+.rv-tag{flex:1 1 100%;font-size:12px;font-weight:800;letter-spacing:.02em}
+.rv-ok .rv-tag{color:var(--ok)}.rv-no .rv-tag{color:var(--no)}.rv-open .rv-tag{color:#C27C00}.rv-auto .rv-tag{color:var(--muted)}
+.rvflash{position:fixed;inset:0;z-index:120;display:grid;place-items:center;pointer-events:none;animation:fxin .2s ease-out}
+.rvflash.out{animation:fxout .4s ease-in forwards}
+.rvf-in{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 34px;border-radius:28px;background:var(--card);box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.rvf-ic{width:84px;height:84px;border-radius:50%;display:grid;place-items:center;font-size:46px;font-weight:900;color:#fff;animation:flameup .5s cubic-bezier(.2,1.6,.4,1) both}
+.rvflash.ok .rvf-ic{background:var(--ok);box-shadow:0 0 0 10px rgba(20,160,107,.18),0 0 40px rgba(20,160,107,.6)}
+.rvflash.no .rvf-ic{background:var(--no);box-shadow:0 0 0 10px rgba(229,72,77,.18)}
 .tbadge{display:inline-block;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;white-space:nowrap;vertical-align:middle}
 .tbadge.social{background:rgba(255,61,90,.14);color:#E5484D}.tbadge.total{background:rgba(10,132,255,.14);color:#0A84FF}
 .thint{border-radius:14px;padding:10px 12px;margin:0 0 12px;font-size:14px;line-height:1.45}
@@ -399,7 +412,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "28";
+const APP_VERSION = "30";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -1386,7 +1399,9 @@ async function invite(){
 function memberSheet(mid){
   const m = group.members.find(x=>x.id===mid); if (!m) return;
   const s = statsFor(m);
-  const rows = [...(m.checkins||[])].sort((a,b)=>a.day<b.day?1:-1).map(c=>`<div class="row"><b>${esc(toDate(c.day).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"}))}</b>
+  const st = c => c.reviewed ? (c.valid===false ? "no" : "ok") : (c.valid===false ? "no" : (c.edited || c.date_ok!==true || c.suspect || c.disputed) ? "open" : "auto");
+  const stTxt = { ok:"✅ freigegeben", no:"❌ abgelehnt", open:"⏳ prüfen", auto:"🤖 KI-frei" };
+  const rows = [...(m.checkins||[])].sort((a,b)=>a.day<b.day?1:-1).map(c=>`<div class="row rv-${st(c)}" style="flex-wrap:wrap"><span class="rv-tag">${stTxt[st(c)]}</span><b>${esc(toDate(c.day).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"}))}</b>
       <span>${fmtHM(c.minutes)}</span>
       ${c.valid===false?`<span class="flag bad">ungültig</span>`:""}${c.edited?`<span class="flag">✏️ ${c.ocr ?? "–"}→${c.minutes}</span>`:""}${c.date_ok===false?`<span class="flag">📅?</span>`:""}${c.disputed?`<span class="flag bad">💬</span>`:""}${c.suspect?`<span class="flag bad">🕵️</span>`:""}${c.joker?`<span class="flag">🃏</span>`:""}${c.reviewed?`<span class="flag">✓</span>`:""}
       <button class="pill" data-day="${c.day}">Ansehen</button></div>`).join("") || `<p class="muted">Noch keine Screenshots.</p>`;
@@ -1395,6 +1410,13 @@ function memberSheet(mid){
     <div class="daylist">${rows}</div>`, root=>{
     root.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>{ const c=m.checkins.find(x=>x.day===b.dataset.day); reviewSheet({member:m.id,name:m.name,day:c.day,minutes:c.minutes,ocr:c.ocr,edited:c.edited,date_ok:c.date_ok,suspect:c.suspect,track:m.track}, ()=>memberSheet(m.id)); });
   });
+}
+/* Grüner Haken / rotes X nach dem Prüfen */
+function reviewFlash(ok){
+  const d = document.createElement("div"); d.className = "rvflash " + (ok ? "ok" : "no");
+  d.innerHTML = `<div class="rvf-in"><div class="rvf-ic">${ok ? "✓" : "✕"}</div><b>${ok ? "Freigegeben" : "Abgelehnt"}</b></div>`;
+  document.body.appendChild(d); navigator.vibrate?.(ok ? 25 : [20,40,20]);
+  setTimeout(()=>d.classList.add("out"), 900); setTimeout(()=>d.remove(), 1300);
 }
 /* Welche Challenge? – beim Prüfen gut sichtbar */
 function trackBadge(t, big){
@@ -1430,7 +1452,7 @@ async function reviewSheet(item, back){
       const mv = parseInt($("#revMin").value,10);
       try{
         await rpc("sf_review",{p_token:T(),p_member:item.member,p_day:item.day,p_valid:b.dataset.v==="1",p_minutes:Number.isNaN(mv)?null:mv});
-        await refresh(); if (acc?.admin) await loadAdmin(); show(); back ? back() : closeSheet();
+        await refresh(); if (acc?.admin) await loadAdmin(); show(); back ? back() : closeSheet(); reviewFlash(b.dataset.v==="1");
         toast(b.dataset.v==="1" ? (sus!=null?"Freigegeben – die KI lag falsch":"Als gültig gespeichert") : (sus!=null?"Als Fake markiert – die KI lag richtig":"Als ungültig markiert"));
       }catch(err){ toast(err.message); }
     });
@@ -1448,7 +1470,7 @@ function renderAdmin(){
   const v = $("#vAdmin");
   if (!adminData){ v.innerHTML = `<div class="loader"></div>`; loadAdmin().then(()=>{ if(tab==="admin") renderAdmin(); }); return; }
   const d = adminData, st = d.settings || {};
-  const tests = d.tests.map(t=>`<div class="row" style="flex-wrap:wrap">${trackBadge(t.track)}<b style="flex:1 1 100%">${esc(new Date(t.created).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))} · ${esc(t.by)}</b>
+  const tests = d.tests.map(t=>`<div class="row ${t.verdict===true?"rv-ok":t.verdict===false?"rv-no":"rv-open"}" style="flex-wrap:wrap">${t.verdict===true?`<span class="rv-tag">✅ geprüft – KI lag richtig</span>`:t.verdict===false?`<span class="rv-tag">❌ geprüft – KI lag falsch</span>`:`<span class="rv-tag">⏳ noch prüfen</span>`}${trackBadge(t.track)}<b style="flex:1 1 100%">${esc(new Date(t.created).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))} · ${esc(t.by)}</b>
       <span>${fmtHM(t.minutes)}${t.ocr!==t.minutes?` <span class="flag">KI: ${t.ocr==null ? "–" : fmtHM(t.ocr)}</span>`:""}</span>
       ${t.suspect?`<span class="flag bad">🕵️</span>`:""}${t.note?`<span class="flag">💬</span>`:""}${t.verdict===true?`<span class="flag" style="color:var(--ok)">KI ✓</span>`:t.verdict===false?`<span class="flag bad">KI ✕</span>`:""}
       <button class="pill" data-test="${t.id}">Prüfen</button><button class="pill" style="color:var(--no)" data-deltest="${t.id}">🗑️</button></div>`).join("") || `<p class="muted small">Noch keine Tests.</p>`;
@@ -1583,7 +1605,7 @@ async function testSheet(t){
       try{ await rpc("sf_delete_test",{p_token:T(),p_id:t.id}); await loadAdmin(); show(); toast("🗑️ Gelöscht"); }catch(err){ toast(err.message); }
     });
     box.querySelectorAll("[data-v]").forEach(b=>b.onclick=async ()=>{
-      try{ await rpc("sf_admin_test_verdict",{p_token:T(),p_id:t.id,p_ok:b.dataset.v==="1"}); await loadAdmin(); show(); closeSheet();
+      try{ await rpc("sf_admin_test_verdict",{p_token:T(),p_id:t.id,p_ok:b.dataset.v==="1"}); await loadAdmin(); show(); closeSheet(); reviewFlash(b.dataset.v==="1");
         toast(b.dataset.v==="1"?"👍 Notiert: KI lag richtig":"Notiert: KI lag falsch – schick mir den Screenshot, dann verbessere ich die Erkennung"); }
       catch(err){ toast(err.message); }
     });
@@ -1653,6 +1675,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"30", date:"12. November", items:[
+    "🔒 „Was ist neu“ sehen jetzt nur noch Admins. Für alle sichtbar wird ein Update erst, wenn David es freigibt."]},
+  { v:"29", date:"12. November", items:[
+    "🛡️ Für Admins: Freigegebene Screenshots <b>leuchten grün</b>, abgelehnte rot, offene gelb – so sieht man sofort, was schon geprüft ist. Beim Freigeben gibt's einen grünen Haken."]},
   { v:"28", date:"12. November", items:[
     "🐞 Behoben: Nach „Erledigt“ bei einer Wochenchallenge wurde die Seite zu breit und die Flamme saß falsch."]},
   { v:"27", date:"12. November", items:[
@@ -1743,16 +1769,23 @@ const CHANGELOG = [
     "🔐 Anmeldung mit E-Mail und Passwort, Admin-Bereich mit KI-Test und Prüfliste.",
     "🔄 Updates werden jetzt automatisch geladen."]}
 ];
+/* „Was ist neu“: Admins sehen alles. Alle anderen nur Einträge, die freigegeben sind (PUBLIC_UPDATES) – freigeben nur auf Ansage von David. */
+const PUBLIC_UPDATES = [];
+const isPubUpdate = c => PUBLIC_UPDATES.includes(c.v);
+const visibleLog = () => acc?.admin ? CHANGELOG : CHANGELOG.filter(isPubUpdate);
 function changelogHtml(all, pick){
-  const list = pick || (all ? CHANGELOG : CHANGELOG.slice(0,1));
-  return list.map((c,i)=>`<div style="${i?"margin-top:14px;padding-top:12px;border-top:1px solid var(--line)":""}"><b>Version ${c.v}</b> <span class="muted small">· ${c.date}</span>
+  const vis = visibleLog();
+  const list = pick || (all ? vis : vis.slice(0,1));
+  if (!list.length) return `<p class="muted small" style="margin:4px 0 0">Gerade gibt's keine neuen Hinweise.</p>`;
+  return list.map((c,i)=>`<div style="${i?"margin-top:14px;padding-top:12px;border-top:1px solid var(--line)":""}"><b>Version ${c.v}</b> <span class="muted small">· ${c.date}</span>${acc?.admin ? (isPubUpdate(c) ? ` <span class="tbadge total">👥 für alle sichtbar</span>` : ` <span class="tbadge social">🔒 nur Admins</span>`) : ""}
     <ul class="newlist">${c.items.map(x=>`<li>${x.replace("${LIMIT}",LIMIT)}</li>`).join("")}</ul></div>`).join("");
 }
 function maybeShowWhatsNew(){
   let seen = null; try { seen = localStorage.getItem("fr_seen_v"); } catch {}
   try { localStorage.setItem("fr_seen_v", APP_VERSION); } catch {}
   if (seen === APP_VERSION || !CHANGELOG.length || CHANGELOG[0].v !== APP_VERSION) return;
-  const missed = CHANGELOG.filter(c => !seen || Number(c.v) > Number(seen));
+  const missed = visibleLog().filter(c => !seen || Number(c.v) > Number(seen));
+  if (!missed.length) return;
   sheet(`<div style="text-align:center;font-size:40px">✨</div><h3 style="text-align:center;margin:4px 0 6px">Neu in Freiraum</h3>
     ${changelogHtml(false, (seen ? missed : missed.slice(0,1)).slice(0,4))}
     <button class="btn btn-flame" id="wnOk" style="margin-top:16px">Alles klar!</button>`, r=>{ r.querySelector("#wnOk").onclick = closeSheet; });
@@ -1859,12 +1892,12 @@ function renderInfo(){
       <button class="btn btn-ghost" id="btnExport" style="margin-bottom:22px">📦 Meine Daten herunterladen</button>
       </div>
         </div></details>
-      <details data-sec="news" ${infoOpen.has("news")?"open":""}><summary><span class="sa-t"><span class="sa-i">✨</span><span><b>Was ist neu</b><small>Version ${APP_VERSION}</small></span></span></summary>
+${acc.admin || PUBLIC_UPDATES.length ? `      <details data-sec="news" ${infoOpen.has("news")?"open":""}><summary><span class="sa-t"><span class="sa-i">✨</span><span><b>Was ist neu</b><small>Version ${APP_VERSION}</small></span></span></summary>
         <div class="accbody">
     <div class="card"><div class="sectionhead"><h3 style="font-size:17px">✨ Was ist neu</h3><span class="muted small">Version ${APP_VERSION}</span></div>
       <div id="clBox">${changelogHtml(false)}</div>
       <button class="linkbtn" id="clAll">Ältere Updates anzeigen</button></div>
-        </div></details>
+        </div></details>` : ""}
     </div>
     <p class="muted small" style="text-align:center;margin-top:20px">Freiraum · 40 Tage Social-Media-Fasten 🎄</p>`;
   document.querySelectorAll("#vInfo .setacc > details").forEach(d=>d.addEventListener("toggle", ()=>{ d.open ? infoOpen.add(d.dataset.sec) : infoOpen.delete(d.dataset.sec); }));
@@ -1874,7 +1907,7 @@ function renderInfo(){
   $("#chTheme").onclick = e=>{ const b=e.target.closest("button"); if(b) setLook("theme", b.dataset.v); };
   $("#chFont").onclick = e=>{ const b=e.target.closest("button"); if(b) setLook("font", b.dataset.v); };
   $("#chSize").onclick = e=>{ const b=e.target.closest("button"); if(b) setLook("size", b.dataset.v); };
-  $("#clAll").onclick = ()=>{ $("#clBox").innerHTML = changelogHtml(true); $("#clAll").remove(); };
+  $("#clAll")?.addEventListener("click", ()=>{ $("#clBox").innerHTML = changelogHtml(true); $("#clAll").remove(); });
   $("#btnPw").onclick = changePw;
   $("#btnInstall")?.addEventListener("click", installSheet);
   $("#btnExport").onclick = async ()=>{
