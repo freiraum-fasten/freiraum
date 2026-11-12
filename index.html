@@ -416,7 +416,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "33";
+const APP_VERSION = "34";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -1730,6 +1730,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"34", date:"12. November", items:[
+    "📄 Datenschutzerklärung ergänzt: Verantwortlicher, kein Mindestalter, Prüfer:innen (Co-Worker)"
+  ]},
   { v:"33", date:"12. November", items:[
     "🧑‍⚖️ Co-Worker: David und Patrick können vertrauenswürdige Helfer ernennen, die beim Prüfen mithelfen",
     "✅ Co-Worker bekommen einen eigenen Reiter „Prüfen“ – mit Screenshot, Kommentaren und den Knöpfen Freigeben / Ablehnen",
