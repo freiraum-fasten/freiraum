@@ -63,10 +63,10 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .row.rv-ok{background:rgba(20,160,107,.13);box-shadow:inset 0 0 0 2px rgba(20,160,107,.55),0 0 14px rgba(20,160,107,.25)}
 .row.rv-no{background:rgba(229,72,77,.11);box-shadow:inset 0 0 0 2px rgba(229,72,77,.5)}
 .row.rv-open{background:rgba(255,170,0,.10);box-shadow:inset 0 0 0 1.5px rgba(255,170,0,.45)}
-.row.rv-auto{background:rgba(20,160,107,.06)}
+.row.rv-auto{background:rgba(20,160,107,.11);box-shadow:inset 0 0 0 2px rgba(20,160,107,.4)}
 .rv-tag{flex:1 1 100%;font-size:12.5px;font-weight:800;letter-spacing:.02em}
 .rv-tag:has(+ .tbadge){flex:0 1 auto;margin-right:2px}
-.rv-ok .rv-tag{color:var(--ok)}.rv-no .rv-tag{color:var(--no)}.rv-open .rv-tag{color:#C27C00}.rv-auto .rv-tag{color:var(--muted)}
+.rv-ok .rv-tag{color:var(--ok)}.rv-no .rv-tag{color:var(--no)}.rv-open .rv-tag{color:#C27C00}.rv-auto .rv-tag{color:var(--ok)}
 .rvflash{position:fixed;inset:0;z-index:120;display:grid;place-items:center;pointer-events:none;animation:fxin .2s ease-out}
 .rvflash.out{animation:fxout .4s ease-in forwards}
 .rvf-in{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 34px;border-radius:28px;background:var(--card);box-shadow:0 20px 60px rgba(0,0,0,.25)}
@@ -416,7 +416,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "37";
+const APP_VERSION = "38";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -1421,7 +1421,7 @@ function memberSheet(mid){
   const m = group.members.find(x=>x.id===mid); if (!m) return;
   const s = statsFor(m);
   const st = c => c.reviewed ? (c.valid===false ? "no" : "ok") : (c.valid===false ? "no" : (c.edited || c.date_ok!==true || c.suspect || c.disputed) ? "open" : "auto");
-  const stTxt = { ok:"✅ freigegeben", no:"❌ abgelehnt", open:"⏳ prüfen", auto:"🤖 KI-frei" };
+  const stTxt = { ok:"✅ freigegeben", no:"❌ abgelehnt", open:"⏳ prüfen", auto:"🤖 von der KI freigegeben" };
   const rows = [...(m.checkins||[])].sort((a,b)=>a.day<b.day?1:-1).map(c=>`<div class="row rv-${st(c)}" style="flex-wrap:wrap"><span class="rv-tag">${stTxt[st(c)]}</span><b>${esc(toDate(c.day).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"}))}</b>
       <span>${fmtHM(c.minutes)}</span>
       ${c.valid===false?`<span class="flag bad">ungültig</span>`:""}${c.edited?`<span class="flag">✏️ ${c.ocr ?? "–"}→${c.minutes}</span>`:""}${c.date_ok===false?`<span class="flag">📅?</span>`:""}${c.disputed?`<span class="flag bad">💬</span>`:""}${c.suspect?`<span class="flag bad">🕵️</span>`:""}${c.joker?`<span class="flag">🃏</span>`:""}${c.reviewed?`<span class="flag">✓</span>`:""}
@@ -1780,6 +1780,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"38", date:"12. November", items:[
+    "🤖 Von der KI automatisch freigegebene Tage leuchten bei Admins jetzt auch grün („von der KI freigegeben“)"
+  ]},
   { v:"37", date:"12. November", items:[
     "🔒 Admins hinzufügen oder entfernen kann nur noch David – andere Admins sehen die Liste, aber keine Knöpfe dafür"
   ]},
