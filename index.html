@@ -56,6 +56,10 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px}
 .brand svg{width:32px;height:32px}
+.helpbtn{position:relative;width:36px;height:36px;border-radius:50%;border:0;background:var(--soft);color:var(--ink);font:800 18px/36px Georgia,serif;font-style:italic;cursor:pointer;flex:none}
+.helpdot{position:absolute;top:-2px;right:-2px;width:13px;height:13px;border-radius:50%;background:#FF3B30;border:2px solid var(--bg);animation:helppulse 1.6s ease-in-out infinite}
+@keyframes helppulse{0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,.6)}50%{box-shadow:0 0 0 7px rgba(255,59,48,0)}}
+.tutvid{width:100%;border-radius:18px;background:#000;display:block;max-height:62vh;object-fit:contain}
 #topPill{max-width:55vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
 .pill{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:var(--soft);font-weight:600;font-size:13px}
 .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;border-radius:16px;font-weight:700;font-size:16px;transition:transform .12s ease,opacity .2s}
@@ -321,7 +325,8 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 <div class="wrap">
   <div class="topbar">
     <div class="brand"><svg><use href="#flame"/></svg>Freiraum</div>
-    <div class="pill" id="topPill">bis Weihnachten</div>
+    <div style="display:flex;gap:8px;align-items:center"><div class="pill" id="topPill">bis Weihnachten</div>
+      <button class="helpbtn hidden" id="btnHelp" aria-label="So funktioniert die App">i<span class="helpdot"></span></button></div>
   </div>
 
   <!-- ONBOARDING -->
@@ -384,7 +389,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "23";
+const APP_VERSION = "24";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJIS = ["🙂","😎","🦊","🐻","🐼","🦁","🐸","🌻","⚡","🎧","⚽","🎸","📚","☕","🌙","🎄"];
@@ -834,7 +839,8 @@ function parseScreenTime(text){
   const lines = text.split(/\n/).map(l=>l.trim()).filter(Boolean);
   const apps = [];
   lines.forEach((l,i)=>{
-    const namePart = l.split(/\d/)[0];                    // Text vor der ersten Zahl = App-Name
+    // Symbol-Reste vor dem Namen („[7] TikTok“, „© WhatsApp“) ignorieren, dann: Text vor der ersten Zahl = App-Name
+    const namePart = l.replace(/^[^A-Za-zÄÖÜäöüß]{1,6}(?=[A-Za-zÄÖÜäöüß])/, "").split(/\d/)[0];
     for (const [name,re] of SOCIAL){
       if (apps.some(a=>a.name===name)) continue;
       const cleaned = namePart.replace(/^[^A-Za-z]+/,"").trim();
@@ -1614,6 +1620,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"24", date:"12. November", items:[
+    "🤖 Die KI erkennt App-Namen jetzt auch, wenn das App-Symbol als Zeichen mitgelesen wird (z. B. TikTok).",
+    "🎬 Neu: Ein <b>Erklärvideo</b> zeigt in einer Minute, wie Freiraum funktioniert – oben über das ⓘ beim ersten Start, danach jederzeit unter Einstellungen → So funktioniert's."]},
   { v:"23", date:"12. November", items:[
     "🏆 Neuer Startbildschirm: Nach dem Öffnen landest du direkt in der <b>Rangliste</b> – mit Begrüßung, Countdown und Siegertreppchen für die Top 3.",
     "📸 Fehlt dein Screenshot von gestern, kannst du ihn direkt oben hochladen.",
@@ -1747,8 +1756,8 @@ function renderInfo(){
       <p class="muted small" style="margin:12px 2px 0">Wird auf diesem Gerät gespeichert.</p>
     </div>
         </div></details>
-      <details data-sec="rules" ${infoOpen.has("rules")?"open":""}><summary><span class="sa-t"><span class="sa-i">📖</span><span><b>So funktioniert's</b><small>Regeln, Joker, was zählt</small></span></span></summary>
-        <div class="accbody">
+      <details data-sec="rules" ${infoOpen.has("rules")?"open":""}><summary><span class="sa-t"><span class="sa-i">📖</span><span><b>So funktioniert's</b><small>Erklärvideo, Regeln, Joker, was zählt</small></span></span></summary>
+        <div class="accbody"><div style="margin-bottom:18px"><b style="display:block;margin-bottom:8px">🎬 Erklärvideo</b>${tutHtml()}</div>
     <div class="card">
       <h3 style="font-size:20px;margin-bottom:8px">So funktioniert's</h3>
       <ol class="steps">
@@ -2015,6 +2024,30 @@ function appTimeSub(){
 function paintAppTime(){ const v = $("#appTimeVal"), s = $("#appTimeSub"); if (v) v.innerHTML = fmtHMS(appTimeNow()); if (s) s.innerHTML = appTimeSub(); }
 setInterval(()=>{ if (appTime && $("#appTimeVal")) $("#appTimeVal").innerHTML = fmtHMS(appTimeNow()); }, 1000);
 
+/* ---------- Erklärvideo: roter Punkt nur beim ersten Mal ---------- */
+const tutSeen = ()=>{ try{ return localStorage.getItem("fr_tour")==="1"; }catch{ return true; } };
+function tutHtml(){
+  return `<video class="tutvid" src="erklaervideo.mp4" poster="erklaervideo.jpg" controls playsinline preload="none"></video>`;
+}
+function tutSheet(){
+  try{ localStorage.setItem("fr_tour","1"); }catch{}
+  $("#btnHelp")?.classList.add("hidden");
+  sheet(`<h3 style="margin-bottom:4px">👋 So funktioniert Freiraum</h3>
+    <p class="muted small" style="margin:0 0 12px">1 Minute – alles Wichtige im Video.</p>
+    ${tutHtml()}
+    <ol class="steps" style="margin:14px 0 6px;padding-left:20px;line-height:1.55">
+      <li><b>Challenge wählen</b> und schätzen, wie viel du vorher am Handy warst.</li>
+      <li>Jeden Tag den <b>Screenshot deiner Bildschirmzeit von gestern</b> hochladen – die KI liest die Minuten aus.</li>
+      <li>Unter dem Limit? <b>Flamme! 🔥</b> Drüber? Du hast <b>3 Joker</b>.</li>
+      <li>Bei <b>Freiräume</b> gibt's Ideen und die <b>Konfi-Challenges</b>.</li>
+    </ol>
+    <p class="muted small" style="margin:6px 0 12px">Das Video findest du jederzeit unter Einstellungen → So funktioniert's.</p>
+    <button class="btn btn-flame" id="tutOk">Los geht's!</button>`, r=>{
+    r.querySelector("#tutOk").onclick = closeSheet;
+    const v = r.querySelector("video"); v?.play?.().catch(()=>{});
+  });
+}
+
 /* ---------- Installieren (PWA) ---------- */
 let installEvt = null;
 const isStandalone = ()=> matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
@@ -2069,6 +2102,7 @@ function show(){
   $("#tabbar").classList.toggle("hidden", !logged);
   $("#tabAdmin").classList.toggle("hidden", !(logged && acc.admin));
   $("#topPill").textContent = "bis Weihnachten 🎄";
+  $("#btnHelp").classList.toggle("hidden", tutSeen());
   const needGroup = logged && !hasGroup && (tab==="today" || tab==="group");
   $("#vNoGroup").classList.toggle("hidden", !needGroup);
   ["today","group","ideas","info","admin"].forEach(t=>$("#v"+t[0].toUpperCase()+t.slice(1)).classList.toggle("hidden", !logged || needGroup || tab!==t));
@@ -2110,6 +2144,7 @@ async function refresh(){
   applyLook(getLook());
   if (auth?.token){ await refresh(); show(); maybeShowWhatsNew(); }
   setTimeout(maybeAskInstall, 1500);
+  $("#btnHelp").onclick = tutSheet;
   document.addEventListener("visibilitychange", async ()=>{ if(!document.hidden && auth?.token){ await refresh(); show(); } });
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").then(r=>r.update()).catch(()=>{});
   checkUpdate(); setInterval(checkUpdate, 5*60*1000);

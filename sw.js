@@ -1,7 +1,7 @@
 // Freiraum Service Worker
 // App-Dateien: immer frisch vom Server (neue Versionen sofort), offline aus dem Speicher.
 // Texterkennung (ocr/…): ändert sich nie → einmal laden, danach aus dem Speicher (spart Datenvolumen).
-const CACHE = "freiraum-v23", OCR = "freiraum-ocr";
+const CACHE = "freiraum-v24", OCR = "freiraum-ocr";
 self.addEventListener("install", e => { self.skipWaiting(); });
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE && k !== OCR).map(k => caches.delete(k)))));
@@ -15,6 +15,7 @@ self.addEventListener("fetch", e => {
     return;
   }
   if (url.pathname.endsWith("version.json")) return; // immer live
+  if (url.pathname.endsWith(".mp4")) return;         // Videos direkt vom Server (Streaming)
   e.respondWith(
     fetch(e.request, { cache: "no-cache" }).then(r => { const copy = r.clone(); if (r.ok) caches.open(CACHE).then(c => c.put(e.request, copy)); return r; })
       .catch(() => caches.match(e.request).then(r => r || caches.match("index.html")))
