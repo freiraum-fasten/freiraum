@@ -442,7 +442,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "52";
+const APP_VERSION = "53";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1797,8 +1797,8 @@ function renderAdmin(){
   const d = adminData, st = d.settings || {};
   const tests = moreList(d.tests.map(t=>`<div class="row ${t.verdict===true?"rv-ok":t.verdict===false?"rv-no":"rv-open"}" style="flex-wrap:wrap">${t.verdict===true?`<span class="rv-tag">✅ geprüft – KI lag richtig</span>`:t.verdict===false?`<span class="rv-tag">❌ geprüft – KI lag falsch</span>`:`<span class="rv-tag">⏳ noch prüfen</span>`}${trackBadge(t.track)}<b style="flex:1 1 100%">${esc(new Date(t.created).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))} · ${esc(t.by)}</b>
       <span>${fmtHM(t.minutes)}${t.ocr!==t.minutes?` <span class="flag">KI: ${t.ocr==null ? "–" : fmtHM(t.ocr)}</span>`:""}</span>
-      ${t.suspect?`<span class="flag bad">🕵️</span>`:""}${t.note?`<span class="flag">💬</span>`:""}${t.verdict===true?`<span class="flag" style="color:var(--ok)">KI ✓</span>`:t.verdict===false?`<span class="flag bad">KI ✕</span>`:""}
-      <button class="pill" data-test="${t.id}">Prüfen</button><button class="pill" style="color:var(--no)" data-deltest="${t.id}">🗑️</button></div>`), "tests") || `<p class="muted small">Noch keine Tests.</p>`;
+      ${t.suspect?`<span class="flag bad">🕵️</span>`:""}${t.note?`<span class="flag">💬</span>`:""}${t.verdict===true?`<span class="flag" style="color:var(--ok)">KI ✓</span>`:t.verdict===false?`<span class="flag bad">KI ✕</span>`:""}${t.correct!=null?`<span class="flag">richtig: ${fmtHM(t.correct)}</span>`:""}
+      <button class="pill" data-test="${t.id}">${t.verdict==null?"Prüfen":"Ändern"}</button><button class="pill" style="color:var(--no)" data-deltest="${t.id}">🗑️</button></div>`), "tests") || `<p class="muted small">Noch keine Tests.</p>`;
   const queue = moreList(d.queue.map((q,i)=>`<div class="row" style="flex-wrap:wrap"><b>${esc(q.emoji)} ${esc(q.name)} <span class="muted small">· ${trackBadge(q.group)} · ${esc(toDate(q.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
       <span>${fmtHM(q.minutes)}${q.total!=null?` · 📱 ${fmtHM(q.total)}`:""}</span>${q.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${q.edited?`<span class="flag">✏️</span>`:""}${q.date_ok===false?`<span class="flag">📅?</span>`:""}${q.suspect?`<span class="flag bad">🕵️ Fake?</span>`:""}
       ${q.suspect?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">🕵️ ${esc(q.suspect)}</div>`:""}
@@ -1964,14 +1964,19 @@ async function testSheet(t){
       <p class="muted small" style="margin:0 0 12px">KI hat erkannt: <b>${t.ocr==null ? "–" : fmtHM(t.ocr)}</b> · eingetragen: <b>${fmtHM(t.minutes)}</b> · Datum: ${t.date_ok?"✅ erkannt":"⚠️ nicht erkannt"}</p>
       ${t.suspect?`<div class="status bad" style="display:block;margin:0 0 12px">🕵️ <b>KI-Verdacht:</b> ${esc(t.suspect)}</div>`:""}
       ${t.note?`<div class="status warn" style="display:block;margin:0 0 12px">💬 Kommentar: „${esc(t.note)}“</div>`:""}
-      <p class="q" style="font-size:16px">Hat die KI richtig gezählt?</p>
-      <button class="btn btn-ghost" id="delTest" style="margin:0 0 12px;color:var(--no)">🗑️ Test löschen</button>
-      <div class="choice"><button class="yes" data-v="1"><span class="ic">✓</span>Richtig</button><button class="no" data-v="0"><span class="ic">✕</span>Falsch</button></div>`;
+      ${t.verdict!=null ? `<div class="status ${t.verdict?"ok":"bad"}" style="display:block;margin:0 0 12px">Bisher bewertet: ${t.verdict?"✅ KI lag richtig":"❌ KI lag falsch"}${t.correct!=null?` · richtige Zeit: <b>${fmtHM(t.correct)}</b>`:""}${t.correct_total!=null?` · 📱 ${fmtHM(t.correct_total)}`:""} – du kannst es hier ändern.</div>` : ""}
+      <div class="minutes" style="margin-top:0"><label>${t.track==="both"?"📵 Social Media – ":""}Richtige Zeit<div class="muted small" style="font-weight:500;margin-top:2px">Nur ändern, wenn die KI falsch lag</div></label><div class="hmin"><input id="tcH" type="number" inputmode="numeric" min="0" max="24" value="${Math.floor((t.correct ?? t.minutes)/60)}"><span>Std.</span><input id="tcM" type="number" inputmode="numeric" min="0" max="59" value="${(t.correct ?? t.minutes)%60}"><span>Min.</span></div></div>
+      ${t.track==="both" ? `<div class="minutes"><label>📱 Gesamte Handyzeit</label><div class="hmin"><input id="tcH2" type="number" inputmode="numeric" min="0" max="24" value="${(t.correct_total ?? t.total)==null?"":Math.floor((t.correct_total ?? t.total)/60)}"><span>Std.</span><input id="tcM2" type="number" inputmode="numeric" min="0" max="59" value="${(t.correct_total ?? t.total)==null?"":(t.correct_total ?? t.total)%60}"><span>Min.</span></div></div>` : ""}
+      <p class="q" style="font-size:16px;margin-top:14px">Hat die KI richtig gezählt?</p>
+      <div class="choice"><button class="yes" data-v="1"><span class="ic">✓</span>Richtig</button><button class="no" data-v="0"><span class="ic">✕</span>Falsch</button></div>
+      <button class="btn btn-ghost" id="delTest" style="margin-top:12px;color:var(--no)">🗑️ Test löschen</button>`;
     $("#delTest").onclick = ()=>confirmSheet("Diesen Test-Upload löschen?", async ()=>{
       try{ await rpc("sf_delete_test",{p_token:T(),p_id:t.id}); await loadAdmin(); show(); toast("🗑️ Gelöscht"); }catch(err){ toast(err.message); }
     });
     box.querySelectorAll("[data-v]").forEach(b=>b.onclick=async ()=>{
-      try{ await rpc("sf_admin_test_verdict",{p_token:T(),p_id:t.id,p_ok:b.dataset.v==="1"}); await loadAdmin(); show(); closeSheet(); reviewFlash(b.dataset.v==="1");
+      const hm = (h,m)=>{ const hv=$(h)?.value ?? "", mv=$(m)?.value ?? ""; return (hv==="" && mv==="") ? null : Math.min(1440,(parseInt(hv,10)||0)*60+(parseInt(mv,10)||0)); };
+      const ok = b.dataset.v==="1", cm = ok ? null : hm("#tcH","#tcM"), ct = (ok || t.track!=="both") ? null : hm("#tcH2","#tcM2");
+      try{ await rpc("sf_admin_test_verdict2",{p_token:T(),p_id:t.id,p_ok:b.dataset.v==="1",p_minutes:cm===t.minutes?null:cm,p_total:ct===(t.total??null)?null:ct}); await loadAdmin(); show(); closeSheet(); reviewFlash(b.dataset.v==="1");
         toast(b.dataset.v==="1"?"👍 Notiert: KI lag richtig":"Notiert: KI lag falsch – schick mir den Screenshot, dann verbessere ich die Erkennung"); }
       catch(err){ toast(err.message); }
     });
@@ -2041,6 +2046,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"53", date:"13. November", items:[
+    "🧪 KI-Test: Beim Prüfen kannst du die richtige Zeit selbst eintragen (bei „Beides“ auch die Gesamtzeit)",
+    "✏️ Bewertung vertippt? Bei bereits geprüften Tests steht „Ändern“ – einfach nochmal öffnen und neu entscheiden"
+  ]},
   { v:"52", date:"13. November", items:[
     "🔍 Gesamtzeit wird besser erkannt – auch wenn die Texterkennung „Ih 38min“, „lh“, „3Bmin“ oder „rnin“ liest",
     "✅ Plausibilitäts-Check bei „Beides“: Ist die erkannte Gesamtzeit kleiner als die Social-Media-Zeit, bleibt das Feld leer statt einer falschen Zahl"
