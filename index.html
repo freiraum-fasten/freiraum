@@ -442,7 +442,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "51";
+const APP_VERSION = "52";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -885,8 +885,17 @@ async function getOcr(){
 }
 /* Zeitangabe → Minuten. Versteht Stunden UND Minuten in allen gängigen Schreibweisen (iPhone, Android, Samsung, DE/EN)
    und bügelt typische Lesefehler der Texterkennung aus („rnin“, „1O“, „l5“, „St.“, „1,5 Std.“). */
+/* Typische Lesefehler der Texterkennung korrigieren (gilt für alle Zeitangaben) */
+function normDur(str){
+  let s = " " + String(str).toLowerCase() + " ";
+  s = s.replace(/(\s)[il|t!](?=\s*(h|std)\.?(?![a-z]))/g, "$11")    // „Ih 38min“ / „lh“ / „|h“ / „Th“ → „1h“
+       .replace(/(\d)b(?=\s*(min|m\b|mn))/g, "$18")                  // „3Bmin“ → „38min“
+       .replace(/(\d)s(?=\s*(min|mn))/g, "$15")                         // „3Smin“ → „35min“
+       .replace(/rn(?=in)/g, "m");                                      // „rnin“ → „min“
+  return s;
+}
 function parseDur(str){
-  let s = " " + str.toLowerCase() + " ";
+  let s = normDur(str);
   s = s.replace(/(\d+)[,.](\d)\s*(std|stunden?|h|hrs?|hours?)(?![a-z])/g, (_,a,b)=>` ${a} h ${Math.round(+b*6)} min `); // 1,5 Std. → 1 h 30 min
   s = s.replace(/[,|]/g," ")
        .replace(/rn(?=in)/g,"m")                                   // „rnin“ → „min“
@@ -920,7 +929,7 @@ function parseTotalTime(text){
     if (/durchschnitt|average|woche|week/i.test(l)) continue;           // Wochenschnitt nicht zählen
     const d = parseDur(l); if (d == null) continue;
     n++; sum += d; if (best == null || d > best) best = d;
-    if (/\d\s*(h|std)\.?\s*\d{1,2}\s*(m|min)/i.test(l) && (bestHM == null || d > bestHM)) bestHM = d;   // „4h 59min“ = echte Gesamtzeit
+    if (/\d\s*(h|std)\.?\s*\d{1,2}\s*(m|min)/i.test(normDur(l)) && (bestHM == null || d > bestHM)) bestHM = d;   // „4h 59min“ = echte Gesamtzeit
   }
   // Wenn die Summe der übrigen Zeiten deutlich größer ist, fehlt die Gesamtzeit vermutlich auf dem Bild
   const maxAll = best;
@@ -1296,7 +1305,10 @@ async function analyse(root, files, day, test){
   const trk = (test && testTrack) || trackOf(), isT = trk==="total", isB = trk==="both", TR = TRACKS[trk];
   let total = apps.reduce((a,x)=>a+x.min,0), totalMissing = false, tot = null;
   if (isT){ const r = parseTotalTime(text); total = r.total ?? 0; totalMissing = r.missing || r.total == null; }
-  if (isB){ const r = parseTotalTime(text); tot = r.total ?? null; totalMissing = r.missing || r.total == null; }
+  if (isB){ const r = parseTotalTime(text); tot = r.total ?? null; totalMissing = r.missing || r.total == null;
+    // Gesamtzeit kann nie kleiner sein als die Social-Media-Zeit – sonst wurde sie falsch gelesen: lieber leer lassen
+    if (tot != null && (tot < total || totalMissing)) { tot = null; totalMissing = true; } }
+  if (isT && apps.length && total < Math.max(...apps.map(a=>a.min))) totalMissing = true;
   const ocrTot = ocrOk && tot != null ? tot : null, hasTot = ocrTot != null;
   const dateOk = ocrOk ? dateMatches(text, day) : false;
   const shown = ocrOk && !dateOk ? shownDate(text) : null;
@@ -1310,7 +1322,7 @@ async function analyse(root, files, day, test){
       : apps.length ? apps.map(a=>`<div class="approw"><span>${esc(a.name)}</span><span>${fmtHM(a.min)}</span></div>`).join("")
         : `<div class="muted small" style="line-height:1.5">${ocrOk ? "Keine Social-Media-Apps erkannt. Wenn du wirklich nichts genutzt hast: super! Sonst trag die Minuten unten selbst ein." : "Automatisches Auslesen hat nicht geklappt. Trag die Minuten bitte selbst ein."}</div>`}
       ${isB ? `<div class="approw" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line)"><span>📱 Handyzeit gesamt</span><span>${hasTot ? fmtHM(tot) : "–"}</span></div>
-          ${totalMissing ? `<div class="status warn" style="margin-top:8px">⚠️ Die Gesamtzeit wurde nicht erkannt. Lade zusätzlich den Bildschirm mit der großen Gesamtzahl hoch – oder trag sie unten selbst ein.</div>` : ""}` : ""}
+          ${totalMissing ? `<div class="status warn" style="margin-top:8px">⚠️ Die Gesamtzeit wurde nicht sicher erkannt. Trag sie unten bitte selbst ein – das ist die große Zahl ganz oben auf dem Screenshot (z. B. „1h 38min“).</div>` : ""}` : ""}
     </div></div>
     ${wv ? `<div class="status bad" style="display:block;line-height:1.5">❌ Das ist die Ansicht <b>„${esc(wv)}“</b> – da stehen keine Minuten. Tippe oben auf „${esc(wv)}“, wähle <b>„Bildschirmzeit“</b> und mach dann einen neuen Screenshot.</div>` : ""}
     <div class="status ${dateOk?"ok":"warn"}" style="display:block;line-height:1.5">${dateOk ? "✅ Datum passt" : shown && shown!==day
@@ -2029,6 +2041,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"52", date:"13. November", items:[
+    "🔍 Gesamtzeit wird besser erkannt – auch wenn die Texterkennung „Ih 38min“, „lh“, „3Bmin“ oder „rnin“ liest",
+    "✅ Plausibilitäts-Check bei „Beides“: Ist die erkannte Gesamtzeit kleiner als die Social-Media-Zeit, bleibt das Feld leer statt einer falschen Zahl"
+  ]},
   { v:"51", date:"12. November", items:[
     "🗑️ Chat: Löschbare Nachrichten haben jetzt ein sichtbares 🗑️ – auch die Fragen der Helfer an die Admins lassen sich löschen",
     "🔒 Sicherheit: Einspruch schlägt die richtige Zeit nur noch vor – ein Admin trägt sie ein",
