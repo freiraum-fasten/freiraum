@@ -92,7 +92,12 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;border-radius:16px;font-weight:700;font-size:16px;transition:transform .12s ease,opacity .2s}
 .btn:active{transform:scale(.98)}
 .btn-primary{background:var(--ink);color:var(--bg)}
-.btn-flame{background:linear-gradient(135deg,var(--flame1),var(--flame2));color:#fff;box-shadow:0 8px 20px rgba(255,61,90,.25)}
+.btn-flame{background:linear-gradient(135deg,var(--flame1),var(--flame2));color:#fff;box-shadow:0 8px 22px rgba(255,61,90,.32),inset 0 1px 0 rgba(255,255,255,.25);font-weight:800}
+.btn-key{box-shadow:0 6px 18px rgba(255,61,90,.28),0 0 0 2px rgba(255,90,60,.35);font-weight:800}
+.pill.key{background:linear-gradient(135deg,var(--flame1),var(--flame2));color:#fff;font-weight:800;box-shadow:0 4px 12px rgba(255,61,90,.28)}
+@keyframes softglow{0%,100%{box-shadow:0 8px 22px rgba(255,61,90,.30)}50%{box-shadow:0 8px 30px rgba(255,61,90,.55)}}
+.btn-flame.glow{animation:softglow 2.6s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.btn-flame.glow{animation:none}}
 .btn-ghost{background:var(--soft)}
 .btn[disabled]{opacity:.5;pointer-events:none}
 .field{display:block;margin-bottom:12px}
@@ -200,7 +205,7 @@ html,body{max-width:100%;overflow-x:hidden}
 .hero2 .h2-stats{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .hero2 .h2-stats div{background:rgba(255,255,255,.14);border-radius:14px;padding:10px 6px;text-align:center;backdrop-filter:blur(6px)}
 .hero2 .h2-stats b{display:block;font-size:20px}.hero2 .h2-stats span{font-size:12px;opacity:.9}
-.hero2 .h2-cta{position:relative;margin-top:14px;background:#fff;color:#1C1B19;font-weight:800}
+.hero2 .h2-cta{position:relative;margin-top:14px;background:#fff;color:#1C1B19;font-weight:800;box-shadow:0 8px 24px rgba(0,0,0,.25),0 0 0 3px rgba(255,255,255,.25)}
 .podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;align-items:end;gap:8px;margin:4px 0 16px}
 .pod{display:flex;flex-direction:column;align-items:center;text-align:center;min-width:0;cursor:default}
 .pod-av{position:relative;width:58px;height:58px;border-radius:20px;background:var(--soft);display:grid;place-items:center;font-size:30px;overflow:visible}
@@ -459,7 +464,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "61";
+const APP_VERSION = "62";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -751,7 +756,7 @@ function renderToday(){
       for (let k=2; k<=GRACE; k++){
         const dk = addDays(today,-k), ek = s.map[dk]; if (!inWindow(dk)) continue;
         const left = GRACE - k;
-        if (!ek) html += `<div class="card" style="padding:16px 20px;border:2px solid var(--no)"><div class="sectionhead"><div><b>${esc(fmtDate(dk))} fehlt</b><div class="muted small">${left===0?"Heute letzte Chance zum Nachtragen!":`Noch ${left===1?"bis morgen":left+" Tage"} Zeit zum Nachtragen.`}</div></div><button class="pill" data-up="${dk}">Nachtragen</button></div></div>`;
+        if (!ek) html += `<div class="card" style="padding:16px 20px;border:2px solid var(--no)"><div class="sectionhead"><div><b>${esc(fmtDate(dk))} fehlt</b><div class="muted small">${left===0?"Heute letzte Chance zum Nachtragen!":`Noch ${left===1?"bis morgen":left+" Tage"} Zeit zum Nachtragen.`}</div></div><button class="pill key" data-up="${dk}">Nachtragen</button></div></div>`;
         else if (canJoker(ek)) html += jokerOffer(dk, ek);
       }
       if (running && inWindow(y)) html += `<p class="muted small todaynote">Heute läuft: ${goalText()} · den Screenshot von heute lädst du morgen hoch.</p>`;
@@ -876,13 +881,13 @@ function checkinCard(s, day, today){
       <div class="badge ${ok?"ok":"no"}">${ok?(e.joker?"🃏":isTotal()?"📱":"✅"):"❌"}</div>
       <div style="flex:1"><b style="font-size:17px;${ok?"":"color:var(--no)"}">${ok?(e.joker?"Mit Joker geschafft! 🔥":isTotal()?"Gestern eingetragen":"Gestern geschafft! 🔥"):(e.valid===false?"Gestern ungültig":"Gestern nicht geschafft")}</b>
       <div class="muted small" style="margin-top:2px">${ok? (isTotal() ? fmtHM(e.minutes)+" Handyzeit – steht in der Rangliste." : fmtHM(e.minutes)+" "+TRACKS[trackOf()].word+" – stark!") : (e.valid===false?"Ein Admin hat den Screenshot abgelehnt.":e.minutes+" Min. – über dem Limit von "+LIMIT+" Min. Keine Flamme. Heute neu angreifen! 💪")}</div></div>
-    </div>${isBoth() && e.total!=null ? `<div class="muted small" style="margin-top:10px">📱 Handyzeit gesamt: <b>${fmtHM(e.total)}</b> – steht in der Handyzeit-Rangliste</div>` : ""}${reviewLine(e)}${canJoker(e) ? `<div class="jokerinline" data-joker="${day}">${jokerCardHtml(false)}<div style="flex:1"><b>Nicht erreicht – willst du einen Joker einlösen?</b><div class="muted small">Noch ${jokersLeft()} von ${JOKERS} · dann bekommst du die Flamme trotzdem</div></div><span class="pill">Einlösen</span></div>` : ""}
+    </div>${isBoth() && e.total!=null ? `<div class="muted small" style="margin-top:10px">📱 Handyzeit gesamt: <b>${fmtHM(e.total)}</b> – steht in der Handyzeit-Rangliste</div>` : ""}${reviewLine(e)}${canJoker(e) ? `<div class="jokerinline" data-joker="${day}">${jokerCardHtml(false)}<div style="flex:1"><b>Nicht erreicht – willst du einen Joker einlösen?</b><div class="muted small">Noch ${jokersLeft()} von ${JOKERS} · dann bekommst du die Flamme trotzdem</div></div><span class="pill key">Einlösen</span></div>` : ""}
     <div style="display:flex;gap:16px;flex-wrap:wrap"><button class="linkbtn" data-up="${day}">Screenshot nochmal hochladen</button>${e.disputed?"":`<button class="linkbtn" data-dispute="${day}">Stimmt nicht? Einspruch</button>`}<button class="linkbtn" data-delday="${day}" style="color:var(--no)">Löschen</button></div></div>`;
   }
   return `<div class="card" style="border:2px solid var(--flame2)">
     <p class="q" style="margin-bottom:4px">📸 Screenshot von ${label}</p>
     <div class="muted small" style="line-height:1.5">Bildschirmzeit von gestern – mit Datum und App-Liste. Die KI liest die Minuten aus.</div>
-    <button class="btn btn-flame" data-up="${day}" style="margin-top:16px">📷 Screenshot hochladen</button>
+    <button class="btn btn-flame glow" data-up="${day}" style="margin-top:16px">📷 Screenshot hochladen</button>
     <div class="muted small" style="text-align:center;margin-top:10px">${isTotal()?"Zählt die gesamte Bildschirmzeit":`Max. ${LIMIT} Min. = 🔥`} · Vergessen? Du hast bis zu ${GRACE} Tage Zeit zum Nachtragen.</div>
   </div>`;
 }
@@ -1391,7 +1396,7 @@ async function analyse(root, files, day, test){
     <div style="margin-top:14px"><label for="noteIn" class="small" style="font-weight:700;display:block;margin:0 4px 6px">💬 Kommentar für die Admins <span class="muted" style="font-weight:500">(freiwillig)</span></label>
       <textarea id="noteIn" class="input" rows="2" maxlength="300" style="font:inherit;resize:vertical" placeholder="z. B. „Eine App übermalt – keine Social Media“ oder „KI hat TikTok nicht erkannt – waren 12 Min.“"></textarea>
       <div class="muted small" style="margin:6px 4px 0;line-height:1.45">🔒 App übermalt? Schreib kurz dazu, dass es keine Social-Media-App ist – wir vertrauen dir.</div></div>
-    <button class="btn btn-primary" id="sendShot" style="margin-top:14px">${test?"Test speichern":"Eintragen"}</button>`;
+    <button class="btn btn-flame" id="sendShot" style="margin-top:14px">${test?"Test speichern":"Eintragen"}</button>`;
   const autoNote = document.createElement("div"); autoNote.className = "muted small"; autoNote.style.margin = "8px 4px 0";
   root.querySelector("#limitInfo").after(autoNote);
   const totVal = ()=> isB ? parseInt(root.querySelector("#totIn").value,10) : null;
@@ -2104,6 +2109,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"62", date:"14. November", items:[
+    "✨ Wichtige Knöpfe dezent hervorgehoben: Screenshot hochladen (leichtes Leuchten), Eintragen, Nachtragen, Joker einlösen"
+  ]},
   { v:"61", date:"14. November", items:[
     "🧪 KI-Test: Probe-Uploads, bei denen die KI sicher ist, stehen jetzt grün als „wäre automatisch freigegeben“ – nur unsichere als „bitte anschauen“"
   ]},
