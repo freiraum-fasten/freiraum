@@ -63,7 +63,14 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .row.rv-ok{background:rgba(20,160,107,.13);box-shadow:inset 0 0 0 2px rgba(20,160,107,.55),0 0 14px rgba(20,160,107,.25)}
 .row.rv-no{background:rgba(229,72,77,.11);box-shadow:inset 0 0 0 2px rgba(229,72,77,.5)}
 .row.rv-open{background:rgba(255,170,0,.10);box-shadow:inset 0 0 0 1.5px rgba(255,170,0,.45)}
-.more-hide{display:none!important}.unsure{color:var(--no)!important;font-weight:800;white-space:nowrap}.unsure i{font-style:normal;font-size:.85em;margin-left:2px}.pill.qok{background:var(--ok);color:#fff;font-weight:800}.row.rv-over,.daylist .row.rv-over{border-radius:16px;padding:12px 14px;margin:10px 0;border-bottom:0;row-gap:8px;background:rgba(220,70,70,.07);box-shadow:inset 0 0 0 2px rgba(220,70,70,.3)}.rv-over .rv-tag{color:var(--no)}.wk{border-radius:18px;background:var(--soft);margin:10px 0;padding:4px 14px}.wk>summary{font-weight:800;padding:10px 0;cursor:pointer}.dayh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:14px 0 2px;font-weight:800}.dayh span{font-weight:600}
+.more-hide{display:none!important}
+.howcard{background:var(--soft);border-radius:18px;padding:14px 16px;margin:4px 0 12px}
+.howhead{font-weight:800;margin-bottom:10px}
+.howto{display:flex;flex-direction:column;gap:12px}
+.hs{display:flex;gap:12px;align-items:flex-start}.hs>div>b{display:block;font-size:15px}.hs small b{color:var(--ink)}.hs small{display:block;color:var(--muted);font-size:13.5px;line-height:1.4;margin-top:1px}
+.hn{flex:none;width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--flame1),var(--flame2));color:#fff;font-weight:800;display:grid;place-items:center;font-size:14px}
+.howno{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:13.5px;color:var(--muted);cursor:pointer}.howno input{width:18px;height:18px}
+.rcard ul{margin:6px 0 0;padding-left:18px;line-height:1.5}.rcard li{margin:3px 0;font-size:14.5px}.unsure{color:var(--no)!important;font-weight:800;white-space:nowrap}.unsure i{font-style:normal;font-size:.85em;margin-left:2px}.pill.qok{background:var(--ok);color:#fff;font-weight:800}.row.rv-over,.daylist .row.rv-over{border-radius:16px;padding:12px 14px;margin:10px 0;border-bottom:0;row-gap:8px;background:rgba(220,70,70,.07);box-shadow:inset 0 0 0 2px rgba(220,70,70,.3)}.rv-over .rv-tag{color:var(--no)}.wk{border-radius:18px;background:var(--soft);margin:10px 0;padding:4px 14px}.wk>summary{font-weight:800;padding:10px 0;cursor:pointer}.dayh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:14px 0 2px;font-weight:800}.dayh span{font-weight:600}
 .row.rv-auto{background:rgba(20,160,107,.11);box-shadow:inset 0 0 0 2px rgba(20,160,107,.4)}
 .rv-tag{flex:1 1 100%;font-size:12.5px;font-weight:800;letter-spacing:.02em}
 .rv-tag:has(+ .tbadge){flex:0 1 auto;margin-right:2px}
@@ -452,7 +459,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "58";
+const APP_VERSION = "59";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1265,16 +1272,39 @@ function platformsHtml(){
     <p class="muted" style="margin:0;line-height:1.6">${PLATFORMS_OK.join(" · ")}</p>`;
 }
 
+/* Kurz-Anleitung „So lädst du richtig hoch“ – beim Hochladen und in den Regeln */
+function howtoSteps(trk){
+  trk = trk || trackOf();
+  const what = trk==="total" ? "die <b>Gesamtzeit</b> – die große Zahl oben" : trk==="both" ? "die <b>Gesamtzeit</b> und die <b>App-Liste</b>" : "die <b>App-Liste mit Minuten</b>";
+  return `<div class="howto">
+    <div class="hs"><span class="hn">1</span><div><b>Erst am nächsten Tag</b><small>Der Tag muss vorbei sein – z. B. am Montag den Sonntag hochladen.</small></div></div>
+    <div class="hs"><span class="hn">2</span><div><b>„Gestern“ auswählen</b><small>In der Bildschirmzeit die Tagesansicht von gestern – das Datum muss drauf sein.</small></div></div>
+    <div class="hs"><span class="hn">3</span><div><b>Das muss zu sehen sein</b><small>${what}. Bei langer Liste: bis zu 5 Bilder.</small></div></div>
+  </div>`;
+}
+let howtoHidden = false; try{ howtoHidden = localStorage.getItem("fr_howto") === "1"; }catch{}
+function howtoCard(trk){
+  if (howtoHidden) return `<button class="linkbtn" id="howtoShow" style="display:block;margin:0 auto 12px">ℹ️ So geht's richtig</button><div id="howtoBox"></div>`;
+  return `<div id="howtoBox" class="howcard"><div class="howhead">📸 So geht's richtig</div>${howtoSteps(trk)}
+    <label class="howno"><input type="checkbox" id="howtoNo"> Nicht mehr anzeigen</label></div>`;
+}
+function bindHowto(root, trk){
+  root.querySelector("#howtoNo")?.addEventListener("change", e=>{ howtoHidden = e.target.checked; try{ localStorage.setItem("fr_howto", e.target.checked ? "1" : "0"); }catch{} if (e.target.checked) toast("Okay – findest du jederzeit unter „So funktioniert's“"); });
+  root.querySelector("#howtoShow")?.addEventListener("click", e=>{ e.target.remove(); const b = root.querySelector("#howtoBox"); b.className = "howcard"; b.innerHTML = `<div class="howhead">📸 So geht's richtig</div>${howtoSteps(trk)}`; });
+}
 function uploadFlow(day, test=false){
   sheet(`<h3 style="margin-bottom:4px">${test ? (acc?.admin ? "🧪 Test-Upload (Admin)" : "🧪 Probe-Upload") : "Screenshot für "+esc(fmtDate(day))}</h3>
     ${test ? `<p class="muted small" style="margin:0 0 10px">${acc?.admin ? "Läuft genauso wie später bei allen – zählt aber nirgends. Danach kannst du prüfen, ob die KI richtig lag." : "Läuft genauso wie ab dem 15.11. – zählt aber noch nicht. Nimm den Screenshot von <b>gestern</b> (Tagesansicht)."}</p>` : ""}
-    <label class="btn btn-flame" style="cursor:pointer;margin:6px 0 12px">📷 Screenshot(s) auswählen<input type="file" accept="image/*" multiple id="shotIn" hidden></label>
-    <div id="shotRes"></div>
-    <div id="shotGuide"><p class="muted small" style="margin:0 0 8px">So kommst du an deine Bildschirmzeit:</p>${guideHtml()}</div>`, root=>{
+    <div id="shotGuide">${howtoCard((test && testTrack) || trackOf())}</div>
+    <label class="btn btn-flame" style="cursor:pointer;margin:6px 0 10px">📷 Screenshot(s) auswählen<input type="file" accept="image/*" multiple id="shotIn" hidden></label>
+    <button class="linkbtn" id="shotHelp" style="display:block;margin:0 auto 12px">📱 Wo finde ich die Bildschirmzeit?</button>
+    <div id="shotRes"></div>`, root=>{
+    bindHowto(root, (test && testTrack) || trackOf());
+    root.querySelector("#shotHelp").onclick = guideSheet;
     root.querySelector("#shotIn").onchange = e => {
       const files = [...e.target.files].slice(0,5);
       if (e.target.files.length > 5) toast("Maximal 5 Screenshots – die ersten 5 werden genommen");
-      if (files.length){ root.querySelector("#shotGuide").remove(); analyse(root, files, day, test); }
+      if (files.length){ root.querySelector("#shotGuide")?.remove(); root.querySelector("#shotHelp")?.remove(); analyse(root, files, day, test); }
     };
   });
 }
@@ -2066,6 +2096,11 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"59", date:"14. November", items:[
+    "📸 Beim Hochladen erklärt eine Kurz-Anleitung in 3 Schritten, wie's richtig geht – mit „Nicht mehr anzeigen“",
+    "📖 „So funktioniert's“ neu: kurze Themen-Kästen statt langer Liste – und die Anleitung zum Nachlesen",
+    "🧹 Hochlade-Fenster aufgeräumt: die lange Handy-Anleitung steckt jetzt hinter „Wo finde ich die Bildschirmzeit?“"
+  ]},
   { v:"58", date:"14. November", items:[
     "⏰ Schutz gegen zu früh fotografierte Screenshots: Zeigt das Bild „Heute“ oder wurde es vor 22 Uhr am selben Tag gemacht, zählt der Tag erst nach Prüfung",
     "💬 Die Teilnehmenden sehen beim Hochladen direkt den Hinweis „Zu früh fotografiert?“ – und können es gleich richtig machen",
@@ -2364,23 +2399,24 @@ function renderInfo(){
     <div class="card setacc">
       <details data-sec="rules" ${infoOpen.has("rules")?"open":""}><summary><span class="sa-t"><span class="sa-i">📖</span><span><b>So funktioniert's</b><small>Erklärvideo, Regeln, Joker, was zählt</small></span></span></summary>
         <div class="accbody"><div style="margin-bottom:18px"><b style="display:block;margin-bottom:8px">🎬 Erklärvideo</b>${tutHtml()}</div>
-    <div class="card">
-      <h3 style="font-size:20px;margin-bottom:8px">📋 Die Regeln</h3>
-      <ol class="steps">
-        <li>Vom <b>15.11. bis 24.12.</b> – 40 Tage bis Heiligabend.</li>
-        <li>Pro Tag <b>max. ${LIMIT} Minuten Social Media</b> (Insta, TikTok, YouTube & Co. zusammen). Messenger wie WhatsApp sind erlaubt.</li>
-        <li>Beim Start gibst du an, wie viel Social Media du <b>vorher</b> pro Tag hattest. So sehen wir, wie viel Zeit du – und wir alle gemeinsam – einsparen. 🎯</li>
-        <li>Jeden Tag lädst du den <b>Screenshot deiner Bildschirmzeit vom Vortag</b> hoch (z. B. am Sonntag den vom Samstag). Die Minuten werden direkt auf deinem Handy ausgelesen.</li>
-        <li>🃏 Du hast <b>3 Joker</b>: Warst du mal über dem Limit, kannst du einen einlösen und bekommst die Flamme trotzdem.</li>
-        <li>Vergessen? Spätestens <b>3 Tage danach</b> muss er drin sein – sonst zählt der Tag als nicht geschafft.</li>
-        <li>Max. ${LIMIT} Min. = <b>geschafft 🔥</b>. Mehr als ${LIMIT} Min. = <b>nicht geschafft</b> – du kannst trotzdem hochladen, bekommst aber keine Flamme. Tage in Folge = deine Flammen-Serie.</li>
-        <li><b>🏆 Wettbewerb:</b> Wer die meisten geschafften Tage hat, liegt vorn. Bei Gleichstand gewinnt, wer an diesen Tagen insgesamt weniger Minuten hatte.</li>
-        <li>Alle, die sich registrieren, sind in <b>einer gemeinsamen Rangliste</b>. Am Anfang ist jeder auf Platz 1. Du siehst dich immer ganz oben.</li>
-        <li>🤖 Die <b>KI prüft und gibt automatisch frei</b>. Nur wenn du Minuten von Hand änderst oder das Datum nicht erkannt wird, schaut zusätzlich ein Admin drüber.</li>
-        <li>Findest du eine Bewertung falsch, tippe auf <b>„Einspruch“</b> – ein Admin prüft dann deinen Screenshot. Ehrlich bleiben!</li>
-        <li>🔒 <b>Deine Privatsphäre zählt:</b> Wenn du eine App nicht zeigen möchtest – oder nicht, wie lange du drin warst –, <b>übermal sie einfach</b> vor dem Hochladen (z. B. mit dem Stift in deiner Fotos-App) und schreib kurz in den Kommentar, dass es <b>keine Social-Media-App</b> ist. Das läuft auf Vertrauensbasis: Wir glauben dir und geben den Tag frei – erklären musst du nichts.</li>
-      </ol>
-    </div>
+    <div class="card"><h3>📸 So lädst du richtig hoch</h3>${howtoSteps()}</div>
+    <div class="card rcard"><h3>🗓️ Ablauf</h3><ul>
+      <li><b>15.11. – 24.12.</b> · 40 Tage bis Heiligabend</li>
+      <li>Jeden Tag den Screenshot <b>vom Vortag</b> hochladen – bis zu <b>3 Tage</b> nachtragen</li>
+      <li>Am Anfang schätzt du, wie viel du <b>vorher</b> hattest – so siehst du, was du sparst 🎯</li></ul></div>
+    <div class="card rcard"><h3>🔥 Flammen & Joker</h3><ul>
+      <li>Max. <b>${LIMIT} Min. Social Media</b> = 🔥 · WhatsApp & Co. zählen nicht</li>
+      <li>Tage in Folge = deine <b>Flammen-Serie</b></li>
+      <li><b>3 Joker</b> für Tage über dem Limit 🃏</li></ul></div>
+    <div class="card rcard"><h3>🏆 Rangliste</h3><ul>
+      <li><b>Flammen:</b> längste Serie vorn · <b>Wettbewerb:</b> meiste geschaffte Tage</li>
+      <li>📱 <b>Handyzeit:</b> wer im Schnitt am wenigsten am Handy ist</li>
+      <li><span class="unsure">Rote Zeiten⏳</span> sind noch nicht bestätigt</li></ul></div>
+    <div class="card rcard"><h3>🛡️ Prüfung & Privatsphäre</h3><ul>
+      <li>🤖 Passt alles, gibt die <b>KI automatisch frei</b></li>
+      <li>Zeit geändert, Datum unklar oder zu früh fotografiert → ein <b>Admin prüft</b></li>
+      <li>🔒 Private App <b>übermalen</b> + kurzer Kommentar – wir vertrauen dir</li>
+      <li>Falsch bewertet? <b>„Einspruch“</b> beim Tag</li></ul></div>
     <div class="card"><h3 style="font-size:17px;margin-bottom:10px">📵 Was zählt als Social Media?</h3>${platformsHtml()}</div>
         </div></details>
       <details data-sec="guide" ${infoOpen.has("guide")?"open":""}><summary><span class="sa-t"><span class="sa-i">📸</span><span><b>Screenshot & Limits</b><small>Anleitung je Handy, Limit einstellen, installieren</small></span></span></summary>
