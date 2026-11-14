@@ -469,7 +469,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "66";
+const APP_VERSION = "67";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -886,7 +886,7 @@ function checkinCard(s, day, today){
       <div style="flex:1"><b style="font-size:17px">Wartet auf Freigabe</b>
       <div class="muted small" style="margin-top:2px">${fmtHM(e.minutes)} eingetragen – ein Admin prüft noch.</div></div>
     </div>${reviewLine(e)}
-    <div style="display:flex;gap:16px;flex-wrap:wrap"><button class="linkbtn" data-up="${day}">Screenshot nochmal hochladen</button><button class="linkbtn" data-delday="${day}" style="color:var(--no)">Löschen</button></div></div>`;
+    <div style="display:flex;gap:16px;flex-wrap:wrap"><button class="linkbtn" data-delday="${day}" style="color:var(--no)">Löschen & neu hochladen</button></div></div>`;
   }
   if (e){
     const ok = e.success;
@@ -895,7 +895,7 @@ function checkinCard(s, day, today){
       <div style="flex:1"><b style="font-size:17px;${ok?"":"color:var(--no)"}">${ok?(e.joker?"Mit Joker geschafft! 🔥":isTotal()?"Gestern eingetragen":"Gestern geschafft! 🔥"):(e.valid===false?"Gestern ungültig":"Gestern nicht geschafft")}</b>
       <div class="muted small" style="margin-top:2px">${ok? (isTotal() ? fmtHM(e.minutes)+" Handyzeit – steht in der Rangliste." : fmtHM(e.minutes)+" "+TRACKS[trackOf()].word+" – stark!") : (e.valid===false?"Ein Admin hat den Screenshot abgelehnt.":e.minutes+" Min. – über dem Limit von "+LIMIT+" Min. Keine Flamme. Heute neu angreifen! 💪")}</div></div>
     </div>${isBoth() && e.total!=null ? `<div class="muted small" style="margin-top:10px">📱 Handyzeit gesamt: <b>${fmtHM(e.total)}</b> – steht in der Handyzeit-Rangliste</div>` : ""}${reviewLine(e)}${canJoker(e) ? `<div class="jokerinline" data-joker="${day}">${jokerCardHtml(false)}<div style="flex:1"><b>Nicht erreicht – willst du einen Joker einlösen?</b><div class="muted small">Noch ${jokersLeft()} von ${JOKERS} · dann bekommst du die Flamme trotzdem</div></div><span class="pill key">Einlösen</span></div>` : ""}
-    <div style="display:flex;gap:16px;flex-wrap:wrap"><button class="linkbtn" data-up="${day}">Screenshot nochmal hochladen</button>${e.disputed?"":`<button class="linkbtn" data-dispute="${day}">Stimmt nicht? Einspruch</button>`}<button class="linkbtn" data-delday="${day}" style="color:var(--no)">Löschen</button></div></div>`;
+    <div style="display:flex;gap:16px;flex-wrap:wrap">${e.valid===false && e.reviewed ? `<button class="linkbtn" data-up="${day}">Neuen Screenshot hochladen</button>` : ""}${e.disputed?"":`<button class="linkbtn" data-dispute="${day}">Stimmt nicht? Einspruch</button>`}<button class="linkbtn" data-delday="${day}" style="color:var(--no)">Löschen & neu hochladen</button></div></div>`;
   }
   return `<div class="card" style="border:2px solid var(--flame2)">
     <p class="q" style="margin-bottom:4px">📸 Screenshot von ${label}</p>
@@ -2153,6 +2153,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"67", date:"14. November", items:[
+    "1️⃣ Pro Tag nur ein Upload (mit bis zu 5 Bildern). Ersetzen geht nur über „Löschen & neu hochladen“ – solange die 3-Tage-Frist läuft",
+    "🔁 Wurde ein Tag von einem Admin abgelehnt, kann man direkt einen neuen Screenshot hochladen – der wird dann geprüft"
+  ]},
   { v:"66", date:"14. November", items:[
     "🐞 Datumsprüfung korrigiert: Steht ein Datum auf dem Screenshot (z. B. „Gestern, 12. November“), zählt dieses Datum – nicht das Wort „Gestern“",
     "🐞 „Zu früh fotografiert“ vergleicht jetzt mit dem Tag auf dem Bild – keine Fehlalarme mehr bei später hochgeladenen Screenshots"
