@@ -442,7 +442,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "55";
+const APP_VERSION = "56";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -2051,6 +2051,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"56", date:"14. November", items:[
+    "✏️ Vorher-Zeit ändern: Unter Einstellungen → Mein Konto kann jeder seine Einschätzung jederzeit anpassen (Schnellauswahl oder genau in Std./Min.)"
+  ]},
   { v:"55", date:"14. November", items:[
     "🔔 Neu: Erinnerungen aufs Handy! Freiraum meldet sich abends um ca. 18:30 Uhr – aber nur, wenn dein Screenshot noch fehlt",
     "📅 Die erste Erinnerung kommt am 16. November – ab da gibt's ja erst was hochzuladen",
@@ -2303,7 +2306,9 @@ function renderInfo(){
       <button class="chatclear" id="chatClear">🗑️ Ganzen Chat löschen</button></div>
     <div class="card"><div class="sectionhead"><div><div class="muted small" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em">Dein Ausgangswert</div>
         <b style="font-size:18px">${fmtHM(acc.baseline)} ${TRACKS[trackOf()].word} pro Tag</b><div class="muted small">vor der Fastenzeit · ${TRACKS[trackOf()].icon} ${isTotal()?"Handyzeit-Challenge (ohne Limit)":`Social-Media-Challenge (max. ${LIMIT} Min.)`}</div></div>
-        ${acc.can_switch?`<button class="pill" id="btnTrack">Ändern</button>`:""}</div>${acc.can_switch?"":`<p class="muted small" style="margin:8px 0 0">Challenge wechseln? Schreib den Admins oben im Chat.</p>`}</div>
+        ${acc.can_switch?`<button class="pill" id="btnTrack">Challenge</button>`:""}</div>
+      <button class="btn btn-ghost" id="btnBl" style="margin-top:12px">✏️ Vorher-Zeit ändern</button>
+      ${acc.can_switch?"":`<p class="muted small" style="margin:8px 0 0">Challenge wechseln? Schreib den Admins oben im Chat.</p>`}</div>
     <div class="card">
       <h3 style="font-size:17px;margin-bottom:12px">Konto</h3>
       <button class="btn btn-ghost" id="btnPw" style="margin-bottom:10px">🔒 Passwort ändern</button>
@@ -2402,6 +2407,7 @@ ${acc.admin || PUBLIC_UPDATES.length ? `      <details data-sec="news" ${infoOpe
   $("#chSize").onclick = e=>{ const b=e.target.closest("button"); if(b) setLook("size", b.dataset.v); };
   $("#clAll")?.addEventListener("click", ()=>{ $("#clBox").innerHTML = changelogHtml(true); $("#clAll").remove(); });
   $("#btnPw").onclick = changePw;
+  $("#btnBl")?.addEventListener("click", baselineSheet);
   bindMyChat(); if (infoOpen.has("konto")) loadMyChat(); chatBadges(); refreshRemind();
   document.querySelector('#vInfo details[data-sec="konto"]')?.addEventListener("toggle", e=>{ if (e.target.open) loadMyChat(); });
   $("#btnInstall")?.addEventListener("click", installSheet);
@@ -2672,6 +2678,22 @@ setInterval(()=>{ if (appTime && $("#appTimeVal")) $("#appTimeVal").innerHTML = 
 
 /* ---------- Erklärvideo: roter Punkt nur beim ersten Mal ---------- */
 const tutSeen = ()=>{ try{ return localStorage.getItem("fr_tour")==="1"; }catch{ return true; } };
+function baselineSheet(){
+  const TT = isTotal(), cur = acc?.baseline ?? 0;
+  const chips = TT ? [[60,"1 Std."],[120,"2 Std."],[180,"3 Std."],[240,"4 Std."],[300,"5 Std."],[360,"6 Std."],[480,"8 Std."]]
+                   : [[10,"10 Min."],[30,"30 Min."],[60,"1 Std."],[90,"1,5 Std."],[120,"2 Std."],[180,"3 Std."],[240,"4 Std."],[300,"5 Std."]];
+  sheet(`<h3 style="margin-bottom:6px">✏️ Deine Vorher-Zeit</h3>
+    <p class="muted small" style="margin:0 0 12px;line-height:1.5">Wie lange warst du <b>vor der Fastenzeit</b> im Schnitt pro Tag ${TT?"<b>insgesamt</b> am Handy":"auf <b>Social Media</b>"}? Damit rechnet Freiraum aus, wie viel Zeit du sparst. Tipp: In der Bildschirmzeit steht oft der Wochen-Durchschnitt.</p>
+    <div class="chips" id="blChips2">${chips.map(([v,l])=>`<button data-v="${v}"${v===cur?' class="on"':""}>${l}</button>`).join("")}</div>
+    <div class="minutes"><label>Oder genau</label><div class="hmin"><input id="blH" type="number" inputmode="numeric" min="0" max="24" value="${Math.floor(cur/60)}"><span>Std.</span><input id="blM" type="number" inputmode="numeric" min="0" max="59" value="${cur%60}"><span>Min.</span></div></div>
+    <button class="btn btn-primary" id="blSave2" style="margin-top:14px">Speichern</button>`, r=>{
+    const set = v=>{ r.querySelector("#blH").value = Math.floor(v/60); r.querySelector("#blM").value = v%60; r.querySelectorAll("#blChips2 button").forEach(b=>b.classList.toggle("on", +b.dataset.v===v)); };
+    r.querySelector("#blChips2").onclick = e=>{ const b=e.target.closest("button"); if(b) set(+b.dataset.v); };
+    r.querySelector("#blSave2").onclick = async ()=>{
+      const v = Math.min(1440, (parseInt(r.querySelector("#blH").value,10)||0)*60 + (parseInt(r.querySelector("#blM").value,10)||0));
+      try{ await rpc("sf_set_baseline",{p_token:T(),p_minutes:v}); closeSheet(); await refresh(); show(); toast(`✅ Vorher-Zeit: ${fmtHM(v)} pro Tag`); }catch(err){ toast(err.message); } };
+  });
+}
 function remindVideoSheet(){
   sheet(`<h3 style="margin-bottom:4px">🔔 So schaltest du Erinnerungen ein</h3>
     <p class="muted small" style="margin:0 0 12px">50 Sekunden – für Android und iPhone.</p>
