@@ -96,7 +96,7 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .hs{display:flex;gap:12px;align-items:flex-start}.hs>div>b{display:block;font-size:15px}.hs small b{color:var(--ink)}.hs small{display:block;color:var(--muted);font-size:13.5px;line-height:1.4;margin-top:1px}
 .hn{flex:none;width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--flame1),var(--flame2));color:#fff;font-weight:800;display:grid;place-items:center;font-size:14px}
 .howno{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:13.5px;color:var(--muted);cursor:pointer}.howno input{width:18px;height:18px}
-.rcard ul{margin:6px 0 0;padding-left:18px;line-height:1.5}.rcard li{margin:3px 0;font-size:14.5px}.unsure{color:var(--no)!important;font-weight:800;white-space:nowrap}.unsure i{font-style:normal;font-size:.85em;margin-left:2px}.pill.qok{background:var(--ok);color:#fff;font-weight:800}.row.rv-over,.daylist .row.rv-over{border-radius:16px;padding:12px 14px;margin:10px 0;border-bottom:0;row-gap:8px;background:rgba(220,70,70,.07);box-shadow:inset 0 0 0 2px rgba(220,70,70,.3)}.rv-over .rv-tag{color:var(--no)}.wk{border-radius:18px;background:var(--soft);margin:10px 0;padding:4px 14px}.wk>summary{font-weight:800;padding:10px 0;cursor:pointer}.dayh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:14px 0 2px;font-weight:800}.dayh span{font-weight:600}
+.rcard ul{margin:6px 0 0;padding-left:18px;line-height:1.5}.rcard li{margin:3px 0;font-size:14.5px}.unsure{color:var(--no)!important;font-weight:800;white-space:nowrap}.unsure i{font-style:normal;font-size:.85em;margin-left:2px}.pill.qok{background:var(--ok);color:#fff;font-weight:800}.row.rv-over,.daylist .row.rv-over{border-radius:16px;padding:12px 14px;margin:10px 0;border-bottom:0;row-gap:8px;background:rgba(20,160,107,.11);box-shadow:inset 0 0 0 2px rgba(20,160,107,.4)}.rv-over .rv-tag{color:var(--ok)}.wk{border-radius:18px;background:var(--soft);margin:10px 0;padding:4px 14px}.wk>summary{font-weight:800;padding:10px 0;cursor:pointer}.dayh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:14px 0 2px;font-weight:800}.dayh span{font-weight:600}
 .row.rv-auto{background:rgba(20,160,107,.11);box-shadow:inset 0 0 0 2px rgba(20,160,107,.4)}
 .rv-tag{flex:1 1 100%;font-size:12.5px;font-weight:800;letter-spacing:.02em}
 .rv-tag:has(+ .tbadge){flex:0 1 auto;margin-right:2px}
@@ -491,7 +491,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "74";
+const APP_VERSION = "75";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1646,7 +1646,7 @@ function allUploadsHtml(){
         const rows = list.map(({m,c})=>{ const k = rvState(c); return `<div class="row rv-${k}" style="flex-wrap:wrap"><span class="rv-tag">${rvLabel(k, m.id, c.day)}</span><b style="flex:1 1 100%;min-width:0">${esc(m.emoji)} ${esc(m.name)} <span class="muted small" style="font-weight:600" title="${m.track==="total"?"Handyzeit":"30 Min."}">${m.track==="total"?"📱":"📵"}</span></b>
           <span>${fmtHM(c.minutes)}${c.total!=null?` · 📱 ${fmtHM(c.total)}`:""}</span>${c.edited?`<span class="flag">✏️ ${c.ocr==null?"–":fmtHM(c.ocr)}</span>`:""}${c.date_ok===false?`<span class="flag">📅?</span>`:""}${c.suspect?`<span class="flag bad">🕵️</span>`:""}${c.disputed?`<span class="flag bad">💬</span>`:""}${c.joker?`<span class="flag">🃏</span>`:""}
           <span style="margin-left:auto;display:flex;gap:6px">${k==="open" ? `<button class="pill qok" data-qok-m="${m.id}" data-qok-d="${c.day}">✓ Freigeben</button>` : (k==="auto"||k==="over") ? `<button class="pill qok" data-qok-m="${m.id}" data-qok-d="${c.day}" title="Als von dir geprüft markieren">✓ Geprüft</button>` : ""}<button class="pill" data-up-m="${m.id}" data-up-d="${c.day}">Ansehen</button></span></div>`; });
-        return `<div class="dayh">${esc(toDate(d).toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long",timeZone:"UTC"}))}<span class="muted small">${list.length} · ✅ ${cnt("ok")+cnt("auto")}${cnt("open")?` · ⏳ ${cnt("open")}`:""}${cnt("no")+cnt("over")?` · ❌ ${cnt("no")+cnt("over")}`:""}</span></div>
+        return `<div class="dayh">${esc(toDate(d).toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long",timeZone:"UTC"}))}<span class="muted small">${list.length} · ✅ ${cnt("ok")+cnt("auto")+cnt("over")}${cnt("open")?` · ⏳ ${cnt("open")}`:""}${cnt("no")?` · ❌ ${cnt("no")}`:""}</span></div>
           <div class="daylist">${moreList(rows, "day-"+d)}</div>`; }).join("")}
     </details>`; }).join("");
 }
@@ -1903,7 +1903,7 @@ const revBy = (mid, day) => revLog[mid+"|"+day];
 /* Etikett mit Bearbeiter: „✅ freigegeben · David“, „🤖 KI · noch von keinem Admin angesehen“ */
 function rvLabel(k, mid, day){
   const r = revBy(mid, day), who = r ? ` · ${esc(r.n)}` : "";
-  return k==="ok" ? `✅ freigegeben${who}` : k==="no" ? `❌ abgelehnt${who}` : k==="open" ? "⏳ prüfen" : k==="auto" ? "🤖 KI hat freigegeben · kein Admin" : "🤖 KI: über dem Limit · kein Admin";
+  return k==="ok" ? `✅ freigegeben${who}` : k==="no" ? `❌ abgelehnt${who}` : k==="open" ? "⏳ prüfen" : k==="auto" ? "🤖 KI hat freigegeben · kein Admin" : "🤖 KI hat freigegeben · über 30 Min. · kein Admin";
 }
 document.addEventListener("click", async e=>{
   const b = e.target.closest("[data-rply]"); if (!b) return; e.stopPropagation();
@@ -2219,6 +2219,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"75", date:"14. November", items:[
+    "🟢 Admins: Uploads über 30 Min., die die KI richtig erkannt hat, leuchten jetzt grün statt rot – sie sind ja in Ordnung"
+  ]},
   { v:"74", date:"14. November", items:[
     "🗄️ Ab dem Start: KI-Test & Probe-Uploads wandern ganz nach unten in einen zugeklappten Kasten",
     "🧹 Probe-Uploads werden nach 10 Tagen automatisch gelöscht"
