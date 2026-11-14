@@ -64,6 +64,8 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .row.rv-no{background:rgba(229,72,77,.11);box-shadow:inset 0 0 0 2px rgba(229,72,77,.5)}
 .row.rv-open{background:rgba(255,170,0,.10);box-shadow:inset 0 0 0 1.5px rgba(255,170,0,.45)}
 .more-hide{display:none!important}
+.cdcard{text-align:center;padding:18px 16px}.cdtitle{font-weight:800;font-size:15px}
+.cdnum{font-size:40px;font-weight:800;letter-spacing:.02em;font-variant-numeric:tabular-nums;margin:6px 0 4px;background:linear-gradient(90deg,var(--flame1),var(--flame2));-webkit-background-clip:text;color:transparent}
 .cmtbox{flex:1 1 100%;margin-top:8px;background:rgba(255,150,40,.12);border:1.5px solid rgba(255,140,40,.55);border-radius:14px;padding:10px 12px}
 .cmt{font-size:14.5px;line-height:1.45}.cmt+.cmt{margin-top:6px}
 .cmtbox .input{background:var(--card)}.cmtbox .chatin .btn{height:42px;min-width:46px;width:46px}
@@ -469,7 +471,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "67";
+const APP_VERSION = "68";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -533,6 +535,16 @@ const IMPULSES = [
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const params = new URLSearchParams(location.search);
+/* Live-Countdown bis 0 Uhr (Gerätezeit) – danach baut sich die Seite von selbst neu */
+function nextMidnight(){ const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()+1).getTime(); }
+function cdText(ms){ ms = Math.max(0, ms); const t = Math.floor(ms/1000), h = Math.floor(t/3600), m = Math.floor(t%3600/60), x = t%60; return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(x).padStart(2,"0")}`; }
+function cdHtml(title, sub, target){ target = target || nextMidnight();
+  return `<div class="card cdcard"><div class="cdtitle">${title}</div><div class="cdnum" data-cd="${target}">${cdText(target-Date.now())}</div><div class="muted small" style="line-height:1.45">${sub}</div></div>`; }
+let cdFired = 0;
+setInterval(()=>{ const els = document.querySelectorAll("[data-cd]"); if (!els.length) return; const now = Date.now(); let due = false;
+  els.forEach(el=>{ const left = +el.dataset.cd - now; el.textContent = cdText(left); if (left <= 0) due = true; });
+  if (due && now - cdFired > 5000){ cdFired = now; refresh().then(()=>{ show(); toast("🕛 Neuer Tag – jetzt kannst du den Screenshot von gestern hochladen!"); }); }
+}, 1000);
 function berlinToday(){ // lokales Datum des Geräts – funktioniert in jeder Zeitzone weltweit
   if (params.get("heute")) return params.get("heute"); // nur zum Testen
   const d = new Date();
@@ -738,6 +750,7 @@ function renderToday(){
     const left = diffDays(START, today);
     html += `<div class="daystrip"><div><div class="label">Start · So., 15. November</div><div class="day">Noch ${left} <span class="muted" style="font-weight:600">${left===1?"Tag":"Tage"}</span></div></div>
       <div class="pill">🧪 Probezeit</div></div>
+    ${left <= 1 ? cdHtml("🚀 Start in", "Um <b>0:00 Uhr</b> geht's los – ab dann zählt jeder Tag.", (()=>{ const d=toDate(START); return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()).getTime(); })()) : ""}
     <div class="card"><h3 style="font-size:18px;margin-bottom:6px">📷 Probe-Upload</h3>
       <p class="muted small" style="margin:0 0 14px;line-height:1.5">Üb schon mal: Lade den Screenshot von <b>gestern</b> hoch und schau, was die KI erkennt. Gezählt wird ab dem 15. November – dann jeden Tag der Screenshot vom Vortag.</p>
       <button class="btn btn-flame" id="goProbe">📷 Probe-Screenshot hochladen</button>
@@ -764,15 +777,15 @@ function renderToday(){
     if (acc.hidden) html += `<div class="hint" style="display:block;margin-bottom:14px"><b>🕶️ Unsichtbar-Modus aktiv</b><br><span class="muted small">Du machst nicht mit und beobachtest nur. Zum Mitmachen im Admin-Bereich ausschalten.</span></div>`;
     else {
       if (inWindow(y)) html += checkinCard(s, y, today);
-      else html += `<div class="card"><p class="q">Tag 1 läuft! 🔥</p><div class="muted small" style="line-height:1.5">Heute zählt's zum ersten Mal: ${goalText()}. <b>Morgen</b> lädst du dann den Screenshot von heute hoch.</div>
-        <button class="btn btn-ghost" id="goSetup" style="margin-top:14px">📸 So machst du den Screenshot</button></div>`;
+      else html += cdHtml("🔥 Tag 1 läuft! Erster Screenshot in", `Heute zählt's zum ersten Mal: ${goalText()}. Ab <b>0:00 Uhr</b> lädst du den Screenshot von heute hoch.`);
       for (let k=2; k<=GRACE; k++){
         const dk = addDays(today,-k), ek = s.map[dk]; if (!inWindow(dk)) continue;
         const left = GRACE - k;
         if (!ek) html += `<div class="card" style="padding:16px 20px;border:2px solid var(--no)"><div class="sectionhead"><div><b>${esc(fmtDate(dk))} fehlt</b><div class="muted small">${left===0?"Heute letzte Chance zum Nachtragen!":`Noch ${left===1?"bis morgen":left+" Tage"} Zeit zum Nachtragen.`}</div></div><button class="pill key" data-up="${dk}">Nachtragen</button></div></div>`;
         else if (canJoker(ek)) html += jokerOffer(dk, ek);
       }
-      if (running && inWindow(y)) html += `<p class="muted small todaynote">Heute läuft: ${goalText()} · den Screenshot von heute lädst du morgen hoch.</p>`;
+      if (running && inWindow(y) && s.map[y]) html += cdHtml("⏳ Nächster Screenshot in", `Heute läuft: ${goalText()}. Ab <b>0:00 Uhr</b> kannst du den Screenshot von heute hochladen.`);
+      else if (running && inWindow(y)) html += `<p class="muted small todaynote">Heute läuft: ${goalText()} · den Screenshot von heute lädst du morgen hoch.</p>`;
     }
     if (running) html += impulseCard(idx-1, `Impuls · Tag ${idx}`);
     html += calendarCard(s, today);
@@ -2153,6 +2166,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"68", date:"14. November", items:[
+    "⏳ Live-Countdown auf „Heute“: bis zum Start, am ersten Tag und nach dem Hochladen bis 0 Uhr – dann kann der nächste Screenshot hoch",
+    "🕛 Um Mitternacht wechselt die App von selbst auf „Screenshot hochladen“ – ohne neu zu laden"
+  ]},
   { v:"67", date:"14. November", items:[
     "1️⃣ Pro Tag nur ein Upload (mit bis zu 5 Bildern). Ersetzen geht nur über „Löschen & neu hochladen“ – solange die 3-Tage-Frist läuft",
     "🔁 Wurde ein Tag von einem Admin abgelehnt, kann man direkt einen neuen Screenshot hochladen – der wird dann geprüft"
