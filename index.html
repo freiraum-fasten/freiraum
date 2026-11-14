@@ -64,6 +64,19 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .row.rv-no{background:rgba(229,72,77,.11);box-shadow:inset 0 0 0 2px rgba(229,72,77,.5)}
 .row.rv-open{background:rgba(255,170,0,.10);box-shadow:inset 0 0 0 1.5px rgba(255,170,0,.45)}
 .more-hide{display:none!important}
+#annBg{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:18px;transition:opacity .25s}
+#annBg.out{opacity:0}
+#ann{width:100%;max-width:420px;max-height:88vh;overflow:auto;background:var(--card);border-radius:28px;padding:22px 20px 18px;box-shadow:0 30px 80px rgba(0,0,0,.5);border:1px solid var(--line);animation:annIn .35s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes annIn{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
+.an-ic{width:58px;height:58px;margin:0 auto 10px;border-radius:50%;background:linear-gradient(135deg,var(--flame1),var(--flame2));display:grid;place-items:center;color:#fff;font-size:34px;font-weight:900;box-shadow:0 0 0 8px rgba(255,90,60,.15)}
+.an-h{text-align:center;font-size:22px;font-weight:800;letter-spacing:-.02em;margin:0}
+.an-from{text-align:center;font-size:13px;color:var(--muted);margin:4px 0 12px}
+.an-intro{font-size:15px;line-height:1.5;margin:0 0 12px}
+.an-pt{display:flex;gap:12px;background:var(--soft);border-radius:16px;padding:12px 14px;margin:0 0 8px}
+.an-n{flex:none;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--flame1),var(--flame2));color:#fff;font-weight:800;font-size:13px;display:grid;place-items:center;margin-top:1px}
+.an-pt b{display:block;font-size:15px}.an-pt span{display:block;font-size:13.5px;color:var(--muted);line-height:1.45;margin-top:2px}.an-pt span b{display:inline;color:var(--ink);font-size:inherit}
+.an-ex{display:inline-block!important;margin-top:6px!important;background:var(--card);border:1px dashed var(--line);border-radius:10px;padding:4px 10px;font-size:13px!important;color:var(--ink)!important}
+.an-foot{font-size:13.5px;color:var(--muted);line-height:1.45;margin:10px 2px 14px;text-align:center}
 .cdcard{text-align:center;padding:18px 16px}.cdtitle{font-weight:800;font-size:15px}
 .cdnum{font-size:40px;font-weight:800;letter-spacing:.02em;font-variant-numeric:tabular-nums;margin:6px 0 4px;background:linear-gradient(90deg,var(--flame1),var(--flame2));-webkit-background-clip:text;color:transparent}
 .cmtbox{flex:1 1 100%;margin-top:8px;background:rgba(255,150,40,.12);border:1.5px solid rgba(255,140,40,.55);border-radius:14px;padding:10px 12px}
@@ -471,7 +484,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "69";
+const APP_VERSION = "70";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -656,7 +669,7 @@ $("#btnAuth").addEventListener("click", async ()=>{
       btn.disabled = false; return; }
     auth = { token:r.token }; save(auth);
     $("#inPw").value = "";
-    await refresh(); tab = "group"; show();
+    await refresh(); tab = "group"; show(); setTimeout(maybeShowAnn, 600);
     toast(authMode==="login" ? `Hallo ${acc?.name || ""} 👋` : "Konto erstellt – willkommen! 🔥");
   }catch(err){ toast(err.message); }
   btn.disabled = false;
@@ -777,14 +790,14 @@ function renderToday(){
     if (acc.hidden) html += `<div class="hint" style="display:block;margin-bottom:14px"><b>🕶️ Unsichtbar-Modus aktiv</b><br><span class="muted small">Du machst nicht mit und beobachtest nur. Zum Mitmachen im Admin-Bereich ausschalten.</span></div>`;
     else {
       if (inWindow(y)) html += checkinCard(s, y, today);
-      else html += cdHtml("🔥 Tag 1 läuft! Erster Screenshot in", `Heute zählt's zum ersten Mal: ${goalText()}. Ab <b>0:00 Uhr</b> lädst du den Screenshot von heute hoch.`);
+      else html += cdHtml("🔥 Tag 1 läuft! Erster Screenshot in", `Heute zählt's zum ersten Mal: ${goalText()}. Den Screenshot machst du <b>morgen früh</b> – dann steht „Gestern, ${esc(toDate(today).toLocaleDateString("de-DE",{day:"numeric",month:"long",timeZone:"UTC"}))}“ drauf.`);
       for (let k=2; k<=GRACE; k++){
         const dk = addDays(today,-k), ek = s.map[dk]; if (!inWindow(dk)) continue;
         const left = GRACE - k;
         if (!ek) html += `<div class="card" style="padding:16px 20px;border:2px solid var(--no)"><div class="sectionhead"><div><b>${esc(fmtDate(dk))} fehlt</b><div class="muted small">${left===0?"Heute letzte Chance zum Nachtragen!":`Noch ${left===1?"bis morgen":left+" Tage"} Zeit zum Nachtragen.`}</div></div><button class="pill key" data-up="${dk}">Nachtragen</button></div></div>`;
         else if (canJoker(ek)) html += jokerOffer(dk, ek);
       }
-      if (running && inWindow(y) && s.map[y]) html += cdHtml("⏳ Nächster Screenshot in", `Heute läuft: ${goalText()}. Ab <b>0:00 Uhr</b> kannst du den Screenshot von heute hochladen.`);
+      if (running && inWindow(y) && s.map[y]) html += cdHtml("⏳ Nächster Screenshot in", `Heute läuft: ${goalText()}. Den Screenshot von heute machst du <b>morgen früh</b> – dann steht „Gestern, ${esc(toDate(today).toLocaleDateString("de-DE",{day:"numeric",month:"long",timeZone:"UTC"}))}“ drauf.`);
       else if (running && inWindow(y)) html += `<p class="muted small todaynote">Heute läuft: ${goalText()} · den Screenshot von heute lädst du morgen hoch.</p>`;
     }
     if (running) html += impulseCard(idx-1, `Impuls · Tag ${idx}`);
@@ -912,7 +925,7 @@ function checkinCard(s, day, today){
   }
   return `<div class="card" style="border:2px solid var(--flame2)">
     <p class="q" style="margin-bottom:4px">📸 Screenshot von ${label}</p>
-    <div class="muted small" style="line-height:1.5">Bildschirmzeit von gestern – mit Datum und App-Liste. Die KI liest die Minuten aus.</div>
+    <div class="muted small" style="line-height:1.5">Mach ihn jetzt – in der Bildschirmzeit steht dann <b>„Gestern, ${esc(toDate(day).toLocaleDateString("de-DE",{day:"numeric",month:"long",timeZone:"UTC"}))}“</b>. Die KI liest die Minuten aus.</div>
     <button class="btn btn-flame glow" data-up="${day}" style="margin-top:16px">📷 Screenshot hochladen</button>
     <div class="muted small" style="text-align:center;margin-top:10px">${isTotal()?"Zählt die gesamte Bildschirmzeit":`Max. ${LIMIT} Min. = 🔥`} · Vergessen? Du hast bis zu ${GRACE} Tage Zeit zum Nachtragen.</div>
   </div>`;
@@ -1311,7 +1324,7 @@ function howtoSteps(trk, day){
   const dname = day ? esc(fmtDate(day)) : "";
   const what = trk==="total" ? "die <b>Gesamtzeit</b> – die große Zahl oben" : trk==="both" ? "die <b>Gesamtzeit</b> und die <b>App-Liste</b>" : "die <b>App-Liste mit Minuten</b>";
   return `<div class="howto">
-    <div class="hs"><span class="hn">1</span><div><b>Erst am nächsten Tag</b><small>Der Tag muss vorbei sein – z. B. am Montag den Sonntag hochladen. Vergessen? Bis zu 3 Tage später nachtragen geht auch.</small></div></div>
+    <div class="hs"><span class="hn">1</span><div><b>Erst am nächsten Morgen</b><small>Nicht am selben Tag fotografieren – sonst fehlt der Abend. Am Montag machst du den Screenshot vom Sonntag. Vergessen? Bis zu 3 Tage nachtragen.</small></div></div>
     ${late ? `<div class="hs"><span class="hn">2</span><div><b>„${dname}“ auswählen</b><small>In der Bildschirmzeit zu diesem Tag zurückblättern (Pfeil ‹ oder Balken antippen) – das Datum muss drauf sein.</small></div></div>`
            : `<div class="hs"><span class="hn">2</span><div><b>„Gestern“ auswählen</b><small>In der Bildschirmzeit die Tagesansicht von gestern – beim Nachtragen den richtigen Tag. Das Datum muss drauf sein.</small></div></div>`}
     <div class="hs"><span class="hn">3</span><div><b>Das muss zu sehen sein</b><small>${what}. Bei langer Liste: bis zu 5 Bilder.</small></div></div>
@@ -2177,6 +2190,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"70", date:"14. November", items:[
+    "❗ Wichtig-Fenster vom Admin-Team: So läuft Freiraum ab – erscheint einmal beim Öffnen, Text passt sich dem Tag an",
+    "📸 Überall klarer erklärt: Screenshot erst am nächsten Morgen machen – dann steht „Gestern, [Datum]“ drauf"
+  ]},
   { v:"69", date:"14. November", items:[
     "🧪 KI-Test: Kommentare zu Probe-Uploads hervorgehoben – mit Antwortfeld direkt darunter (auch bei älteren)",
     "🛡️ KI-Test: Es steht dabei, welcher Admin einen Probe-Upload bewertet hat"
@@ -2443,6 +2460,35 @@ function changelogHtml(all, pick){
   if (!list.length) return `<p class="muted small" style="margin:4px 0 0">Gerade gibt's keine neuen Hinweise.</p>`;
   return list.map((c,i)=>`<div style="${i?"margin-top:14px;padding-top:12px;border-top:1px solid var(--line)":""}"><b>Version ${c.v}</b> <span class="muted small">· ${c.date}</span>${acc?.admin ? (isPubUpdate(c) ? ` <span class="tbadge total">👥 für alle sichtbar</span>` : ` <span class="tbadge social">🔒 nur Admins</span>`) : ""}
     <ul class="newlist">${c.items.map(x=>`<li>${x.replace("${LIMIT}",LIMIT)}</li>`).join("")}</ul></div>`).join("");
+}
+/* ❗ Wichtig-Fenster vom Admin – Text passt sich dem Datum an */
+const ANN_ID = "start1";
+function annHtml(){
+  const today = berlinToday(), pre = today < START, d1 = today === START;
+  const exDay = pre || d1 ? START : addDays(today, -1);
+  const ex = toDate(exDay).toLocaleDateString("de-DE",{day:"numeric",month:"long",timeZone:"UTC"});
+  const title = pre ? "Wichtig – so läuft's ab morgen" : d1 ? "Wichtig – heute geht's los!" : "Wichtig – so läuft Freiraum";
+  const intro = pre ? `Hey! 👋 Morgen, <b>Sonntag 15.11.</b>, startet Freiraum. Damit alles glatt läuft, hier das Wichtigste:`
+    : d1 ? `Hey! 👋 Heute, <b>Sonntag 15.11.</b>, startet Freiraum. Damit alles glatt läuft, hier das Wichtigste:`
+    : `Hey! 👋 Schön, dass du dabei bist. Damit alles glatt läuft, hier das Wichtigste:`;
+  const p1 = pre ? [`Sonntag = Tag 1`, `Ab morgen zählt's – hochladen kannst du ab Montag.`]
+    : d1 ? [`Heute = Tag 1`, `Heute zählt's schon – hochladen kannst du ab <b>morgen, 0 Uhr</b>.`]
+    : [`Jeder Tag zählt`, `Bis Heiligabend: jeden Tag max. ${LIMIT} Min. Social Media – oder so wenig Handyzeit wie möglich.`];
+  const pt = (n,b,t,x="") => `<div class="an-pt"><div class="an-n">${n}</div><div><b>${b}</b><span>${t}</span>${x}</div></div>`;
+  return `<div class="an-ic">!</div><h3 class="an-h">${title}</h3><div class="an-from">📣 Von David · Admin-Team</div><p class="an-intro">${intro}</p>
+    ${pt(1, p1[0], p1[1])}
+    ${pt(2, "Screenshot erst am nächsten Morgen", `Am <b>Montag</b> machst du den Screenshot vom <b>Sonntag</b>. Bitte <b>nicht</b> am selben Tag fotografieren – sonst fehlt der Abend.`, `<span class="an-ex">📱 „Gestern, ${ex}“</span>`)}
+    ${pt(3, "Jeden Tag so weiter", `Dienstag → Montag, Mittwoch → Dienstag … Vergessen? Du hast <b>3 Tage</b> zum Nachtragen.`)}
+    ${pt(4, "Die App hilft dir", `Ein Countdown zeigt, ab wann's geht – und auf Wunsch erinnert dich die App abends. 🔔`)}
+    <p class="an-foot">Fragen? Schreib uns im Chat unter <b>Einstellungen → Chat mit den Admins</b>.<br><b style="color:var(--ink)">Viel Erfolg – wir glauben an euch! 🔥</b></p>
+    <button class="btn btn-flame" id="annOk">Verstanden</button>`;
+}
+function maybeShowAnn(){
+  let seen = null; try{ seen = localStorage.getItem("fr_ann"); }catch{}
+  if (seen === ANN_ID || !acc || $("#annBg")) return false;
+  const bg = document.createElement("div"); bg.id = "annBg"; bg.innerHTML = `<div id="ann">${annHtml()}</div>`; document.body.appendChild(bg);
+  bg.querySelector("#annOk").onclick = ()=>{ try{ localStorage.setItem("fr_ann", ANN_ID); }catch{} bg.classList.add("out"); setTimeout(()=>bg.remove(), 250); };
+  return true;
 }
 function maybeShowWhatsNew(){
   let seen = null; try { seen = localStorage.getItem("fr_seen_v"); } catch {}
@@ -3010,7 +3056,7 @@ async function refresh(){
   if (params.get("g") || params.get("zugang")) history.replaceState(null,"",location.pathname + (params.get("heute")?`?heute=${params.get("heute")}`:""));
   show();
   applyLook(getLook());
-  if (auth?.token){ await refresh(); show(); maybeShowWhatsNew(); }
+  if (auth?.token){ await refresh(); show(); if (!maybeShowAnn()) maybeShowWhatsNew(); }
   setTimeout(maybeAskInstall, 1500);
   $("#btnHelp").onclick = tutSheet;
   document.addEventListener("visibilitychange", async ()=>{ if(!document.hidden && auth?.token){ await refresh(); show(); } });
