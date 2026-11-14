@@ -80,7 +80,9 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .cdcard{text-align:center;padding:18px 16px}.cdtitle{font-weight:800;font-size:15px}
 .cdnum{font-size:40px;font-weight:800;letter-spacing:.02em;font-variant-numeric:tabular-nums;margin:6px 0 4px;background:linear-gradient(90deg,var(--flame1),var(--flame2));-webkit-background-clip:text;color:transparent}
 .cmtbox{flex:1 1 100%;margin-top:8px;background:rgba(255,150,40,.12);border:1.5px solid rgba(255,140,40,.55);border-radius:14px;padding:10px 12px}
-.cmt{font-size:14.5px;line-height:1.45}.cmt+.cmt{margin-top:6px}
+.cmt{font-size:14.5px;line-height:1.45}
+.rep{margin-top:8px;padding:8px 10px;border-radius:12px;background:rgba(20,160,107,.14);border-left:3px solid var(--ok);font-size:14px;line-height:1.4}.rep .muted{font-size:12.5px}
+.rep.none{background:none;border-left:3px dashed var(--line);color:var(--muted);font-size:13px;padding:4px 10px}.cmt+.cmt{margin-top:6px}
 .cmtbox .input{background:var(--card)}.cmtbox .chatin .btn{height:42px;min-width:46px;width:46px}
 .row.hascmt{box-shadow:inset 4px 0 0 #ff9a2a;padding-left:14px!important}.replybox{background:var(--soft);border-radius:16px;padding:10px;margin:0 0 10px}.replybox .input{background:var(--card)}
 .howcard{background:var(--soft);border-radius:18px;padding:14px 16px;margin:4px 0 12px}
@@ -484,7 +486,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "71";
+const APP_VERSION = "72";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -598,7 +600,7 @@ function confetti(){
 let auth = load();          // {token}
 let acc = null;             // Konto: {id,email,name,emoji,admin,member_id,group_code,limit}
 let group = null;           // {name, code, members:[...]}
-let adminData = null, joinReqs = [], revLog = {}, reviewData = null, cwMsgs = null, chatThreads = [], chatUnread = {mine:0, admin:0}, chatFilter = "open", chatSearch = "";
+let adminData = null, joinReqs = [], revLog = {}, cmtRep = {}, reviewData = null, cwMsgs = null, chatThreads = [], chatUnread = {mine:0, admin:0}, chatFilter = "open", chatSearch = "";
 let tab = "group";
 let mode = "join", authMode = "login", regOpen = true;
 rpc("sf_reg_status",{}).then(r=>{ if (r){ regOpen = !!r.open; if (!auth?.token) renderOnboard(); } }).catch(()=>{});
@@ -1699,6 +1701,7 @@ async function reviewSheet(item, back){
     box.innerHTML = `${img && img.startsWith("data:image/jpeg;base64,") ? `<img class="full" src="${img}" alt="Screenshot">` : `<p class="muted">Kein Bild vorhanden.</p>`}
       ${item.dispute?`<div class="status warn" style="margin:0 0 10px">💬 Einspruch: „${esc(item.dispute)}“</div>`:""}
       ${note?`<div class="status warn" style="display:block;margin:0 0 10px">💬 Kommentar: „${esc(note)}“</div>`:""}
+      ${(note || item.dispute) ? `<div class="replybox" style="padding-bottom:4px">${repliesHtml("day:"+item.member+"|"+item.day)}</div>` : ""}
       ${(note || item.dispute) && acc?.admin ? `<div class="replybox"><div class="chatin" style="margin:0"><textarea class="input" id="rvReply" rows="1" maxlength="1000" placeholder="Antwort an ${esc(item.name)} …"></textarea><button class="btn btn-flame" id="rvReplySend">➤</button></div><div class="muted small" style="margin:6px 4px 0">Landet im Chat von ${esc(item.name)} – mit Bezug auf diesen Tag.</div></div>` : ""}
       <div class="muted small" style="margin:0 0 10px">${(()=>{ const r = revBy(item.member, item.day); return r ? `🛡️ Zuletzt bearbeitet von <b>${esc(r.n)}</b>${r.at?` · ${esc(new Date(r.at).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))}`:""}` : "🛡️ Noch von keinem Admin bearbeitet"; })()}</div>
       ${sus && sus.includes("noch nicht vorbei") ? `<div class="status warn" style="display:block;margin:0 0 10px;line-height:1.45">🕐 <b>Prüf-Tipp:</b> Schau aufs Stunden-Diagramm im Screenshot. Gehen die Balken bis in den Abend? Hören sie mittags auf, wurde der Screenshot gemacht, bevor der Tag vorbei war.</div>` : ""}
@@ -1714,7 +1717,7 @@ async function reviewSheet(item, back){
       ${isCoWorker() ? `<button class="btn btn-ghost" id="askDay" style="margin-top:10px">💬 Frage an die Admins zu diesem Tag</button>` : ""}
       ${acc?.admin ? `<button class="btn btn-ghost" id="delShot" style="margin-top:10px;color:var(--no)">🗑️ Screenshot löschen</button>` : ""}`;
     if ($("#rvReplySend")) $("#rvReplySend").onclick = async ()=>{ const ta = $("#rvReply"), t = ta.value.trim(); if (!t) return;
-      try{ await rpc("sf_chat_reply_member",{p_token:T(),p_member:item.member,p_text:`Zu deinem Screenshot vom ${fmtDate(item.day)}: ${t}`}); ta.value = ""; toast(`↩️ An ${item.name} geschickt`); loadAdmin(); }catch(err){ toast(err.message); } };
+      try{ await rpc("sf_chat_reply_ref",{p_token:T(),p_account:null,p_member:item.member,p_ref:"day:"+item.member+"|"+item.day,p_text:`Zu deinem Screenshot vom ${fmtDate(item.day)}: ${t}`}); ta.value = ""; await loadReplies(); reviewSheet(item, back); toast(`↩️ An ${item.name} geschickt`); loadAdmin(); }catch(err){ toast(err.message); } };
     if ($("#askDay")) $("#askDay").onclick = ()=>askAdminSheet({member:item.member,name:item.name,day:item.day}, ()=>{ if (tab==="review") renderReview(); });
     if ($("#delShot")) $("#delShot").onclick = ()=>confirmSheet(`Screenshot von ${item.name} für ${fmtDate(item.day)} löschen? Der Tag zählt dann nicht mehr.`, async ()=>{
       try{ await rpc("sf_admin_delete_checkin",{p_token:T(),p_member:item.member,p_day:item.day}); await refresh(); await loadAdmin(); show(); toast("🗑️ Screenshot gelöscht"); }catch(err){ toast(err.message); }
@@ -1737,7 +1740,7 @@ async function loadAdmin(){
   if (!acc?.admin) { adminData = null; return; }
   try { [adminData, cwMsgs, chatThreads] = await Promise.all([rpc("sf_admin_overview",{p_token:T()}), rpc("sf_cw_messages",{p_token:T()}).catch(()=>[]), rpc("sf_chat_threads",{p_token:T()}).catch(()=>[])]); chatThreads ||= [];
     joinReqs = await rpc("sf_admin_requests",{p_token:T()}).catch(()=>[]) || [];
-    await loadRevLog(); } catch(err){ toast(err.message); }
+    await Promise.all([loadRevLog(), loadReplies()]); } catch(err){ toast(err.message); }
 }
 let accSearch = ""; const accOpen = new Set();
 /* ---------- Chat mit den Admins ---------- */
@@ -1878,6 +1881,11 @@ document.addEventListener("click", async e=>{
     if (inSheet && msOpen) memberSheet(msOpen);
   }catch(err){ toast(err.message); b.disabled = false; b.textContent = was; }
 });
+async function loadReplies(){ try{ const l = await rpc("sf_comment_replies",{p_token:T()}) || []; cmtRep = {}; l.forEach(([ref,n,t,at])=>(cmtRep[ref] ||= []).push({n,t,at})); }catch{} }
+function repliesHtml(ref){
+  const l = cmtRep[ref]; if (!l || !l.length) return `<div class="rep none">○ Noch keine Antwort</div>`;
+  return l.map(r=>`<div class="rep">↩️ <b>${esc(r.n||"Admin")}</b> <span class="muted">· ${esc(new Date(r.at).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))}</span><div>${esc(String(r.t).replace(/^Zu deinem (Probe-)?Screenshot( vom [^:]*)?:\s*/,""))}</div></div>`).join("");
+}
 async function loadRevLog(){ try{ const l = await rpc("sf_review_log",{p_token:T()}) || []; revLog = {}; l.forEach(([m,d,n,at])=>revLog[m+"|"+d] = {n, at}); }catch{} }
 const revBy = (mid, day) => revLog[mid+"|"+day];
 /* Etikett mit Bearbeiter: „✅ freigegeben · David“, „🤖 KI · noch von keinem Admin angesehen“ */
@@ -1890,7 +1898,7 @@ document.addEventListener("click", async e=>{
   const [mid, day, name] = b.dataset.rply.split("|"), ta = document.querySelector(`[data-rplytxt="${mid}|${day}"]`), t = ta?.value.trim();
   if (!t) return toast("Bitte erst etwas schreiben");
   b.disabled = true;
-  try{ await rpc("sf_chat_reply_member",{p_token:T(),p_member:mid,p_text:`Zu deinem Screenshot vom ${fmtDate(day)}: ${t}`}); ta.value = ""; ta.placeholder = "✓ Gesendet – noch etwas?"; toast(`↩️ An ${name} geschickt`); }
+  try{ await rpc("sf_chat_reply_ref",{p_token:T(),p_account:null,p_member:mid,p_ref:"day:"+mid+"|"+day,p_text:`Zu deinem Screenshot vom ${fmtDate(day)}: ${t}`}); toast(`↩️ An ${name} geschickt`); await loadReplies(); const y = window.scrollY; show(); window.scrollTo({top:y}); }
   catch(err){ toast(err.message); }
   b.disabled = false;
 });
@@ -1899,7 +1907,9 @@ document.addEventListener("click", async e=>{
   const [accId, key, name] = b.dataset.rplya.split("|"), ta = document.querySelector(`[data-rplytxt="${key}"]`), t = ta?.value.trim();
   if (!t) return toast("Bitte erst etwas schreiben");
   b.disabled = true;
-  try{ await rpc("sf_chat_reply",{p_token:T(),p_account:accId,p_text:`Zu deinem Probe-Screenshot: ${t}`}); ta.value = ""; ta.placeholder = "✓ Gesendet – noch etwas?"; toast(`↩️ An ${name} geschickt`); }
+  try{ await rpc("sf_chat_reply_ref",{p_token:T(),p_account:accId,p_member:null,p_ref:"test:"+key.slice(1),p_text:`Zu deinem Probe-Screenshot: ${t}`}); toast(`↩️ An ${name} geschickt`); await loadReplies();
+    if (b.closest(".sheet")){ const box = b.closest(".cmtbox"); box.querySelectorAll(".rep").forEach(x=>x.remove()); box.querySelector(".cmt").insertAdjacentHTML("afterend", repliesHtml("test:"+key.slice(1))); ta.value = ""; }
+    const y = window.scrollY; if (tab==="admin") renderAdmin(); window.scrollTo({top:y}); }
   catch(err){ toast(err.message); }
   b.disabled = false;
 });
@@ -1907,11 +1917,11 @@ function isCoWorker(){ return !!(acc && acc.reviewer && !acc.admin); }
 function renderReview(){
   const v = $("#vReview");
   if (!reviewData || !cwMsgs){ v.innerHTML = `<div class="loader"></div>`;
-    Promise.all([rpc("sf_review_queue",{p_token:T()}), rpc("sf_cw_messages",{p_token:T()}), loadRevLog()]).then(([q,mm])=>{ reviewData = q || []; cwMsgs = mm || []; if (tab==="review") renderReview(); }).catch(err=>{ toast(err.message); v.innerHTML = `<p class="muted">${esc(err.message)}</p>`; }); return; }
+    Promise.all([rpc("sf_review_queue",{p_token:T()}), rpc("sf_cw_messages",{p_token:T()}), loadRevLog(), loadReplies()]).then(([q,mm])=>{ reviewData = q || []; cwMsgs = mm || []; if (tab==="review") renderReview(); }).catch(err=>{ toast(err.message); v.innerHTML = `<p class="muted">${esc(err.message)}</p>`; }); return; }
   const q = reviewData;
   const rows = q.slice(0,80).map((x,i)=>`<div class="row rv-open${x.note||x.dispute?" hascmt":""}" style="flex-wrap:wrap"><b>${esc(x.emoji)} ${esc(x.name)} <span class="muted small">· ${trackBadge(x.group)} · ${esc(toDate(x.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
       <span>${fmtHM(x.minutes)}${x.total!=null?` · 📱 ${fmtHM(x.total)}`:""}</span>${x.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${x.edited?`<span class="flag">✏️ KI: ${x.ocr==null?"–":fmtHM(x.ocr)}</span>`:""}${x.date_ok===false?`<span class="flag">📅?</span>`:""}${x.suspect?`<span class="flag bad">${String(x.suspect).includes("noch nicht vorbei")?"⏰ zu früh?":"🕵️ Fake?"}</span>`:""}
-      ${(x.note||x.dispute) ? `<div class="cmtbox">${x.note?`<div class="cmt">💬 <b>Kommentar von ${esc(x.name)}:</b> „${esc(x.note)}“</div>`:""}${x.dispute?`<div class="cmt">⚖️ <b>Einspruch:</b> „${esc(x.dispute)}“</div>`:""}${acc?.admin ? `<div class="chatin" style="margin:8px 0 0"><textarea class="input" rows="1" maxlength="1000" data-rplytxt="${x.member}|${x.day}" placeholder="Direkt antworten …"></textarea><button class="btn btn-flame" data-rply="${x.member}|${x.day}|${esc(x.name)}">➤</button></div>` : ""}</div>` : ""}
+      ${(x.note||x.dispute) ? `<div class="cmtbox">${x.note?`<div class="cmt">💬 <b>Kommentar von ${esc(x.name)}:</b> „${esc(x.note)}“</div>`:""}${x.dispute?`<div class="cmt">⚖️ <b>Einspruch:</b> „${esc(x.dispute)}“</div>`:""}${repliesHtml("day:"+x.member+"|"+x.day)}${acc?.admin ? `<div class="chatin" style="margin:8px 0 0"><textarea class="input" rows="1" maxlength="1000" data-rplytxt="${x.member}|${x.day}" placeholder="Direkt antworten …"></textarea><button class="btn btn-flame" data-rply="${x.member}|${x.day}|${esc(x.name)}">➤</button></div>` : ""}</div>` : ""}
       <span style="margin-left:auto;display:flex;gap:6px"><button class="pill qok" data-qok-m="${x.member}" data-qok-d="${x.day}">✓ Freigeben</button><button class="pill" data-rq="${i}">Ansehen</button></span></div>`).join("") || `<p class="muted small">Alles geprüft 👍 Danke fürs Helfen!</p>`;
   v.innerHTML = `<div class="card"><div class="sectionhead"><h3>🧑‍⚖️ Prüfen</h3><span class="muted small">${q.length} offen</span></div>
       <p class="muted small" style="margin:6px 0 0;line-height:1.5">Du bist Co-Worker und hilfst beim Prüfen. Schau dir den Screenshot an und sag <b>Freigeben</b> oder <b>Ablehnen</b>. Übermalte Apps mit Kommentar „keine Social Media“ gibst du auf Vertrauensbasis frei. Löschen und alles andere machen die Admins. Deine eigenen Tage prüft jemand anderes.</p></div>
@@ -1934,12 +1944,12 @@ function renderAdmin(){
   const tests = moreList(d.tests.map(t=>`<div class="row ${t.verdict===true?"rv-ok":t.verdict===false?"rv-no":tAuto(t)?"rv-auto":"rv-open"}${t.note?" hascmt":""}" style="flex-wrap:wrap">${t.verdict===true?`<span class="rv-tag">✅ KI lag richtig${t.vby?` · ${esc(t.vby)}`:""}</span>`:t.verdict===false?`<span class="rv-tag">❌ KI lag falsch${t.vby?` · ${esc(t.vby)}`:""}</span>`:tAuto(t)?`<span class="rv-tag">🤖 KI sicher – wäre automatisch freigegeben</span>`:`<span class="rv-tag">⏳ KI unsicher – bitte anschauen</span>`}${trackBadge(t.track)}<b style="flex:1 1 100%">${esc(new Date(t.created).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))} · ${esc(t.by)}</b>
       <span>${fmtHM(t.minutes)}${t.ocr!==t.minutes?` <span class="flag">KI: ${t.ocr==null ? "–" : fmtHM(t.ocr)}</span>`:""}</span>
       ${t.suspect?`<span class="flag bad">🕵️</span>`:""}${t.note?`<span class="flag">💬</span>`:""}${t.verdict===true?`<span class="flag" style="color:var(--ok)">KI ✓</span>`:t.verdict===false?`<span class="flag bad">KI ✕</span>`:""}${t.correct!=null?`<span class="flag">richtig: ${fmtHM(t.correct)}</span>`:""}
-      ${t.note ? `<div class="cmtbox"><div class="cmt">💬 <b>Kommentar von ${esc(t.by)}:</b> „${esc(t.note)}“</div>${t.acc?`<div class="chatin" style="margin:8px 0 0"><textarea class="input" rows="1" maxlength="1000" data-rplytxt="a${t.id}" placeholder="Direkt antworten …"></textarea><button class="btn btn-flame" data-rplya="${t.acc}|a${t.id}|${esc(t.by)}">➤</button></div>`:""}</div>` : ""}
+      ${t.note ? `<div class="cmtbox"><div class="cmt">💬 <b>Kommentar von ${esc(t.by)}:</b> „${esc(t.note)}“</div>${repliesHtml("test:"+t.id)}${t.acc?`<div class="chatin" style="margin:8px 0 0"><textarea class="input" rows="1" maxlength="1000" data-rplytxt="a${t.id}" placeholder="Direkt antworten …"></textarea><button class="btn btn-flame" data-rplya="${t.acc}|a${t.id}|${esc(t.by)}">➤</button></div>`:""}</div>` : ""}
       <button class="pill" data-test="${t.id}">${t.verdict!=null?"Ändern":tAuto(t)?"Ansehen":"Prüfen"}</button><button class="pill" style="color:var(--no)" data-deltest="${t.id}">🗑️</button></div>`), "tests") || `<p class="muted small">Noch keine Tests.</p>`;
   const queue = moreList(d.queue.map((q,i)=>`<div class="row${q.note||q.dispute?" hascmt":""}" style="flex-wrap:wrap"><b>${esc(q.emoji)} ${esc(q.name)} <span class="muted small">· ${trackBadge(q.group)} · ${esc(toDate(q.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
       <span>${fmtHM(q.minutes)}${q.total!=null?` · 📱 ${fmtHM(q.total)}`:""}</span>${q.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${q.edited?`<span class="flag">✏️</span>`:""}${q.date_ok===false?`<span class="flag">📅?</span>`:""}${q.suspect?`<span class="flag bad">${String(q.suspect).includes("noch nicht vorbei")?"⏰ zu früh?":"🕵️ Fake?"}</span>`:""}
       ${q.suspect?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">🕵️ ${esc(q.suspect)}</div>`:""}
-      ${(q.note||q.dispute) ? `<div class="cmtbox">${q.note?`<div class="cmt">💬 <b>Kommentar von ${esc(q.name)}:</b> „${esc(q.note)}“</div>`:""}${q.dispute?`<div class="cmt">⚖️ <b>Einspruch:</b> „${esc(q.dispute)}“</div>`:""}${acc?.admin ? `<div class="chatin" style="margin:8px 0 0"><textarea class="input" rows="1" maxlength="1000" data-rplytxt="${q.member}|${q.day}" placeholder="Direkt antworten …"></textarea><button class="btn btn-flame" data-rply="${q.member}|${q.day}|${esc(q.name)}">➤</button></div>` : ""}</div>` : ""}
+      ${(q.note||q.dispute) ? `<div class="cmtbox">${q.note?`<div class="cmt">💬 <b>Kommentar von ${esc(q.name)}:</b> „${esc(q.note)}“</div>`:""}${q.dispute?`<div class="cmt">⚖️ <b>Einspruch:</b> „${esc(q.dispute)}“</div>`:""}${repliesHtml("day:"+q.member+"|"+q.day)}${acc?.admin ? `<div class="chatin" style="margin:8px 0 0"><textarea class="input" rows="1" maxlength="1000" data-rplytxt="${q.member}|${q.day}" placeholder="Direkt antworten …"></textarea><button class="btn btn-flame" data-rply="${q.member}|${q.day}|${esc(q.name)}">➤</button></div>` : ""}</div>` : ""}
       <span style="margin-left:auto;display:flex;gap:6px"><button class="pill qok" data-qok-m="${q.member}" data-qok-d="${q.day}">✓ Freigeben</button><button class="pill" data-q="${i}">Ansehen</button></span></div>`), "queue") || `<p class="muted small">Alles geprüft 👍</p>`;
   const accs = d.accounts.filter(a=>!accSearch || (a.email+" "+a.name).toLowerCase().includes(accSearch.toLowerCase()));
   const accRows = accs.map(a=>`<details class="accd" data-acc="${a.id}" ${accOpen.has(a.id)?"open":""} style="padding:10px 0">
@@ -2106,7 +2116,7 @@ async function testSheet(t){
     box.innerHTML = `${img ? `<img class="full" src="${img}" alt="Screenshot">` : ""}
       <p class="muted small" style="margin:0 0 12px">KI hat erkannt: <b>${t.ocr==null ? "–" : fmtHM(t.ocr)}</b> · eingetragen: <b>${fmtHM(t.minutes)}</b> · Datum: ${t.date_ok?"✅ erkannt":"⚠️ nicht erkannt"}</p>
       ${t.suspect?`<div class="status bad" style="display:block;margin:0 0 12px">🕵️ <b>KI-Verdacht:</b> ${esc(t.suspect)}</div>`:""}
-      ${t.note?`<div class="cmtbox" style="margin:0 0 12px"><div class="cmt">💬 <b>Kommentar von ${esc(t.by)}:</b> „${esc(t.note)}“</div>${t.acc?`<div class="chatin" style="margin:8px 0 0"><textarea class="input" rows="1" maxlength="1000" data-rplytxt="s${t.id}" placeholder="Direkt antworten …"></textarea><button class="btn btn-flame" data-rplya="${t.acc}|s${t.id}|${esc(t.by)}">➤</button></div>`:""}</div>`:""}
+      ${t.note?`<div class="cmtbox" style="margin:0 0 12px"><div class="cmt">💬 <b>Kommentar von ${esc(t.by)}:</b> „${esc(t.note)}“</div>${repliesHtml("test:"+t.id)}${t.acc?`<div class="chatin" style="margin:8px 0 0"><textarea class="input" rows="1" maxlength="1000" data-rplytxt="s${t.id}" placeholder="Direkt antworten …"></textarea><button class="btn btn-flame" data-rplya="${t.acc}|s${t.id}|${esc(t.by)}">➤</button></div>`:""}</div>`:""}
       ${t.verdict==null?`<div class="muted small" style="margin:0 0 10px">🛡️ Noch von keinem Admin bewertet</div>`:""}
       ${t.verdict!=null ? `<div class="status ${t.verdict?"ok":"bad"}" style="display:block;margin:0 0 12px">Bisher bewertet${t.vby?` von <b>${esc(t.vby)}</b>`:""}: ${t.verdict?"✅ KI lag richtig":"❌ KI lag falsch"}${t.correct!=null?` · richtige Zeit: <b>${fmtHM(t.correct)}</b>`:""}${t.correct_total!=null?` · 📱 ${fmtHM(t.correct_total)}`:""} – du kannst es hier ändern.</div>` : ""}
       <div class="minutes" style="margin-top:0"><label>${t.track==="both"?"📵 Social Media – ":""}Richtige Zeit<div class="muted small" style="font-weight:500;margin-top:2px">Nur ändern, wenn die KI falsch lag</div></label><div class="hmin"><input id="tcH" type="number" inputmode="numeric" min="0" max="24" value="${Math.floor((t.correct ?? t.minutes)/60)}"><span>Std.</span><input id="tcM" type="number" inputmode="numeric" min="0" max="59" value="${(t.correct ?? t.minutes)%60}"><span>Min.</span></div></div>
@@ -2190,6 +2200,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"72", date:"14. November", items:[
+    "↩️ Unter jedem Kommentar steht jetzt, wer schon geantwortet hat und was – oder „Noch keine Antwort“. So antwortet niemand doppelt"
+  ]},
   { v:"71", date:"14. November", items:[
     "❗ Das Wichtig-Fenster erscheint am Starttag bei allen nochmal („Heute geht's los!“) – auch beim Zurückkehren in die App"
   ]},
