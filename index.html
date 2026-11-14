@@ -484,7 +484,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "70";
+const APP_VERSION = "71";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -2190,6 +2190,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"71", date:"14. November", items:[
+    "❗ Das Wichtig-Fenster erscheint am Starttag bei allen nochmal („Heute geht's los!“) – auch beim Zurückkehren in die App"
+  ]},
   { v:"70", date:"14. November", items:[
     "❗ Wichtig-Fenster vom Admin-Team: So läuft Freiraum ab – erscheint einmal beim Öffnen, Text passt sich dem Tag an",
     "📸 Überall klarer erklärt: Screenshot erst am nächsten Morgen machen – dann steht „Gestern, [Datum]“ drauf"
@@ -2462,7 +2465,7 @@ function changelogHtml(all, pick){
     <ul class="newlist">${c.items.map(x=>`<li>${x.replace("${LIMIT}",LIMIT)}</li>`).join("")}</ul></div>`).join("");
 }
 /* ❗ Wichtig-Fenster vom Admin – Text passt sich dem Datum an */
-const ANN_ID = "start1";
+const annId = () => berlinToday() < START ? "start-pre" : "start-run";   // am Starttag kommt es bei allen nochmal
 function annHtml(){
   const today = berlinToday(), pre = today < START, d1 = today === START;
   const exDay = pre || d1 ? START : addDays(today, -1);
@@ -2485,9 +2488,9 @@ function annHtml(){
 }
 function maybeShowAnn(){
   let seen = null; try{ seen = localStorage.getItem("fr_ann"); }catch{}
-  if (seen === ANN_ID || !acc || $("#annBg")) return false;
+  if (seen === annId() || !acc || $("#annBg")) return false;
   const bg = document.createElement("div"); bg.id = "annBg"; bg.innerHTML = `<div id="ann">${annHtml()}</div>`; document.body.appendChild(bg);
-  bg.querySelector("#annOk").onclick = ()=>{ try{ localStorage.setItem("fr_ann", ANN_ID); }catch{} bg.classList.add("out"); setTimeout(()=>bg.remove(), 250); };
+  bg.querySelector("#annOk").onclick = ()=>{ try{ localStorage.setItem("fr_ann", annId()); }catch{} bg.classList.add("out"); setTimeout(()=>bg.remove(), 250); };
   return true;
 }
 function maybeShowWhatsNew(){
@@ -3059,7 +3062,7 @@ async function refresh(){
   if (auth?.token){ await refresh(); show(); if (!maybeShowAnn()) maybeShowWhatsNew(); }
   setTimeout(maybeAskInstall, 1500);
   $("#btnHelp").onclick = tutSheet;
-  document.addEventListener("visibilitychange", async ()=>{ if(!document.hidden && auth?.token){ await refresh(); show(); } });
+  document.addEventListener("visibilitychange", async ()=>{ if(!document.hidden && auth?.token){ await refresh(); show(); maybeShowAnn(); } });
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").then(r=>r.update()).catch(()=>{});
   checkUpdate(); setInterval(checkUpdate, 5*60*1000);
   document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) checkUpdate(); });
