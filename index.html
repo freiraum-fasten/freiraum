@@ -63,7 +63,7 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .row.rv-ok{background:rgba(20,160,107,.13);box-shadow:inset 0 0 0 2px rgba(20,160,107,.55),0 0 14px rgba(20,160,107,.25)}
 .row.rv-no{background:rgba(229,72,77,.11);box-shadow:inset 0 0 0 2px rgba(229,72,77,.5)}
 .row.rv-open{background:rgba(255,170,0,.10);box-shadow:inset 0 0 0 1.5px rgba(255,170,0,.45)}
-.more-hide{display:none!important}
+.more-hide{display:none!important}.replybox{background:var(--soft);border-radius:16px;padding:10px;margin:0 0 10px}.replybox .input{background:var(--card)}
 .howcard{background:var(--soft);border-radius:18px;padding:14px 16px;margin:4px 0 12px}
 .howhead{font-weight:800;margin-bottom:10px}
 .howto{display:flex;flex-direction:column;gap:12px}
@@ -465,7 +465,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "63";
+const APP_VERSION = "64";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -569,7 +569,7 @@ function confetti(){
 let auth = load();          // {token}
 let acc = null;             // Konto: {id,email,name,emoji,admin,member_id,group_code,limit}
 let group = null;           // {name, code, members:[...]}
-let adminData = null, joinReqs = [], reviewData = null, cwMsgs = null, chatThreads = [], chatUnread = {mine:0, admin:0}, chatFilter = "open", chatSearch = "";
+let adminData = null, joinReqs = [], revLog = {}, reviewData = null, cwMsgs = null, chatThreads = [], chatUnread = {mine:0, admin:0}, chatFilter = "open", chatSearch = "";
 let tab = "group";
 let mode = "join", authMode = "login", regOpen = true;
 rpc("sf_reg_status",{}).then(r=>{ if (r){ regOpen = !!r.open; if (!auth?.token) renderOnboard(); } }).catch(()=>{});
@@ -1603,9 +1603,9 @@ function allUploadsHtml(){
     return `<details class="wk" data-wk="${g.w}" ${open?"open":""}><summary>${weekLabel(g.w)} <span class="muted small" style="font-weight:600">· ${all.length} Uploads${openN?` · <span style="color:#C27C00">${openN} offen</span>`:""}</span></summary>
       ${g.days.map(d=>{ const list = byDay[d].sort((a,b)=>order[rvState(a.c)]-order[rvState(b.c)] || a.m.name.localeCompare(b.m.name));
         const cnt = k => list.filter(x=>rvState(x.c)===k).length;
-        const rows = list.map(({m,c})=>{ const k = rvState(c); return `<div class="row rv-${k}" style="flex-wrap:wrap"><span class="rv-tag">${rvText[k]}</span><b style="flex:1 1 100%;min-width:0">${esc(m.emoji)} ${esc(m.name)} <span class="muted small" style="font-weight:600" title="${m.track==="total"?"Handyzeit":"30 Min."}">${m.track==="total"?"📱":"📵"}</span></b>
+        const rows = list.map(({m,c})=>{ const k = rvState(c); return `<div class="row rv-${k}" style="flex-wrap:wrap"><span class="rv-tag">${rvLabel(k, m.id, c.day)}</span><b style="flex:1 1 100%;min-width:0">${esc(m.emoji)} ${esc(m.name)} <span class="muted small" style="font-weight:600" title="${m.track==="total"?"Handyzeit":"30 Min."}">${m.track==="total"?"📱":"📵"}</span></b>
           <span>${fmtHM(c.minutes)}${c.total!=null?` · 📱 ${fmtHM(c.total)}`:""}</span>${c.edited?`<span class="flag">✏️ ${c.ocr==null?"–":fmtHM(c.ocr)}</span>`:""}${c.date_ok===false?`<span class="flag">📅?</span>`:""}${c.suspect?`<span class="flag bad">🕵️</span>`:""}${c.disputed?`<span class="flag bad">💬</span>`:""}${c.joker?`<span class="flag">🃏</span>`:""}
-          <span style="margin-left:auto;display:flex;gap:6px">${k==="open" ? `<button class="pill qok" data-qok-m="${m.id}" data-qok-d="${c.day}">✓ Freigeben</button>` : ""}<button class="pill" data-up-m="${m.id}" data-up-d="${c.day}">Ansehen</button></span></div>`; });
+          <span style="margin-left:auto;display:flex;gap:6px">${k==="open" ? `<button class="pill qok" data-qok-m="${m.id}" data-qok-d="${c.day}">✓ Freigeben</button>` : (k==="auto"||k==="over") ? `<button class="pill qok" data-qok-m="${m.id}" data-qok-d="${c.day}" title="Als von dir geprüft markieren">✓ Geprüft</button>` : ""}<button class="pill" data-up-m="${m.id}" data-up-d="${c.day}">Ansehen</button></span></div>`; });
         return `<div class="dayh">${esc(toDate(d).toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long",timeZone:"UTC"}))}<span class="muted small">${list.length} · ✅ ${cnt("ok")+cnt("auto")}${cnt("open")?` · ⏳ ${cnt("open")}`:""}${cnt("no")+cnt("over")?` · ❌ ${cnt("no")+cnt("over")}`:""}</span></div>
           <div class="daylist">${moreList(rows, "day-"+d)}</div>`; }).join("")}
     </details>`; }).join("");
@@ -1621,10 +1621,10 @@ function memberSheet(mid){
   const m = group.members.find(x=>x.id===mid); if (!m) return;
   const s = statsFor(m);
   const st = rvState, stTxt = rvText;
-  const mkRow = c=>`<div class="row rv-${st(c)}" style="flex-wrap:wrap"><span class="rv-tag">${stTxt[st(c)]}</span><b>${esc(toDate(c.day).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"}))}</b>
+  const mkRow = c=>`<div class="row rv-${st(c)}" style="flex-wrap:wrap"><span class="rv-tag">${rvLabel(st(c), m.id, c.day)}</span><b>${esc(toDate(c.day).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"}))}</b>
       <span>${fmtHM(c.minutes)}${c.total!=null?` · 📱 ${fmtHM(c.total)}`:""}</span>
       ${c.valid===false?`<span class="flag bad">ungültig</span>`:""}${c.edited?`<span class="flag">✏️ ${c.ocr ?? "–"}→${c.minutes}</span>`:""}${c.date_ok===false?`<span class="flag">📅?</span>`:""}${c.disputed?`<span class="flag bad">💬</span>`:""}${c.suspect?`<span class="flag bad">🕵️</span>`:""}${c.joker?`<span class="flag">🃏</span>`:""}${c.reviewed?`<span class="flag">✓</span>`:""}
-      <span style="margin-left:auto;display:flex;gap:6px">${st(c)==="open" ? `<button class="pill qok" data-qok-m="${m.id}" data-qok-d="${c.day}">✓ Freigeben</button>` : ""}<button class="pill" data-day="${c.day}">Ansehen</button></span></div>`;
+      <span style="margin-left:auto;display:flex;gap:6px">${st(c)==="open" ? `<button class="pill qok" data-qok-m="${m.id}" data-qok-d="${c.day}">✓ Freigeben</button>` : (st(c)==="auto"||st(c)==="over") ? `<button class="pill qok" data-qok-m="${m.id}" data-qok-d="${c.day}">✓ Geprüft</button>` : ""}<button class="pill" data-day="${c.day}">Ansehen</button></span></div>`;
   const sorted = [...(m.checkins||[])].sort((a,b)=>a.day<b.day?1:-1), wks = [...new Set(sorted.map(c=>weekOf(c.day)))];
   const rows = wks.map(w=>`<div class="dayh">${weekLabel(w)}<span class="muted small">${sorted.filter(c=>weekOf(c.day)===w).length} Tage</span></div>${moreList(sorted.filter(c=>weekOf(c.day)===w).map(mkRow), "m-"+m.id+"-"+w)}`).join("") || `<p class="muted">Noch keine Screenshots.</p>`;
   sheet(`<h3 style="margin-bottom:6px">${esc(m.emoji)} ${esc(m.name)} ${trackBadge(m.track)}</h3>
@@ -1666,6 +1666,8 @@ async function reviewSheet(item, back){
     box.innerHTML = `${img && img.startsWith("data:image/jpeg;base64,") ? `<img class="full" src="${img}" alt="Screenshot">` : `<p class="muted">Kein Bild vorhanden.</p>`}
       ${item.dispute?`<div class="status warn" style="margin:0 0 10px">💬 Einspruch: „${esc(item.dispute)}“</div>`:""}
       ${note?`<div class="status warn" style="display:block;margin:0 0 10px">💬 Kommentar: „${esc(note)}“</div>`:""}
+      ${(note || item.dispute) && acc?.admin ? `<div class="replybox"><div class="chatin" style="margin:0"><textarea class="input" id="rvReply" rows="1" maxlength="1000" placeholder="Antwort an ${esc(item.name)} …"></textarea><button class="btn btn-flame" id="rvReplySend">➤</button></div><div class="muted small" style="margin:6px 4px 0">Landet im Chat von ${esc(item.name)} – mit Bezug auf diesen Tag.</div></div>` : ""}
+      <div class="muted small" style="margin:0 0 10px">${(()=>{ const r = revBy(item.member, item.day); return r ? `🛡️ Zuletzt bearbeitet von <b>${esc(r.n)}</b>${r.at?` · ${esc(new Date(r.at).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))}`:""}` : "🛡️ Noch von keinem Admin bearbeitet"; })()}</div>
       ${sus && sus.includes("noch nicht vorbei") ? `<div class="status warn" style="display:block;margin:0 0 10px;line-height:1.45">🕐 <b>Prüf-Tipp:</b> Schau aufs Stunden-Diagramm im Screenshot. Gehen die Balken bis in den Abend? Hören sie mittags auf, wurde der Screenshot gemacht, bevor der Tag vorbei war.</div>` : ""}
       <div class="muted small" style="margin:0 0 10px;line-height:1.45">🤝 Ist eine App übermalt und im Kommentar steht, dass es keine Social Media ist: <b>auf Vertrauensbasis freigeben</b>, nicht nachfragen. Privatsphäre geht vor.</div>
       <div class="muted small" style="margin:0 0 8px">${BOTH?"📵 ":""}KI erkannt: <b>${item.ocr==null ? "–" : fmtHM(item.ocr)}</b> · eingetragen: <b>${fmtHM(item.minutes)}</b>${BOTH ? `<br>📱 KI erkannt: <b>${item.ocr_total==null ? "–" : fmtHM(item.ocr_total)}</b> · eingetragen: <b>${item.total==null ? "–" : fmtHM(item.total)}</b>` : ""}${item.date_ok===false?" · 📅 Datum nicht erkannt":""}</div>
@@ -1678,6 +1680,8 @@ async function reviewSheet(item, back){
       <button class="btn btn-ghost" id="backBtn" style="margin-top:10px">Zurück</button>
       ${isCoWorker() ? `<button class="btn btn-ghost" id="askDay" style="margin-top:10px">💬 Frage an die Admins zu diesem Tag</button>` : ""}
       ${acc?.admin ? `<button class="btn btn-ghost" id="delShot" style="margin-top:10px;color:var(--no)">🗑️ Screenshot löschen</button>` : ""}`;
+    if ($("#rvReplySend")) $("#rvReplySend").onclick = async ()=>{ const ta = $("#rvReply"), t = ta.value.trim(); if (!t) return;
+      try{ await rpc("sf_chat_reply_member",{p_token:T(),p_member:item.member,p_text:`Zu deinem Screenshot vom ${fmtDate(item.day)}: ${t}`}); ta.value = ""; toast(`↩️ An ${item.name} geschickt`); loadAdmin(); }catch(err){ toast(err.message); } };
     if ($("#askDay")) $("#askDay").onclick = ()=>askAdminSheet({member:item.member,name:item.name,day:item.day}, ()=>{ if (tab==="review") renderReview(); });
     if ($("#delShot")) $("#delShot").onclick = ()=>confirmSheet(`Screenshot von ${item.name} für ${fmtDate(item.day)} löschen? Der Tag zählt dann nicht mehr.`, async ()=>{
       try{ await rpc("sf_admin_delete_checkin",{p_token:T(),p_member:item.member,p_day:item.day}); await refresh(); await loadAdmin(); show(); toast("🗑️ Screenshot gelöscht"); }catch(err){ toast(err.message); }
@@ -1699,7 +1703,8 @@ async function reviewSheet(item, back){
 async function loadAdmin(){
   if (!acc?.admin) { adminData = null; return; }
   try { [adminData, cwMsgs, chatThreads] = await Promise.all([rpc("sf_admin_overview",{p_token:T()}), rpc("sf_cw_messages",{p_token:T()}).catch(()=>[]), rpc("sf_chat_threads",{p_token:T()}).catch(()=>[])]); chatThreads ||= [];
-    joinReqs = await rpc("sf_admin_requests",{p_token:T()}).catch(()=>[]) || []; } catch(err){ toast(err.message); }
+    joinReqs = await rpc("sf_admin_requests",{p_token:T()}).catch(()=>[]) || [];
+    await loadRevLog(); } catch(err){ toast(err.message); }
 }
 let accSearch = ""; const accOpen = new Set();
 /* ---------- Chat mit den Admins ---------- */
@@ -1830,7 +1835,7 @@ function bindMsgAdmin(root, list, rerender){
 }
 document.addEventListener("click", async e=>{
   const b = e.target.closest("[data-qok-m]"); if (!b || b.disabled) return;
-  e.stopPropagation(); b.disabled = true; b.textContent = "…";
+  e.stopPropagation(); const was = b.textContent; b.disabled = true; b.textContent = "…";
   try{
     await rpc("sf_review",{p_token:T(),p_member:b.dataset.qokM,p_day:b.dataset.qokD,p_valid:true,p_minutes:null});
     reviewFlash(true);
@@ -1838,13 +1843,20 @@ document.addEventListener("click", async e=>{
     await refresh(); if (acc?.admin) await loadAdmin(); else reviewData = null;
     const y = window.scrollY; show(); window.scrollTo({top:y});
     if (inSheet && msOpen) memberSheet(msOpen);
-  }catch(err){ toast(err.message); b.disabled = false; b.textContent = "✓ Freigeben"; }
+  }catch(err){ toast(err.message); b.disabled = false; b.textContent = was; }
 });
+async function loadRevLog(){ try{ const l = await rpc("sf_review_log",{p_token:T()}) || []; revLog = {}; l.forEach(([m,d,n,at])=>revLog[m+"|"+d] = {n, at}); }catch{} }
+const revBy = (mid, day) => revLog[mid+"|"+day];
+/* Etikett mit Bearbeiter: „✅ freigegeben · David“, „🤖 KI · noch von keinem Admin angesehen“ */
+function rvLabel(k, mid, day){
+  const r = revBy(mid, day), who = r ? ` · ${esc(r.n)}` : "";
+  return k==="ok" ? `✅ freigegeben${who}` : k==="no" ? `❌ abgelehnt${who}` : k==="open" ? "⏳ prüfen" : k==="auto" ? "🤖 KI hat freigegeben · kein Admin" : "🤖 KI: über dem Limit · kein Admin";
+}
 function isCoWorker(){ return !!(acc && acc.reviewer && !acc.admin); }
 function renderReview(){
   const v = $("#vReview");
   if (!reviewData || !cwMsgs){ v.innerHTML = `<div class="loader"></div>`;
-    Promise.all([rpc("sf_review_queue",{p_token:T()}), rpc("sf_cw_messages",{p_token:T()})]).then(([q,mm])=>{ reviewData = q || []; cwMsgs = mm || []; if (tab==="review") renderReview(); }).catch(err=>{ toast(err.message); v.innerHTML = `<p class="muted">${esc(err.message)}</p>`; }); return; }
+    Promise.all([rpc("sf_review_queue",{p_token:T()}), rpc("sf_cw_messages",{p_token:T()}), loadRevLog()]).then(([q,mm])=>{ reviewData = q || []; cwMsgs = mm || []; if (tab==="review") renderReview(); }).catch(err=>{ toast(err.message); v.innerHTML = `<p class="muted">${esc(err.message)}</p>`; }); return; }
   const q = reviewData;
   const rows = q.slice(0,80).map((x,i)=>`<div class="row rv-open" style="flex-wrap:wrap"><b>${esc(x.emoji)} ${esc(x.name)} <span class="muted small">· ${trackBadge(x.group)} · ${esc(toDate(x.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
       <span>${fmtHM(x.minutes)}${x.total!=null?` · 📱 ${fmtHM(x.total)}`:""}</span>${x.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${x.edited?`<span class="flag">✏️ KI: ${x.ocr==null?"–":fmtHM(x.ocr)}</span>`:""}${x.date_ok===false?`<span class="flag">📅?</span>`:""}${x.suspect?`<span class="flag bad">${String(x.suspect).includes("noch nicht vorbei")?"⏰ zu früh?":"🕵️ Fake?"}</span>`:""}
@@ -2127,6 +2139,11 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"64", date:"14. November", items:[
+    "💬 Prüfen: Auf Kommentare und Einsprüche direkt im Prüffenster antworten – landet im Chat der Person",
+    "✓ Neuer Knopf „Geprüft“ auch bei Screenshots, die die KI schon freigegeben hat",
+    "🛡️ Überall sichtbar, welcher Admin einen Screenshot bearbeitet hat – oder ob noch keiner"
+  ]},
   { v:"63", date:"14. November", items:[
     "🙋 Anmeldung bleibt bis 18.11. offen (letzter Nachtrag-Tag für Tag 1) – danach „Beitritt anfragen“",
     "🛡️ Admins: Beitrittsanfragen mit „Freischalten“ / „Ablehnen“ + Push-Nachricht bei neuer Anfrage",
