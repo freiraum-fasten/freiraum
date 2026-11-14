@@ -459,7 +459,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "60";
+const APP_VERSION = "61";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1852,10 +1852,11 @@ function renderAdmin(){
   const v = $("#vAdmin");
   if (!adminData){ v.innerHTML = `<div class="loader"></div>`; loadAdmin().then(()=>{ if(tab==="admin") renderAdmin(); }); return; }
   const d = adminData, st = d.settings || {};
-  const tests = moreList(d.tests.map(t=>`<div class="row ${t.verdict===true?"rv-ok":t.verdict===false?"rv-no":"rv-open"}" style="flex-wrap:wrap">${t.verdict===true?`<span class="rv-tag">✅ geprüft – KI lag richtig</span>`:t.verdict===false?`<span class="rv-tag">❌ geprüft – KI lag falsch</span>`:`<span class="rv-tag">⏳ noch prüfen</span>`}${trackBadge(t.track)}<b style="flex:1 1 100%">${esc(new Date(t.created).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))} · ${esc(t.by)}</b>
+  const tAuto = t => t.verdict==null && t.ocr===t.minutes && t.date_ok && !t.suspect && !t.note;   // wäre im Ernstfall automatisch freigegeben
+  const tests = moreList(d.tests.map(t=>`<div class="row ${t.verdict===true?"rv-ok":t.verdict===false?"rv-no":tAuto(t)?"rv-auto":"rv-open"}" style="flex-wrap:wrap">${t.verdict===true?`<span class="rv-tag">✅ geprüft – KI lag richtig</span>`:t.verdict===false?`<span class="rv-tag">❌ geprüft – KI lag falsch</span>`:tAuto(t)?`<span class="rv-tag">🤖 KI sicher – wäre automatisch freigegeben</span>`:`<span class="rv-tag">⏳ KI unsicher – bitte anschauen</span>`}${trackBadge(t.track)}<b style="flex:1 1 100%">${esc(new Date(t.created).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))} · ${esc(t.by)}</b>
       <span>${fmtHM(t.minutes)}${t.ocr!==t.minutes?` <span class="flag">KI: ${t.ocr==null ? "–" : fmtHM(t.ocr)}</span>`:""}</span>
       ${t.suspect?`<span class="flag bad">🕵️</span>`:""}${t.note?`<span class="flag">💬</span>`:""}${t.verdict===true?`<span class="flag" style="color:var(--ok)">KI ✓</span>`:t.verdict===false?`<span class="flag bad">KI ✕</span>`:""}${t.correct!=null?`<span class="flag">richtig: ${fmtHM(t.correct)}</span>`:""}
-      <button class="pill" data-test="${t.id}">${t.verdict==null?"Prüfen":"Ändern"}</button><button class="pill" style="color:var(--no)" data-deltest="${t.id}">🗑️</button></div>`), "tests") || `<p class="muted small">Noch keine Tests.</p>`;
+      <button class="pill" data-test="${t.id}">${t.verdict!=null?"Ändern":tAuto(t)?"Ansehen":"Prüfen"}</button><button class="pill" style="color:var(--no)" data-deltest="${t.id}">🗑️</button></div>`), "tests") || `<p class="muted small">Noch keine Tests.</p>`;
   const queue = moreList(d.queue.map((q,i)=>`<div class="row" style="flex-wrap:wrap"><b>${esc(q.emoji)} ${esc(q.name)} <span class="muted small">· ${trackBadge(q.group)} · ${esc(toDate(q.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
       <span>${fmtHM(q.minutes)}${q.total!=null?` · 📱 ${fmtHM(q.total)}`:""}</span>${q.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${q.edited?`<span class="flag">✏️</span>`:""}${q.date_ok===false?`<span class="flag">📅?</span>`:""}${q.suspect?`<span class="flag bad">${String(q.suspect).includes("noch nicht vorbei")?"⏰ zu früh?":"🕵️ Fake?"}</span>`:""}
       ${q.suspect?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">🕵️ ${esc(q.suspect)}</div>`:""}
@@ -2103,6 +2104,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"61", date:"14. November", items:[
+    "🧪 KI-Test: Probe-Uploads, bei denen die KI sicher ist, stehen jetzt grün als „wäre automatisch freigegeben“ – nur unsichere als „bitte anschauen“"
+  ]},
   { v:"60", date:"14. November", items:[
     "📅 Nachtragen: Beim Hochladen eines älteren Tages sagt die Anleitung genau, welchen Tag man in der Bildschirmzeit wählen muss (statt „Gestern“)"
   ]},
