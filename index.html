@@ -442,7 +442,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "54";
+const APP_VERSION = "55";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -743,8 +743,9 @@ function renderToday(){
     html += calendarCard(s, today);
   }
   if (!acc?.hidden && pushSupported() && Notification.permission === "default" && !(()=>{ try{ return localStorage.getItem("fr_push_hint"); }catch{ return "1"; } })())
-    html = `<div class="card" id="pushHint" style="display:flex;gap:12px;align-items:center;padding:14px 16px"><div style="font-size:30px">🔔</div><div style="flex:1"><b>Erinnerung gefällig?</b><div class="muted small">Abends eine Nachricht, wenn dein Screenshot fehlt.</div></div><button class="pill" id="phYes" style="background:var(--ink);color:var(--bg)">Ja</button><button class="pill" id="phNo">✕</button></div>` + html;
+    html = `<div class="card" id="pushHint" style="display:flex;gap:12px;align-items:center;padding:14px 16px"><div style="font-size:30px">🔔</div><div style="flex:1"><b>Erinnerung gefällig?</b><div class="muted small">Abends eine Nachricht, wenn dein Screenshot fehlt. <a href="#" id="phVid" style="color:inherit;font-weight:700">Video</a></div></div><button class="pill" id="phYes" style="background:var(--ink);color:var(--bg)">Ja</button><button class="pill" id="phNo">✕</button></div>` + html;
   $("#vToday").innerHTML = html;
+  $("#phVid")?.addEventListener("click", e=>{ e.preventDefault(); remindVideoSheet(); });
   $("#phNo")?.addEventListener("click", ()=>{ try{ localStorage.setItem("fr_push_hint","1"); }catch{} $("#pushHint")?.remove(); });
   $("#phYes")?.addEventListener("click", async ()=>{ try{ localStorage.setItem("fr_push_hint","1"); }catch{} try{ await pushEnable(1); toast("🔔 Erinnerungen sind an – um ca. 18:30 Uhr, wenn was fehlt"); }catch(err){ toast(err.message); } $("#pushHint")?.remove(); });
   $("#goInvite")?.addEventListener("click", invite);
@@ -2050,6 +2051,13 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"55", date:"14. November", items:[
+    "🔔 Neu: Erinnerungen aufs Handy! Freiraum meldet sich abends um ca. 18:30 Uhr – aber nur, wenn dein Screenshot noch fehlt",
+    "📅 Die erste Erinnerung kommt am 16. November – ab da gibt's ja erst was hochzuladen",
+    "⚙️ Einschalten: Einstellungen → Mein Konto → „Erinnerungen einschalten“. Du wählst: jeden Tag oder alle 2 Tage",
+    "🎬 Kurzes Erklärvideo für Android und iPhone – direkt bei den Erinnerungen",
+    "🔴 Roter Punkt bei „Heute“, solange ein Screenshot fehlt"
+  ]},
   { v:"54", date:"14. November", items:[
     "🔔 Neu: Erinnerungen aufs Handy – abends um ca. 18:30 Uhr, wenn dein Screenshot noch fehlt (Einstellungen → Mein Konto)",
     "⏰ „Letzte Chance“-Erinnerung am letzten Tag zum Nachtragen",
@@ -2244,7 +2252,7 @@ const CHANGELOG = [
     "🔄 Updates werden jetzt automatisch geladen."]}
 ];
 /* „Was ist neu“: Admins sehen alles. Alle anderen nur Einträge, die freigegeben sind (PUBLIC_UPDATES) – freigeben nur auf Ansage von David. */
-const PUBLIC_UPDATES = [];
+const PUBLIC_UPDATES = ["55"];
 const isPubUpdate = c => PUBLIC_UPDATES.includes(c.v);
 const visibleLog = () => acc?.admin ? CHANGELOG : CHANGELOG.filter(isPubUpdate);
 function changelogHtml(all, pick){
@@ -2262,7 +2270,8 @@ function maybeShowWhatsNew(){
   if (!missed.length) return;
   sheet(`<div style="text-align:center;font-size:40px">✨</div><h3 style="text-align:center;margin:4px 0 6px">Neu in Freiraum</h3>
     ${changelogHtml(false, (seen ? missed : missed.slice(0,1)).slice(0,4))}
-    <button class="btn btn-flame" id="wnOk" style="margin-top:16px">Alles klar!</button>`, r=>{ r.querySelector("#wnOk").onclick = closeSheet; });
+    ${missed.some(c=>c.v==="55") ? `<button class="btn btn-primary" id="wnVid" style="margin-top:16px">▶️ Video: Erinnerungen einschalten</button>` : ""}
+    <button class="btn btn-flame" id="wnOk" style="margin-top:10px">Alles klar!</button>`, r=>{ r.querySelector("#wnOk").onclick = closeSheet; r.querySelector("#wnVid")?.addEventListener("click", remindVideoSheet); });
 }
 
 /* ---------- Infos ---------- */
@@ -2487,17 +2496,20 @@ function remindHtml(){
   const ps = pushState;
   if (!ps) return `<div class="loader"></div>`;
   if (ps.perm === "unsupported") return isIOS() && !isStandalone()
-    ? `<p class="small" style="margin:0;line-height:1.5">📲 Auf dem iPhone funktionieren Erinnerungen nur, wenn Freiraum als App installiert ist: in Safari unten auf <b>Teilen</b> → <b>„Zum Home-Bildschirm“</b>. Danach Freiraum über das neue Symbol öffnen und hier einschalten.</p>`
+    ? `<p class="small" style="margin:0;line-height:1.5">📲 Auf dem iPhone funktionieren Erinnerungen nur, wenn Freiraum als App installiert ist: in Safari unten auf <b>Teilen</b> → <b>„Zum Home-Bildschirm“</b>. Danach Freiraum über das neue Symbol öffnen und hier einschalten.</p><button class="linkbtn rvVid" style="display:block;margin:12px auto 0">▶️ So geht's – kurzes Video</button>`
     : `<p class="muted small" style="margin:0">Dein Browser kann leider keine Benachrichtigungen anzeigen. Der rote Punkt bei „Heute“ erinnert dich trotzdem.</p>`;
-  if (ps.perm === "denied") return `<p class="small" style="margin:0;line-height:1.5">🚫 Benachrichtigungen sind für Freiraum blockiert. Erlaube sie in den Einstellungen deines Handys bzw. Browsers (Website-Einstellungen → Benachrichtigungen) und tippe dann hier nochmal.</p><button class="btn btn-ghost" id="pushOn" style="margin-top:10px">Nochmal versuchen</button>`;
+  if (ps.perm === "denied") return `<p class="small" style="margin:0;line-height:1.5">🚫 Benachrichtigungen sind für Freiraum blockiert. Erlaube sie in den Einstellungen deines Handys bzw. Browsers (Website-Einstellungen → Benachrichtigungen) und tippe dann hier nochmal.</p><button class="btn btn-ghost" id="pushOn" style="margin-top:10px">Nochmal versuchen</button><button class="linkbtn rvVid" style="display:block;margin:12px auto 0">▶️ So geht's – kurzes Video</button>`;
   return ps.on
     ? `<div class="status ok" style="display:block;margin:0 0 10px">✅ Erinnerungen sind an – um ca. <b>18:30 Uhr</b>, wenn dein Screenshot fehlt.</div>
        <div class="seg" id="pushFreq" style="margin:0 0 10px"><button data-f="1" class="${(ps.freq||1)==1?"on":""}">Jeden Tag</button><button data-f="2" class="${ps.freq==2?"on":""}">Alle 2 Tage</button></div>
-       <div class="btnrow" style="margin:0"><button class="btn btn-ghost" id="pushTest">🔔 Test schicken</button><button class="btn btn-ghost" id="pushOff" style="color:var(--no)">Ausschalten</button></div>`
+       <div class="btnrow" style="margin:0"><button class="btn btn-ghost" id="pushTest">🔔 Test schicken</button><button class="btn btn-ghost" id="pushOff" style="color:var(--no)">Ausschalten</button></div>${remindStartNote()}`
     : `<p class="muted small" style="margin:0 0 10px;line-height:1.5">Bekomm abends um ca. 18:30 Uhr eine Nachricht aufs Handy, wenn dein Screenshot noch fehlt – nur dann, sonst nie.</p>
-       <button class="btn btn-flame" id="pushOn">🔔 Erinnerungen einschalten</button>`;
+       <button class="btn btn-flame" id="pushOn">🔔 Erinnerungen einschalten</button>
+       <button class="linkbtn rvVid" style="display:block;margin:12px auto 0">▶️ So geht's – kurzes Video</button>${remindStartNote()}`;
 }
+function remindStartNote(){ return berlinToday() < "2026-11-16" ? `<p class="muted small" style="margin:10px 0 0;text-align:center">Die erste Erinnerung kommt frühestens am <b>16. November</b> – vorher gibt's ja noch nichts hochzuladen.</p>` : ""; }
 function bindRemind(rerender){
+  document.querySelectorAll(".rvVid").forEach(b=>b.onclick = remindVideoSheet);
   $("#pushOn")?.addEventListener("click", async e=>{ const b=e.currentTarget; b.disabled = true;
     try{ await pushEnable(1); pushState = await pushInfo(); rerender(); toast("🔔 Erinnerungen sind an"); }catch(err){ toast(err.message); pushState = await pushInfo(); rerender(); } });
   $("#pushOff")?.addEventListener("click", async ()=>{ await pushDisable(); pushState = await pushInfo(); rerender(); toast("🔕 Erinnerungen aus"); });
@@ -2660,6 +2672,14 @@ setInterval(()=>{ if (appTime && $("#appTimeVal")) $("#appTimeVal").innerHTML = 
 
 /* ---------- Erklärvideo: roter Punkt nur beim ersten Mal ---------- */
 const tutSeen = ()=>{ try{ return localStorage.getItem("fr_tour")==="1"; }catch{ return true; } };
+function remindVideoSheet(){
+  sheet(`<h3 style="margin-bottom:4px">🔔 So schaltest du Erinnerungen ein</h3>
+    <p class="muted small" style="margin:0 0 12px">50 Sekunden – für Android und iPhone.</p>
+    <video class="tutvid" src="erinnerungen.mp4?v=1" poster="erinnerungen.jpg" controls playsinline preload="metadata"></video>
+    <button class="btn btn-flame" id="rvGo" style="margin-top:14px">🔔 Jetzt einschalten</button>`, r=>{
+    r.querySelector("#rvGo").onclick = ()=>{ closeSheet(); infoOpen.add("konto"); tab="info"; show(); setTimeout(()=>$("#cardRemind")?.scrollIntoView({behavior:"smooth",block:"center"}),80); };
+  });
+}
 function tutHtml(){
   return `<video class="tutvid" src="erklaervideo.mp4?v=2" poster="erklaervideo.jpg" controls playsinline preload="none"></video>`;
 }
