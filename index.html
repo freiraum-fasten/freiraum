@@ -63,7 +63,11 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .row.rv-ok{background:rgba(20,160,107,.13);box-shadow:inset 0 0 0 2px rgba(20,160,107,.55),0 0 14px rgba(20,160,107,.25)}
 .row.rv-no{background:rgba(229,72,77,.11);box-shadow:inset 0 0 0 2px rgba(229,72,77,.5)}
 .row.rv-open{background:rgba(255,170,0,.10);box-shadow:inset 0 0 0 1.5px rgba(255,170,0,.45)}
-.more-hide{display:none!important}.replybox{background:var(--soft);border-radius:16px;padding:10px;margin:0 0 10px}.replybox .input{background:var(--card)}
+.more-hide{display:none!important}
+.cmtbox{flex:1 1 100%;margin-top:8px;background:rgba(255,150,40,.12);border:1.5px solid rgba(255,140,40,.55);border-radius:14px;padding:10px 12px}
+.cmt{font-size:14.5px;line-height:1.45}.cmt+.cmt{margin-top:6px}
+.cmtbox .input{background:var(--card)}.cmtbox .chatin .btn{height:42px;min-width:46px;width:46px}
+.row.hascmt{box-shadow:inset 4px 0 0 #ff9a2a;padding-left:14px!important}.replybox{background:var(--soft);border-radius:16px;padding:10px;margin:0 0 10px}.replybox .input{background:var(--card)}
 .howcard{background:var(--soft);border-radius:18px;padding:14px 16px;margin:4px 0 12px}
 .howhead{font-weight:800;margin-bottom:10px}
 .howto{display:flex;flex-direction:column;gap:12px}
@@ -465,7 +469,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "64";
+const APP_VERSION = "65";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1852,16 +1856,24 @@ function rvLabel(k, mid, day){
   const r = revBy(mid, day), who = r ? ` · ${esc(r.n)}` : "";
   return k==="ok" ? `✅ freigegeben${who}` : k==="no" ? `❌ abgelehnt${who}` : k==="open" ? "⏳ prüfen" : k==="auto" ? "🤖 KI hat freigegeben · kein Admin" : "🤖 KI: über dem Limit · kein Admin";
 }
+document.addEventListener("click", async e=>{
+  const b = e.target.closest("[data-rply]"); if (!b) return; e.stopPropagation();
+  const [mid, day, name] = b.dataset.rply.split("|"), ta = document.querySelector(`[data-rplytxt="${mid}|${day}"]`), t = ta?.value.trim();
+  if (!t) return toast("Bitte erst etwas schreiben");
+  b.disabled = true;
+  try{ await rpc("sf_chat_reply_member",{p_token:T(),p_member:mid,p_text:`Zu deinem Screenshot vom ${fmtDate(day)}: ${t}`}); ta.value = ""; ta.placeholder = "✓ Gesendet – noch etwas?"; toast(`↩️ An ${name} geschickt`); }
+  catch(err){ toast(err.message); }
+  b.disabled = false;
+});
 function isCoWorker(){ return !!(acc && acc.reviewer && !acc.admin); }
 function renderReview(){
   const v = $("#vReview");
   if (!reviewData || !cwMsgs){ v.innerHTML = `<div class="loader"></div>`;
     Promise.all([rpc("sf_review_queue",{p_token:T()}), rpc("sf_cw_messages",{p_token:T()}), loadRevLog()]).then(([q,mm])=>{ reviewData = q || []; cwMsgs = mm || []; if (tab==="review") renderReview(); }).catch(err=>{ toast(err.message); v.innerHTML = `<p class="muted">${esc(err.message)}</p>`; }); return; }
   const q = reviewData;
-  const rows = q.slice(0,80).map((x,i)=>`<div class="row rv-open" style="flex-wrap:wrap"><b>${esc(x.emoji)} ${esc(x.name)} <span class="muted small">· ${trackBadge(x.group)} · ${esc(toDate(x.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
+  const rows = q.slice(0,80).map((x,i)=>`<div class="row rv-open${x.note||x.dispute?" hascmt":""}" style="flex-wrap:wrap"><b>${esc(x.emoji)} ${esc(x.name)} <span class="muted small">· ${trackBadge(x.group)} · ${esc(toDate(x.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
       <span>${fmtHM(x.minutes)}${x.total!=null?` · 📱 ${fmtHM(x.total)}`:""}</span>${x.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${x.edited?`<span class="flag">✏️ KI: ${x.ocr==null?"–":fmtHM(x.ocr)}</span>`:""}${x.date_ok===false?`<span class="flag">📅?</span>`:""}${x.suspect?`<span class="flag bad">${String(x.suspect).includes("noch nicht vorbei")?"⏰ zu früh?":"🕵️ Fake?"}</span>`:""}
-      ${x.note?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">💬 Kommentar: „${esc(x.note)}“</div>`:""}
-      ${x.dispute?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">💬 Einspruch: „${esc(x.dispute)}“</div>`:""}
+      ${(x.note||x.dispute) ? `<div class="cmtbox">${x.note?`<div class="cmt">💬 <b>Kommentar von ${esc(x.name)}:</b> „${esc(x.note)}“</div>`:""}${x.dispute?`<div class="cmt">⚖️ <b>Einspruch:</b> „${esc(x.dispute)}“</div>`:""}${acc?.admin ? `<div class="chatin" style="margin:8px 0 0"><textarea class="input" rows="1" maxlength="1000" data-rplytxt="${x.member}|${x.day}" placeholder="Direkt antworten …"></textarea><button class="btn btn-flame" data-rply="${x.member}|${x.day}|${esc(x.name)}">➤</button></div>` : ""}</div>` : ""}
       <span style="margin-left:auto;display:flex;gap:6px"><button class="pill qok" data-qok-m="${x.member}" data-qok-d="${x.day}">✓ Freigeben</button><button class="pill" data-rq="${i}">Ansehen</button></span></div>`).join("") || `<p class="muted small">Alles geprüft 👍 Danke fürs Helfen!</p>`;
   v.innerHTML = `<div class="card"><div class="sectionhead"><h3>🧑‍⚖️ Prüfen</h3><span class="muted small">${q.length} offen</span></div>
       <p class="muted small" style="margin:6px 0 0;line-height:1.5">Du bist Co-Worker und hilfst beim Prüfen. Schau dir den Screenshot an und sag <b>Freigeben</b> oder <b>Ablehnen</b>. Übermalte Apps mit Kommentar „keine Social Media“ gibst du auf Vertrauensbasis frei. Löschen und alles andere machen die Admins. Deine eigenen Tage prüft jemand anderes.</p></div>
@@ -1885,11 +1897,10 @@ function renderAdmin(){
       <span>${fmtHM(t.minutes)}${t.ocr!==t.minutes?` <span class="flag">KI: ${t.ocr==null ? "–" : fmtHM(t.ocr)}</span>`:""}</span>
       ${t.suspect?`<span class="flag bad">🕵️</span>`:""}${t.note?`<span class="flag">💬</span>`:""}${t.verdict===true?`<span class="flag" style="color:var(--ok)">KI ✓</span>`:t.verdict===false?`<span class="flag bad">KI ✕</span>`:""}${t.correct!=null?`<span class="flag">richtig: ${fmtHM(t.correct)}</span>`:""}
       <button class="pill" data-test="${t.id}">${t.verdict!=null?"Ändern":tAuto(t)?"Ansehen":"Prüfen"}</button><button class="pill" style="color:var(--no)" data-deltest="${t.id}">🗑️</button></div>`), "tests") || `<p class="muted small">Noch keine Tests.</p>`;
-  const queue = moreList(d.queue.map((q,i)=>`<div class="row" style="flex-wrap:wrap"><b>${esc(q.emoji)} ${esc(q.name)} <span class="muted small">· ${trackBadge(q.group)} · ${esc(toDate(q.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
+  const queue = moreList(d.queue.map((q,i)=>`<div class="row${q.note||q.dispute?" hascmt":""}" style="flex-wrap:wrap"><b>${esc(q.emoji)} ${esc(q.name)} <span class="muted small">· ${trackBadge(q.group)} · ${esc(toDate(q.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
       <span>${fmtHM(q.minutes)}${q.total!=null?` · 📱 ${fmtHM(q.total)}`:""}</span>${q.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${q.edited?`<span class="flag">✏️</span>`:""}${q.date_ok===false?`<span class="flag">📅?</span>`:""}${q.suspect?`<span class="flag bad">${String(q.suspect).includes("noch nicht vorbei")?"⏰ zu früh?":"🕵️ Fake?"}</span>`:""}
       ${q.suspect?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">🕵️ ${esc(q.suspect)}</div>`:""}
-      ${q.note?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">💬 Kommentar: „${esc(q.note)}“</div>`:""}
-      ${q.dispute?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">💬 „${esc(q.dispute)}“</div>`:""}
+      ${(q.note||q.dispute) ? `<div class="cmtbox">${q.note?`<div class="cmt">💬 <b>Kommentar von ${esc(q.name)}:</b> „${esc(q.note)}“</div>`:""}${q.dispute?`<div class="cmt">⚖️ <b>Einspruch:</b> „${esc(q.dispute)}“</div>`:""}${acc?.admin ? `<div class="chatin" style="margin:8px 0 0"><textarea class="input" rows="1" maxlength="1000" data-rplytxt="${q.member}|${q.day}" placeholder="Direkt antworten …"></textarea><button class="btn btn-flame" data-rply="${q.member}|${q.day}|${esc(q.name)}">➤</button></div>` : ""}</div>` : ""}
       <span style="margin-left:auto;display:flex;gap:6px"><button class="pill qok" data-qok-m="${q.member}" data-qok-d="${q.day}">✓ Freigeben</button><button class="pill" data-q="${i}">Ansehen</button></span></div>`), "queue") || `<p class="muted small">Alles geprüft 👍</p>`;
   const accs = d.accounts.filter(a=>!accSearch || (a.email+" "+a.name).toLowerCase().includes(accSearch.toLowerCase()));
   const accRows = accs.map(a=>`<details class="accd" data-acc="${a.id}" ${accOpen.has(a.id)?"open":""} style="padding:10px 0">
@@ -2139,6 +2150,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"65", date:"14. November", items:[
+    "💬 Kommentare und Einsprüche stehen in „Zu prüfen“ jetzt orange hervorgehoben – mit Antwortfeld direkt darunter, ohne den Screenshot zu öffnen"
+  ]},
   { v:"64", date:"14. November", items:[
     "💬 Prüfen: Auf Kommentare und Einsprüche direkt im Prüffenster antworten – landet im Chat der Person",
     "✓ Neuer Knopf „Geprüft“ auch bei Screenshots, die die KI schon freigegeben hat",
