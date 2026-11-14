@@ -63,7 +63,7 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .row.rv-ok{background:rgba(20,160,107,.13);box-shadow:inset 0 0 0 2px rgba(20,160,107,.55),0 0 14px rgba(20,160,107,.25)}
 .row.rv-no{background:rgba(229,72,77,.11);box-shadow:inset 0 0 0 2px rgba(229,72,77,.5)}
 .row.rv-open{background:rgba(255,170,0,.10);box-shadow:inset 0 0 0 1.5px rgba(255,170,0,.45)}
-.more-hide{display:none!important}
+.more-hide{display:none!important}.archbox>summary{display:flex;justify-content:space-between;gap:10px;align-items:center;cursor:pointer;list-style:none}.archbox>summary::-webkit-details-marker{display:none}.archbox{opacity:.92}
 #annBg{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:18px;transition:opacity .25s}
 #annBg.out{opacity:0}
 #ann{width:100%;max-width:420px;max-height:88vh;overflow:auto;background:var(--card);border-radius:28px;padding:22px 20px 18px;box-shadow:0 30px 80px rgba(0,0,0,.5);border:1px solid var(--line);animation:annIn .35s cubic-bezier(.2,.9,.3,1.2)}
@@ -491,7 +491,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "73";
+const APP_VERSION = "74";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1925,6 +1925,7 @@ document.addEventListener("click", async e=>{
   catch(err){ toast(err.message); }
   b.disabled = false;
 });
+const testsArchived = () => berlinToday() >= START;   // ab dem Start: Probe-Uploads nur noch unten zum Aufklappen
 function isCoWorker(){ return !!(acc && acc.reviewer && !acc.admin); }
 function renderReview(){
   const v = $("#vReview");
@@ -1986,12 +1987,12 @@ function renderAdmin(){
     <div class="card" style="${acc.hidden?"border:2px solid var(--ink)":""}"><div class="sectionhead"><h3 style="font-size:17px">🕶️ Unsichtbar-Modus</h3>
         <input type="checkbox" id="hidToggle" style="width:26px;height:26px" ${acc.hidden?"checked":""}></div>
       <p class="muted small" style="margin:6px 0 0;line-height:1.5">${acc.hidden ? "<b>Aktiv:</b> Du tauchst nirgends in der Rangliste auf und zählst bei „dabei“ nicht mit. Du kannst trotzdem alles beobachten und als Admin prüfen." : "Schalte ihn ein, wenn du nicht mitmachen, sondern nur still beobachten willst. Niemand sieht dich dann in der Rangliste."}</p></div>
-    <div class="card"><h3 style="font-size:17px">🧪 KI-Test</h3>
+    ${!testsArchived() ? `<div class="card"><h3 style="font-size:17px">🧪 KI-Test</h3>
       <p class="muted small" style="margin:6px 0 12px;line-height:1.5">Lade einen echten Bildschirmzeit-Screenshot <b>von gestern</b> hoch (wie später alle). Die App liest die Minuten aus – danach kannst du sagen, ob die KI richtig lag. Tests zählen nirgends.</p>
       <button class="btn btn-flame" id="btnTest">📵 Test: Social-Media-Screenshot</button>
       <button class="btn btn-primary" id="btnTestT" style="margin-top:8px">📱 Test: Handyzeit-Screenshot (gesamt)</button>
       <button class="btn btn-ghost" id="btnTestB" style="margin-top:8px">🔥 Test: Beides (Social Media + Handyzeit)</button>
-      <div class="daylist" style="margin-top:10px">${tests}</div></div>
+      <div class="daylist" style="margin-top:10px">${tests}</div></div>` : ""}
     ${(cwMsgs||[]).length ? `<div class="card" style="${(cwMsgs||[]).some(g=>!g.done)?"border:2px solid var(--flame2)":""}"><div class="sectionhead"><h3 style="font-size:17px">💬 Nachrichten von Helfern</h3><span class="muted small">${cwMsgs.filter(g=>!g.done).length} offen</span></div>
       <p class="muted small" style="margin:6px 0 8px">Fragen und Hinweise der Co-Worker – zu einem Tag oder allgemein. Deine Antwort sehen sie im Reiter „Prüfen“.</p>
       <div class="daylist" id="msgList">${cwMsgs.slice(0,40).map(g=>msgHtml(g,true)).join("")}</div></div>` : ""}
@@ -2019,6 +2020,12 @@ function renderAdmin(){
       <div class="minutes"><label for="setReg">Neue Registrierungen erlauben<div class="muted small" style="font-weight:500;margin-top:2px">Schließt automatisch nach dem 18.11. – danach nur noch per Anfrage</div></label><input id="setReg" type="checkbox" style="width:24px;height:24px" ${st.registration_open==="true"?"checked":""}></div>
       <button class="btn btn-primary" id="btnSaveSet" style="margin-top:12px">Einstellungen speichern</button>
       <button class="btn btn-ghost" id="btnClearTests" style="margin-top:10px;color:var(--no)">Alle Tests löschen</button></div>
+    ${testsArchived() ? `<details class="card archbox"><summary><b>🧪 KI-Test & Probe-Uploads</b><span class="muted small">${d.tests.length} · werden nach 10 Tagen gelöscht</span></summary><div style="margin-top:12px">
+      <p class="muted small" style="margin:6px 0 12px;line-height:1.5">Lade einen echten Bildschirmzeit-Screenshot <b>von gestern</b> hoch (wie später alle). Die App liest die Minuten aus – danach kannst du sagen, ob die KI richtig lag. Tests zählen nirgends.</p>
+      <button class="btn btn-flame" id="btnTest">📵 Test: Social-Media-Screenshot</button>
+      <button class="btn btn-primary" id="btnTestT" style="margin-top:8px">📱 Test: Handyzeit-Screenshot (gesamt)</button>
+      <button class="btn btn-ghost" id="btnTestB" style="margin-top:8px">🔥 Test: Beides (Social Media + Handyzeit)</button>
+      <div class="daylist" style="margin-top:10px">${tests}</div></div></details>` : ""}
     ${acc.owner ? `<div class="card"><h3 style="font-size:17px;margin-bottom:6px">⏱️ Zeit in Freiraum</h3>
       <p class="muted small" style="margin:0 0 10px">Live-Zähler, wie lange alle zusammen in der App waren. Nur du kannst ihn zurücksetzen.</p>
       <button class="btn btn-ghost" id="btnResetApp" style="color:var(--no)">Zähler auf 0 zurücksetzen</button></div>` : ""}`;
@@ -2212,6 +2219,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"74", date:"14. November", items:[
+    "🗄️ Ab dem Start: KI-Test & Probe-Uploads wandern ganz nach unten in einen zugeklappten Kasten",
+    "🧹 Probe-Uploads werden nach 10 Tagen automatisch gelöscht"
+  ]},
   { v:"73", date:"14. November", items:[
     "🔽 Beantwortete Kommentare werden klein: „✓ beantwortet von …“ – zum Aufklappen. Nur unbeantwortete stehen groß und orange"
   ]},
