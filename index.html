@@ -336,8 +336,8 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 .tabbar button.on{background:var(--soft);color:var(--ink)}
 
 /* Toast + sheet */
-.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translate(-50%,-140%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:14px;font-weight:600;font-size:14px;transition:transform .35s ease;z-index:50;max-width:90vw;text-align:center}
-.toast.show{transform:translate(-50%,0)}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translate(-50%,-160%);visibility:hidden;background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:14px;font-weight:600;font-size:14px;transition:transform .35s ease,visibility 0s .35s;z-index:50;max-width:90vw;text-align:center}
+.toast.show{transform:translate(-50%,0);visibility:visible;transition:transform .35s ease}
 .sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:40;display:flex;align-items:flex-end;justify-content:center}
 .sheet{background:var(--bg);width:100%;max-width:520px;border-radius:26px 26px 0 0;padding:22px 20px calc(env(safe-area-inset-bottom) + 22px);animation:up .3s ease}
 @keyframes up{from{transform:translateY(100%)}to{transform:none}}
@@ -491,7 +491,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "75";
+const APP_VERSION = "76";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -2219,6 +2219,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"76", date:"14. November", items:[
+    "🧽 Kleiner weißer Fleck oben am Bildschirmrand entfernt"
+  ]},
   { v:"75", date:"14. November", items:[
     "🟢 Admins: Uploads über 30 Min., die die KI richtig erkannt hat, leuchten jetzt grün statt rot – sie sind ja in Ordnung"
   ]},
