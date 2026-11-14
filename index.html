@@ -224,8 +224,18 @@ html,body{max-width:100%;overflow-x:hidden}
 .setacc .sa-i{width:38px;height:38px;border-radius:12px;background:var(--soft);display:grid;place-items:center;font-size:20px;flex:none}
 .setacc .sa-t small{display:block;color:var(--muted);font-weight:500;font-size:13px}
 .accbody{padding-top:14px}
-.accbody .card{background:none;border:0;box-shadow:none;padding:0;margin:0 0 18px}
-.accbody .card > h3:first-child{font-size:16px !important}
+.accbody .card{background:var(--soft);border:0;box-shadow:none;padding:16px;margin:0 0 12px;border-radius:18px}
+.accbody .card:last-child{margin-bottom:4px}
+.accbody .card h3{font-size:16px !important;margin:0 0 8px !important;line-height:1.3}
+.accbody .card .sectionhead{margin-bottom:6px}
+.accbody .btn-ghost,.accbody .chips button,.accbody .seg{background:var(--card)}
+.accbody .input{background:var(--card)}.accbody .bub.them{background:var(--card)}
+.accbody details:not([data-sec]){border-bottom:1px solid var(--line);padding:4px 0}
+.accbody details:not([data-sec]):last-child{border-bottom:0}
+.setgrp{font-size:12.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:22px 8px 8px}
+.setacc > details[open] > summary .sa-i{background:linear-gradient(135deg,var(--flame1),var(--flame2))}
+.setacc > details[open] > summary b{color:var(--flame2)}
+a.btn{color:inherit}
 @keyframes pop{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
 .flame.pop{animation:pop .6s ease}
 .q{font-size:19px;font-weight:700;line-height:1.35;margin:0 0 4px}
@@ -442,7 +452,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "56";
+const APP_VERSION = "57";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1673,7 +1683,7 @@ async function loadMyChat(){
 function bindMyChat(){
   const send = $("#chatSend"); if (!send) return;
   $("#chatClear").onclick = ()=>confirmSheet("Deinen ganzen Chat mit den Admins löschen? Das kann man nicht rückgängig machen.", async ()=>{
-    try{ await rpc("sf_chat_empty",{p_token:T(),p_account:null}); toast("🗑️ Chat gelöscht"); infoOpen.add("konto"); show(); }catch(err){ toast(err.message); } });
+    try{ await rpc("sf_chat_empty",{p_token:T(),p_account:null}); toast("🗑️ Chat gelöscht"); infoOpen.add("chat"); show(); }catch(err){ toast(err.message); } });
   const ta = $("#chatTxt"); ta.oninput = ()=>{ ta.style.height = "auto"; ta.style.height = Math.min(140, ta.scrollHeight)+"px"; };
   send.onclick = async ()=>{ const t = ta.value.trim(); if (!t) return; send.disabled = true;
     try{ await rpc("sf_chat_send",{p_token:T(),p_text:t}); ta.value = ""; ta.style.height = "auto"; await loadMyChat(); toast("💬 An die Admins geschickt"); }catch(err){ toast(err.message); }
@@ -1687,7 +1697,7 @@ function chatBadges(){
   const set = (btn, n)=>{ if (!btn) return; let d = btn.querySelector(".tdot"); if (n>0){ if (!d){ d = document.createElement("span"); d.className = "tdot"; btn.appendChild(d); } d.textContent = n>9?"9+":n; } else d?.remove(); };
   set(document.querySelector('#tabbar [data-t="info"]'), chatUnread.mine||0);
   set($("#tabAdmin"), acc?.admin ? (chatUnread.admin||0) : 0);
-  const sm = $("#kontoSub"); if (sm) sm.innerHTML = chatUnread.mine ? `<span style="color:var(--flame2);font-weight:800">💬 ${chatUnread.mine} neue Nachricht${chatUnread.mine===1?"":"en"} von den Admins</span>` : "Chat mit den Admins, Challenge, Passwort";
+  const sm = $("#chatSub"); if (sm) sm.innerHTML = chatUnread.mine ? `<span style="color:var(--flame2);font-weight:800">${chatUnread.mine} neue Nachricht${chatUnread.mine===1?"":"en"} von den Admins</span>` : "Fragen, Probleme, Wünsche";
 }
 function threadsHtml(){
   const q = chatSearch.trim().toLowerCase();
@@ -2051,6 +2061,11 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"57", date:"14. November", items:[
+    "🧭 Einstellungen übersichtlicher: zwei Gruppen „Mein Freiraum“ und „Hilfe & Infos“",
+    "💬 Chat, 🔔 Erinnerungen und 👤 Mein Konto sind jetzt eigene Abteile – nicht mehr alles in einem",
+    "🗂️ In jedem Abteil sind die Bereiche als eigene Kästen abgesetzt, das geöffnete Abteil ist farbig markiert"
+  ]},
   { v:"56", date:"14. November", items:[
     "✏️ Vorher-Zeit ändern: Unter Einstellungen → Mein Konto kann jeder seine Einschätzung jederzeit anpassen (Schnellauswahl oder genau in Std./Min.)"
   ]},
@@ -2281,7 +2296,7 @@ function maybeShowWhatsNew(){
 const infoOpen = new Set();
 function renderInfo(){
   const look = getLook();
-  if (chatUnread.mine) infoOpen.add("konto");
+  if (chatUnread.mine) infoOpen.add("chat");
   $("#vInfo").innerHTML = `
     <div class="card">
       <div style="display:flex;align-items:center;gap:14px">
@@ -2293,28 +2308,32 @@ function renderInfo(){
         <button class="btn btn-ghost" id="btnEdit" style="padding:13px">✏️ Name</button>
       </div>
     </div>
+    <div class="setgrp">Mein Freiraum</div>
     <div class="card setacc">
-      <details data-sec="konto" ${infoOpen.has("konto")?"open":""}><summary><span class="sa-t"><span class="sa-i">👤</span><span><b>Mein Konto</b><small id="kontoSub">Chat mit den Admins, Challenge, Passwort</small></span></span></summary>
+      <details data-sec="chat" ${infoOpen.has("chat")?"open":""}><summary><span class="sa-t"><span class="sa-i">💬</span><span><b>Chat mit den Admins</b><small id="chatSub">Fragen, Probleme, Wünsche</small></span></span></summary>
         <div class="accbody">
-    <div class="card" id="cardRemind"><div class="sectionhead"><h3 style="font-size:17px">🔔 Erinnerungen</h3><span class="muted small">aufs Handy</span></div>
-      <div id="remindBox" style="margin-top:6px"></div></div>
-    <div class="card" id="cardChat"><div class="sectionhead"><h3 style="font-size:17px">💬 Chat mit den Admins</h3><span class="muted small">nur du & die Admins</span></div>
-      <p class="muted small" style="margin:4px 0 8px;line-height:1.45">Fragen, Probleme oder Challenge wechseln? Schreib einfach – die Antwort kommt hier rein.</p>
+    <div class="card" id="cardChat">
+      <p class="muted small" style="margin:0 0 8px;line-height:1.45">🔒 Nur du und die Admins sehen das. Fragen, Probleme oder Challenge wechseln? Schreib einfach – die Antwort kommt hier rein.</p>
       <div class="chat" id="chatBox"><div class="loader"></div></div>
       <div class="chatin"><textarea class="input" id="chatTxt" rows="1" maxlength="1000" placeholder="Nachricht an die Admins …"></textarea><button class="btn btn-flame" id="chatSend">➤</button></div>
       <p class="muted small" style="margin:8px 2px 0;text-align:center">Tipp: Auf 🗑️ bei deiner Nachricht tippen, um sie zu löschen.</p>
       <button class="chatclear" id="chatClear">🗑️ Ganzen Chat löschen</button></div>
+        </div></details>
+      <details data-sec="remind" ${infoOpen.has("remind")?"open":""}><summary><span class="sa-t"><span class="sa-i">🔔</span><span><b>Erinnerungen</b><small id="remindSub">Abends eine Nachricht, wenn was fehlt</small></span></span></summary>
+        <div class="accbody">
+    <div class="card" id="cardRemind"><div id="remindBox"></div></div>
+        </div></details>
+      <details data-sec="konto" ${infoOpen.has("konto")?"open":""}><summary><span class="sa-t"><span class="sa-i">👤</span><span><b>Mein Konto</b><small>Vorher-Zeit, Challenge, Passwort</small></span></span></summary>
+        <div class="accbody">
     <div class="card"><div class="sectionhead"><div><div class="muted small" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em">Dein Ausgangswert</div>
         <b style="font-size:18px">${fmtHM(acc.baseline)} ${TRACKS[trackOf()].word} pro Tag</b><div class="muted small">vor der Fastenzeit · ${TRACKS[trackOf()].icon} ${isTotal()?"Handyzeit-Challenge (ohne Limit)":`Social-Media-Challenge (max. ${LIMIT} Min.)`}</div></div>
         ${acc.can_switch?`<button class="pill" id="btnTrack">Challenge</button>`:""}</div>
       <button class="btn btn-ghost" id="btnBl" style="margin-top:12px">✏️ Vorher-Zeit ändern</button>
-      ${acc.can_switch?"":`<p class="muted small" style="margin:8px 0 0">Challenge wechseln? Schreib den Admins oben im Chat.</p>`}</div>
+      ${acc.can_switch?"":`<p class="muted small" style="margin:8px 0 0">Challenge wechseln? Schreib den Admins im Chat.</p>`}</div>
     <div class="card">
-      <h3 style="font-size:17px;margin-bottom:12px">Konto</h3>
-      <button class="btn btn-ghost" id="btnPw" style="margin-bottom:10px">🔒 Passwort ändern</button>
-      
-      <button class="btn btn-ghost" id="btnLogout" style="margin-bottom:10px">Abmelden</button>
-      <button class="btn btn-ghost" id="btnDel" style="color:var(--no)">Konto löschen</button>
+      <h3>🔐 Anmeldung</h3>
+      <div class="btnrow" style="margin:10px 0 0"><button class="btn btn-ghost" id="btnPw">🔒 Passwort</button><button class="btn btn-ghost" id="btnLogout">Abmelden</button></div>
+      <button class="chatclear" id="btnDel" style="color:var(--no);margin-top:14px">Konto löschen</button>
     </div>
         </div></details>
       <details data-sec="look" ${infoOpen.has("look")?"open":""}><summary><span class="sa-t"><span class="sa-i">🎨</span><span><b>Gestaltung</b><small>Design, Schriftart, Schriftgröße</small></span></span></summary>
@@ -2330,10 +2349,13 @@ function renderInfo(){
       <p class="muted small" style="margin:12px 2px 0">Wird auf diesem Gerät gespeichert.</p>
     </div>
         </div></details>
+    </div>
+    <div class="setgrp">Hilfe & Infos</div>
+    <div class="card setacc">
       <details data-sec="rules" ${infoOpen.has("rules")?"open":""}><summary><span class="sa-t"><span class="sa-i">📖</span><span><b>So funktioniert's</b><small>Erklärvideo, Regeln, Joker, was zählt</small></span></span></summary>
         <div class="accbody"><div style="margin-bottom:18px"><b style="display:block;margin-bottom:8px">🎬 Erklärvideo</b>${tutHtml()}</div>
     <div class="card">
-      <h3 style="font-size:20px;margin-bottom:8px">So funktioniert's</h3>
+      <h3 style="font-size:20px;margin-bottom:8px">📋 Die Regeln</h3>
       <ol class="steps">
         <li>Vom <b>15.11. bis 24.12.</b> – 40 Tage bis Heiligabend.</li>
         <li>Pro Tag <b>max. ${LIMIT} Minuten Social Media</b> (Insta, TikTok, YouTube & Co. zusammen). Messenger wie WhatsApp sind erlaubt.</li>
@@ -2369,7 +2391,7 @@ function renderInfo(){
       <details data-sec="privacy" ${infoOpen.has("privacy")?"open":""}><summary><span class="sa-t"><span class="sa-i">🔒</span><span><b>Datenschutz</b><small>Was wir speichern, Datenschutz-Info, deine Daten</small></span></span></summary>
         <div class="accbody">
     <div class="card">
-      <h3 style="font-size:17px;margin-bottom:8px">🔒 Datenschutz & Sicherheit</h3>
+      <h3 style="font-size:17px;margin-bottom:8px">🔒 Kurz gesagt</h3>
       <ul class="steps" style="padding-left:18px">
         <li>Gespeichert werden: E-Mail, Passwort (nur verschlüsselt, niemand kann es lesen), Spitzname, Symbol, Profilbild (freiwillig), deine Minuten und Screenshots (verkleinert).</li>
         <li>Screenshots werden 10 Tage nach dem Hochladen automatisch gelöscht, sobald sie geprüft oder unauffällig sind – die Minuten bleiben.</li>
@@ -2383,7 +2405,7 @@ function renderInfo(){
       <p class="muted small" style="margin:8px 0 0;line-height:1.5">Tipp: Schneide Mitteilungen oder Privates vor dem Hochladen weg. Eine App, die niemand sehen soll, kannst du einfach <b>übermalen</b> – kurz im Kommentar dazuschreiben, dass es keine Social-Media-App ist. Das respektieren wir, ohne nachzufragen.</p>
     </div>
     <div class="card">
-      <h3 style="font-size:17px;margin-bottom:6px">🔒 Datenschutz</h3>
+      <h3 style="font-size:17px;margin-bottom:6px">📄 Dokumente & deine Daten</h3>
       <p class="muted small" style="margin:0 0 12px;line-height:1.5">Was wir speichern, wer was sieht und wie deine Daten geschützt sind.</p>
       <a class="btn btn-ghost" href="datenschutz.html" target="_blank" rel="noopener" style="margin-bottom:10px;display:block;text-align:center;text-decoration:none">📄 Datenschutz-Info lesen</a>
       <a class="btn btn-ghost" href="datenschutz.pdf" download="Freiraum-Datenschutz.pdf" style="margin-bottom:10px;display:block;text-align:center;text-decoration:none">⬇️ Als PDF herunterladen</a>
@@ -2408,8 +2430,8 @@ ${acc.admin || PUBLIC_UPDATES.length ? `      <details data-sec="news" ${infoOpe
   $("#clAll")?.addEventListener("click", ()=>{ $("#clBox").innerHTML = changelogHtml(true); $("#clAll").remove(); });
   $("#btnPw").onclick = changePw;
   $("#btnBl")?.addEventListener("click", baselineSheet);
-  bindMyChat(); if (infoOpen.has("konto")) loadMyChat(); chatBadges(); refreshRemind();
-  document.querySelector('#vInfo details[data-sec="konto"]')?.addEventListener("toggle", e=>{ if (e.target.open) loadMyChat(); });
+  bindMyChat(); if (infoOpen.has("chat")) loadMyChat(); chatBadges(); refreshRemind();
+  document.querySelector('#vInfo details[data-sec="chat"]')?.addEventListener("toggle", e=>{ if (e.target.open) loadMyChat(); });
   $("#btnInstall")?.addEventListener("click", installSheet);
   $("#btnExport").onclick = async ()=>{
     try{ const data = await rpc("sf_export_me",{p_token:T()});
@@ -2526,7 +2548,8 @@ function bindRemind(rerender){
 }
 async function refreshRemind(){
   pushState = await pushInfo();
-  const rr = ()=>{ const b = $("#remindBox"); if (b){ b.innerHTML = remindHtml(); bindRemind(rr); } }; rr();
+  const rr = ()=>{ const b = $("#remindBox"); if (b){ b.innerHTML = remindHtml(); bindRemind(rr); }
+    const sub = $("#remindSub"); if (sub) sub.innerHTML = pushState?.on ? `<span style="color:var(--ok);font-weight:700">An · ${pushState.freq==2?"alle 2 Tage":"jeden Tag"}</span>` : "Abends eine Nachricht, wenn was fehlt"; }; rr();
 }
 /* roter Punkt bei „Heute“ + Zahl am App-Symbol, wenn der Screenshot von gestern fehlt */
 function todayBadge(){
@@ -2699,7 +2722,7 @@ function remindVideoSheet(){
     <p class="muted small" style="margin:0 0 12px">50 Sekunden – für Android und iPhone.</p>
     <video class="tutvid" src="erinnerungen.mp4?v=1" poster="erinnerungen.jpg" controls playsinline preload="metadata"></video>
     <button class="btn btn-flame" id="rvGo" style="margin-top:14px">🔔 Jetzt einschalten</button>`, r=>{
-    r.querySelector("#rvGo").onclick = ()=>{ closeSheet(); infoOpen.add("konto"); tab="info"; show(); setTimeout(()=>$("#cardRemind")?.scrollIntoView({behavior:"smooth",block:"center"}),80); };
+    r.querySelector("#rvGo").onclick = ()=>{ closeSheet(); infoOpen.add("remind"); tab="info"; show(); setTimeout(()=>$("#cardRemind")?.scrollIntoView({behavior:"smooth",block:"center"}),80); };
   });
 }
 function tutHtml(){
