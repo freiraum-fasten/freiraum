@@ -417,8 +417,9 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
     <div class="card">
       <div class="seg" id="segAuth">
         <button class="on" data-a="login">Anmelden</button>
-        <button data-a="register">Registrieren</button>
+        <button data-a="register" id="segReg">Registrieren</button>
       </div>
+      <div id="regClosed" class="status warn hidden" style="display:block;line-height:1.5;margin:0 0 12px">🔒 <b>Die Anmeldung ist geschlossen</b> – die Challenge läuft schon. Du kannst aber noch <b>anfragen</b>: Füll das Formular aus, ein Admin schaltet dich frei.</div>
       <label class="field"><span>E-Mail</span><input class="input" id="inEmail" type="email" autocomplete="email" inputmode="email" placeholder="name@beispiel.de"></label>
       <label class="field"><span>Passwort</span><input class="input" id="inPw" type="password" autocomplete="current-password" placeholder="mind. 8 Zeichen"></label>
       <div id="regFields" class="hidden">
@@ -464,7 +465,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "62";
+const APP_VERSION = "63";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -568,9 +569,10 @@ function confetti(){
 let auth = load();          // {token}
 let acc = null;             // Konto: {id,email,name,emoji,admin,member_id,group_code,limit}
 let group = null;           // {name, code, members:[...]}
-let adminData = null, reviewData = null, cwMsgs = null, chatThreads = [], chatUnread = {mine:0, admin:0}, chatFilter = "open", chatSearch = "";
+let adminData = null, joinReqs = [], reviewData = null, cwMsgs = null, chatThreads = [], chatUnread = {mine:0, admin:0}, chatFilter = "open", chatSearch = "";
 let tab = "group";
-let mode = "join", authMode = "login";
+let mode = "join", authMode = "login", regOpen = true;
+rpc("sf_reg_status",{}).then(r=>{ if (r){ regOpen = !!r.open; if (!auth?.token) renderOnboard(); } }).catch(()=>{});
 let pickedEmoji = EMOJIS[0];
 let rankMode = "streak";
 const T = () => auth?.token;
@@ -607,7 +609,9 @@ function renderOnboard(){
   $("#emojiPick").innerHTML = emojiPickHtml(pickedEmoji);
   $("#regFields").classList.toggle("hidden", authMode!=="register");
   document.querySelectorAll("#segAuth button").forEach(b=>b.classList.toggle("on", b.dataset.a===authMode));
-  $("#btnAuth").textContent = authMode==="login" ? "Anmelden" : "Konto erstellen";
+  $("#btnAuth").textContent = authMode==="login" ? "Anmelden" : regOpen ? "Konto erstellen" : "🙋 Beitritt anfragen";
+  $("#segReg").textContent = regOpen ? "Registrieren" : "Beitritt anfragen";
+  $("#regClosed").classList.toggle("hidden", authMode!=="register" || regOpen);
   $("#inPw").autocomplete = authMode==="login" ? "current-password" : "new-password";
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
@@ -629,6 +633,11 @@ $("#btnAuth").addEventListener("click", async ()=>{
       if (pw.length < 8){ toast("Passwort braucht mindestens 8 Zeichen"); btn.disabled=false; return; }
       r = await rpc("sf_register",{p_email:email,p_password:pw,p_name:name,p_emoji:pickedEmoji});
     }
+    if (r && r.pending){ $("#inPw").value = ""; authMode = "login"; renderOnboard();
+      sheet(`<div style="text-align:center;font-size:44px">🙋</div><h3 style="text-align:center;margin:6px 0 8px">Anfrage gesendet!</h3>
+        <p class="muted" style="text-align:center;line-height:1.5;margin:0 0 14px">Ein Admin schaut sich deine Anfrage an und schaltet dich frei. Danach kannst du dich hier ganz normal <b>anmelden</b> – mit deiner E-Mail und deinem Passwort.</p>
+        <button class="btn btn-flame" id="rqOk">Alles klar</button>`, rr=>{ rr.querySelector("#rqOk").onclick = closeSheet; });
+      btn.disabled = false; return; }
     auth = { token:r.token }; save(auth);
     $("#inPw").value = "";
     await refresh(); tab = "group"; show();
@@ -1303,6 +1312,7 @@ function bindHowto(root, trk, day){
   root.querySelector("#howtoShow")?.addEventListener("click", e=>{ e.target.remove(); const b = root.querySelector("#howtoBox"); b.className = "howcard"; b.innerHTML = `<div class="howhead">📸 So geht's richtig</div>${howtoSteps(trk, day)}`; });
 }
 function uploadFlow(day, test=false){
+  if (!test && acc && acc.baseline == null){ toast("Erst noch kurz: Wie viel warst du vorher am Handy?"); baselineSheet(()=>uploadFlow(day)); return; }
   sheet(`<h3 style="margin-bottom:4px">${test ? (acc?.admin ? "🧪 Test-Upload (Admin)" : "🧪 Probe-Upload") : "Screenshot für "+esc(fmtDate(day))}</h3>
     ${test ? `<p class="muted small" style="margin:0 0 10px">${acc?.admin ? "Läuft genauso wie später bei allen – zählt aber nirgends. Danach kannst du prüfen, ob die KI richtig lag." : "Läuft genauso wie ab dem 15.11. – zählt aber noch nicht. Nimm den Screenshot von <b>gestern</b> (Tagesansicht)."}</p>` : ""}
     <div id="shotGuide">${howtoCard((test && testTrack) || trackOf(), test ? null : day)}</div>
@@ -1688,7 +1698,8 @@ async function reviewSheet(item, back){
 /* ---------- Admin ---------- */
 async function loadAdmin(){
   if (!acc?.admin) { adminData = null; return; }
-  try { [adminData, cwMsgs, chatThreads] = await Promise.all([rpc("sf_admin_overview",{p_token:T()}), rpc("sf_cw_messages",{p_token:T()}).catch(()=>[]), rpc("sf_chat_threads",{p_token:T()}).catch(()=>[])]); chatThreads ||= []; } catch(err){ toast(err.message); }
+  try { [adminData, cwMsgs, chatThreads] = await Promise.all([rpc("sf_admin_overview",{p_token:T()}), rpc("sf_cw_messages",{p_token:T()}).catch(()=>[]), rpc("sf_chat_threads",{p_token:T()}).catch(()=>[])]); chatThreads ||= [];
+    joinReqs = await rpc("sf_admin_requests",{p_token:T()}).catch(()=>[]) || []; } catch(err){ toast(err.message); }
 }
 let accSearch = ""; const accOpen = new Set();
 /* ---------- Chat mit den Admins ---------- */
@@ -1881,6 +1892,10 @@ function renderAdmin(){
   v.innerHTML = `
     <div class="card"><div class="sectionhead"><h3>🛡️ Admin-Bereich</h3><span class="muted small">${d.accounts.length} Konten · ${d.stats?.uploads ?? 0} Uploads</span></div>
       <p class="muted small" style="margin:6px 0 0">Nur Admins sehen diesen Bereich.</p></div>
+    ${joinReqs.length ? `<div class="card" id="admReqs" style="border:2px solid var(--flame2)"><div class="sectionhead"><h3 style="font-size:17px">🙋 Beitrittsanfragen</h3><span class="muted small">${joinReqs.length} offen</span></div>
+      <p class="muted small" style="margin:4px 0 8px;line-height:1.45">Diese Personen möchten nach Anmeldeschluss noch mitmachen.</p>
+      <div class="daylist">${joinReqs.map(q=>`<div class="row" style="flex-wrap:wrap"><b style="flex:1 1 100%;min-width:0">${esc(q.emoji)} ${esc(q.name)}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(q.email)} · ${esc(new Date(q.created).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))}</div></b>
+        <span style="margin-left:auto;display:flex;gap:6px"><button class="pill qok" data-jr="${q.id}" data-v="1">✓ Freischalten</button><button class="pill" style="color:var(--no)" data-jr="${q.id}" data-v="0">Ablehnen</button></span></div>`).join("")}</div></div>` : ""}
     <div class="card" id="admChats" style="${chatThreads.some(t=>t.waiting)?"border:2px solid var(--flame2)":""}"><div class="sectionhead"><h3 style="font-size:17px">💬 Chats</h3><span class="muted small">${chatThreads.filter(t=>t.waiting).length} offen</span></div>
       <p class="muted small" style="margin:4px 0 0;line-height:1.45">Direkte Nachrichten der Teilnehmenden. Unbeantwortete stehen oben, neue sind orange umrandet.</p>
       ${threadsHtml()}</div>
@@ -1917,7 +1932,7 @@ function renderAdmin(){
     <div class="card"><h3 style="font-size:17px;margin-bottom:10px">⚙️ Einstellungen</h3>
       <div class="minutes" style="margin-top:0"><label for="setLimit">📵 Tageslimit Social Media (Min.)</label><input id="setLimit" type="number" inputmode="numeric" min="1" max="900" value="${esc(st.limit_minutes||30)}"></div>
       <div class="minutes"><label for="setGoal">🎯 Ziel: gesparte Stunden pro Person</label><input id="setGoal" type="number" inputmode="numeric" min="1" max="900" value="${esc(st.goal_hours_per_person||30)}"></div>
-      <div class="minutes"><label for="setReg">Neue Registrierungen erlauben</label><input id="setReg" type="checkbox" style="width:24px;height:24px" ${st.registration_open==="true"?"checked":""}></div>
+      <div class="minutes"><label for="setReg">Neue Registrierungen erlauben<div class="muted small" style="font-weight:500;margin-top:2px">Schließt automatisch nach dem 18.11. – danach nur noch per Anfrage</div></label><input id="setReg" type="checkbox" style="width:24px;height:24px" ${st.registration_open==="true"?"checked":""}></div>
       <button class="btn btn-primary" id="btnSaveSet" style="margin-top:12px">Einstellungen speichern</button>
       <button class="btn btn-ghost" id="btnClearTests" style="margin-top:10px;color:var(--no)">Alle Tests löschen</button></div>
     ${acc.owner ? `<div class="card"><h3 style="font-size:17px;margin-bottom:6px">⏱️ Zeit in Freiraum</h3>
@@ -1954,6 +1969,9 @@ function renderAdmin(){
     });
   });
   bindMore(v, ()=>{ const y = window.scrollY; renderAdmin(); window.scrollTo({top:y}); });
+  v.querySelectorAll("[data-jr]").forEach(b=>b.onclick=()=>{ const q = joinReqs.find(x=>x.id===b.dataset.jr), ok = b.dataset.v==="1";
+    confirmSheet(ok ? `${q.name} (${q.email}) freischalten? Danach kann sich die Person anmelden und mitmachen.` : `Anfrage von ${q.name} ablehnen und löschen?`, async ()=>{
+      try{ await rpc("sf_admin_request_decide",{p_token:T(),p_account:q.id,p_ok:ok}); await loadAdmin(); renderAdmin(); toast(ok ? "✅ Freigeschaltet – die Person kann sich jetzt anmelden" : "Anfrage abgelehnt"); }catch(err){ toast(err.message); } }); });
   bindThreads($("#admChats"), ()=>{ const y = window.scrollY; renderAdmin(); window.scrollTo({top:y}); });
   if ($("#allUp")) bindAllUploads($("#allUp"));
   if ($("#msgList")) bindMsgAdmin($("#msgList"), cwMsgs, ()=>{ if (tab==="admin") renderAdmin(); });
@@ -2109,6 +2127,11 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"63", date:"14. November", items:[
+    "🙋 Anmeldung bleibt bis 18.11. offen (letzter Nachtrag-Tag für Tag 1) – danach „Beitritt anfragen“",
+    "🛡️ Admins: Beitrittsanfragen mit „Freischalten“ / „Ablehnen“ + Push-Nachricht bei neuer Anfrage",
+    "⏱️ Vor dem ersten Upload muss die Vorher-Zeit eingetragen sein – damit die Statistik stimmt"
+  ]},
   { v:"62", date:"14. November", items:[
     "✨ Wichtige Knöpfe dezent hervorgehoben: Screenshot hochladen (leichtes Leuchten), Eintragen, Nachtragen, Joker einlösen"
   ]},
@@ -2497,7 +2520,7 @@ ${acc.admin || PUBLIC_UPDATES.length ? `      <details data-sec="news" ${infoOpe
   $("#chSize").onclick = e=>{ const b=e.target.closest("button"); if(b) setLook("size", b.dataset.v); };
   $("#clAll")?.addEventListener("click", ()=>{ $("#clBox").innerHTML = changelogHtml(true); $("#clAll").remove(); });
   $("#btnPw").onclick = changePw;
-  $("#btnBl")?.addEventListener("click", baselineSheet);
+  $("#btnBl")?.addEventListener("click", ()=>baselineSheet());
   bindMyChat(); if (infoOpen.has("chat")) loadMyChat(); chatBadges(); refreshRemind();
   document.querySelector('#vInfo details[data-sec="chat"]')?.addEventListener("toggle", e=>{ if (e.target.open) loadMyChat(); });
   $("#btnInstall")?.addEventListener("click", installSheet);
@@ -2769,7 +2792,7 @@ setInterval(()=>{ if (appTime && $("#appTimeVal")) $("#appTimeVal").innerHTML = 
 
 /* ---------- Erklärvideo: roter Punkt nur beim ersten Mal ---------- */
 const tutSeen = ()=>{ try{ return localStorage.getItem("fr_tour")==="1"; }catch{ return true; } };
-function baselineSheet(){
+function baselineSheet(after){
   const TT = isTotal(), cur = acc?.baseline ?? 0;
   const chips = TT ? [[60,"1 Std."],[120,"2 Std."],[180,"3 Std."],[240,"4 Std."],[300,"5 Std."],[360,"6 Std."],[480,"8 Std."]]
                    : [[10,"10 Min."],[30,"30 Min."],[60,"1 Std."],[90,"1,5 Std."],[120,"2 Std."],[180,"3 Std."],[240,"4 Std."],[300,"5 Std."]];
@@ -2782,7 +2805,7 @@ function baselineSheet(){
     r.querySelector("#blChips2").onclick = e=>{ const b=e.target.closest("button"); if(b) set(+b.dataset.v); };
     r.querySelector("#blSave2").onclick = async ()=>{
       const v = Math.min(1440, (parseInt(r.querySelector("#blH").value,10)||0)*60 + (parseInt(r.querySelector("#blM").value,10)||0));
-      try{ await rpc("sf_set_baseline",{p_token:T(),p_minutes:v}); closeSheet(); await refresh(); show(); toast(`✅ Vorher-Zeit: ${fmtHM(v)} pro Tag`); }catch(err){ toast(err.message); } };
+      try{ await rpc("sf_set_baseline",{p_token:T(),p_minutes:v}); closeSheet(); await refresh(); show(); toast(`✅ Vorher-Zeit: ${fmtHM(v)} pro Tag`); if (typeof after === "function") setTimeout(after, 300); }catch(err){ toast(err.message); } };
   });
 }
 function remindVideoSheet(){
