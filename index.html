@@ -81,6 +81,11 @@ h1,h2,h3{margin:0;letter-spacing:-.02em}
 .cdnum{font-size:40px;font-weight:800;letter-spacing:.02em;font-variant-numeric:tabular-nums;margin:6px 0 4px;background:linear-gradient(90deg,var(--flame1),var(--flame2));-webkit-background-clip:text;color:transparent}
 .cmtbox{flex:1 1 100%;margin-top:8px;background:rgba(255,150,40,.12);border:1.5px solid rgba(255,140,40,.55);border-radius:14px;padding:10px 12px}
 .cmt{font-size:14.5px;line-height:1.45}
+.cmtbox.done{background:var(--soft);border:1px solid var(--line);padding:8px 12px}
+.cmtbox.done>summary{list-style:none;cursor:pointer;font-size:13.5px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.cmtbox.done>summary::-webkit-details-marker{display:none}.cmtbox.done>summary::after{display:none!important;content:none!important}
+.cmt-ok{color:var(--ok);font-weight:700}.cmt-more{margin-left:auto;text-decoration:underline;font-size:12.5px}
+.cmtbox.done[open]>summary .cmt-more{display:none}.cmtbox.done[open]>summary{margin-bottom:6px}
 .rep{margin-top:8px;padding:8px 10px;border-radius:12px;background:rgba(20,160,107,.14);border-left:3px solid var(--ok);font-size:14px;line-height:1.4}.rep .muted{font-size:12.5px}
 .rep.none{background:none;border-left:3px dashed var(--line);color:var(--muted);font-size:13px;padding:4px 10px}.cmt+.cmt{margin-top:6px}
 .cmtbox .input{background:var(--card)}.cmtbox .chatin .btn{height:42px;min-width:46px;width:46px}
@@ -486,7 +491,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "72";
+const APP_VERSION = "73";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1882,6 +1887,13 @@ document.addEventListener("click", async e=>{
   }catch(err){ toast(err.message); b.disabled = false; b.textContent = was; }
 });
 async function loadReplies(){ try{ const l = await rpc("sf_comment_replies",{p_token:T()}) || []; cmtRep = {}; l.forEach(([ref,n,t,at])=>(cmtRep[ref] ||= []).push({n,t,at})); }catch{} }
+/* Beantwortete Kommentare klein & zugeklappt anzeigen */
+function cmtOpen(ref){ const l = cmtRep[ref];
+  if (!l || !l.length) return `<div class="cmtbox">`;
+  const last = l[l.length-1];
+  return `<details class="cmtbox done"><summary>💬 Kommentar <span class="cmt-ok">✓ beantwortet von ${esc(last.n||"Admin")}</span><span class="cmt-more">anzeigen</span></summary>`; }
+function cmtClose(ref){ const l = cmtRep[ref]; return (!l || !l.length) ? `</div>` : `</details>`; }
+const cmtOpenRow = ref => !(cmtRep[ref] && cmtRep[ref].length);
 function repliesHtml(ref){
   const l = cmtRep[ref]; if (!l || !l.length) return `<div class="rep none">○ Noch keine Antwort</div>`;
   return l.map(r=>`<div class="rep">↩️ <b>${esc(r.n||"Admin")}</b> <span class="muted">· ${esc(new Date(r.at).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))}</span><div>${esc(String(r.t).replace(/^Zu deinem (Probe-)?Screenshot( vom [^:]*)?:\s*/,""))}</div></div>`).join("");
@@ -1919,9 +1931,9 @@ function renderReview(){
   if (!reviewData || !cwMsgs){ v.innerHTML = `<div class="loader"></div>`;
     Promise.all([rpc("sf_review_queue",{p_token:T()}), rpc("sf_cw_messages",{p_token:T()}), loadRevLog(), loadReplies()]).then(([q,mm])=>{ reviewData = q || []; cwMsgs = mm || []; if (tab==="review") renderReview(); }).catch(err=>{ toast(err.message); v.innerHTML = `<p class="muted">${esc(err.message)}</p>`; }); return; }
   const q = reviewData;
-  const rows = q.slice(0,80).map((x,i)=>`<div class="row rv-open${x.note||x.dispute?" hascmt":""}" style="flex-wrap:wrap"><b>${esc(x.emoji)} ${esc(x.name)} <span class="muted small">· ${trackBadge(x.group)} · ${esc(toDate(x.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
+  const rows = q.slice(0,80).map((x,i)=>`<div class="row rv-open${(x.note||x.dispute) && cmtOpenRow("day:"+x.member+"|"+x.day)?" hascmt":""}" style="flex-wrap:wrap"><b>${esc(x.emoji)} ${esc(x.name)} <span class="muted small">· ${trackBadge(x.group)} · ${esc(toDate(x.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
       <span>${fmtHM(x.minutes)}${x.total!=null?` · 📱 ${fmtHM(x.total)}`:""}</span>${x.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${x.edited?`<span class="flag">✏️ KI: ${x.ocr==null?"–":fmtHM(x.ocr)}</span>`:""}${x.date_ok===false?`<span class="flag">📅?</span>`:""}${x.suspect?`<span class="flag bad">${String(x.suspect).includes("noch nicht vorbei")?"⏰ zu früh?":"🕵️ Fake?"}</span>`:""}
-      ${(x.note||x.dispute) ? `<div class="cmtbox">${x.note?`<div class="cmt">💬 <b>Kommentar von ${esc(x.name)}:</b> „${esc(x.note)}“</div>`:""}${x.dispute?`<div class="cmt">⚖️ <b>Einspruch:</b> „${esc(x.dispute)}“</div>`:""}${repliesHtml("day:"+x.member+"|"+x.day)}${acc?.admin ? `<div class="chatin" style="margin:8px 0 0"><textarea class="input" rows="1" maxlength="1000" data-rplytxt="${x.member}|${x.day}" placeholder="Direkt antworten …"></textarea><button class="btn btn-flame" data-rply="${x.member}|${x.day}|${esc(x.name)}">➤</button></div>` : ""}</div>` : ""}
+      ${(x.note||x.dispute) ? `${cmtOpen("day:"+x.member+"|"+x.day)}${x.note?`<div class="cmt">💬 <b>Kommentar von ${esc(x.name)}:</b> „${esc(x.note)}“</div>`:""}${x.dispute?`<div class="cmt">⚖️ <b>Einspruch:</b> „${esc(x.dispute)}“</div>`:""}${repliesHtml("day:"+x.member+"|"+x.day)}${acc?.admin ? `<div class="chatin" style="margin:8px 0 0"><textarea class="input" rows="1" maxlength="1000" data-rplytxt="${x.member}|${x.day}" placeholder="Direkt antworten …"></textarea><button class="btn btn-flame" data-rply="${x.member}|${x.day}|${esc(x.name)}">➤</button></div>` : ""}${cmtClose("day:"+x.member+"|"+x.day)}` : ""}
       <span style="margin-left:auto;display:flex;gap:6px"><button class="pill qok" data-qok-m="${x.member}" data-qok-d="${x.day}">✓ Freigeben</button><button class="pill" data-rq="${i}">Ansehen</button></span></div>`).join("") || `<p class="muted small">Alles geprüft 👍 Danke fürs Helfen!</p>`;
   v.innerHTML = `<div class="card"><div class="sectionhead"><h3>🧑‍⚖️ Prüfen</h3><span class="muted small">${q.length} offen</span></div>
       <p class="muted small" style="margin:6px 0 0;line-height:1.5">Du bist Co-Worker und hilfst beim Prüfen. Schau dir den Screenshot an und sag <b>Freigeben</b> oder <b>Ablehnen</b>. Übermalte Apps mit Kommentar „keine Social Media“ gibst du auf Vertrauensbasis frei. Löschen und alles andere machen die Admins. Deine eigenen Tage prüft jemand anderes.</p></div>
@@ -1941,15 +1953,15 @@ function renderAdmin(){
   if (!adminData){ v.innerHTML = `<div class="loader"></div>`; loadAdmin().then(()=>{ if(tab==="admin") renderAdmin(); }); return; }
   const d = adminData, st = d.settings || {};
   const tAuto = t => t.verdict==null && t.ocr===t.minutes && t.date_ok && !t.suspect && !t.note;   // wäre im Ernstfall automatisch freigegeben
-  const tests = moreList(d.tests.map(t=>`<div class="row ${t.verdict===true?"rv-ok":t.verdict===false?"rv-no":tAuto(t)?"rv-auto":"rv-open"}${t.note?" hascmt":""}" style="flex-wrap:wrap">${t.verdict===true?`<span class="rv-tag">✅ KI lag richtig${t.vby?` · ${esc(t.vby)}`:""}</span>`:t.verdict===false?`<span class="rv-tag">❌ KI lag falsch${t.vby?` · ${esc(t.vby)}`:""}</span>`:tAuto(t)?`<span class="rv-tag">🤖 KI sicher – wäre automatisch freigegeben</span>`:`<span class="rv-tag">⏳ KI unsicher – bitte anschauen</span>`}${trackBadge(t.track)}<b style="flex:1 1 100%">${esc(new Date(t.created).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))} · ${esc(t.by)}</b>
+  const tests = moreList(d.tests.map(t=>`<div class="row ${t.verdict===true?"rv-ok":t.verdict===false?"rv-no":tAuto(t)?"rv-auto":"rv-open"}${t.note && cmtOpenRow("test:"+t.id)?" hascmt":""}" style="flex-wrap:wrap">${t.verdict===true?`<span class="rv-tag">✅ KI lag richtig${t.vby?` · ${esc(t.vby)}`:""}</span>`:t.verdict===false?`<span class="rv-tag">❌ KI lag falsch${t.vby?` · ${esc(t.vby)}`:""}</span>`:tAuto(t)?`<span class="rv-tag">🤖 KI sicher – wäre automatisch freigegeben</span>`:`<span class="rv-tag">⏳ KI unsicher – bitte anschauen</span>`}${trackBadge(t.track)}<b style="flex:1 1 100%">${esc(new Date(t.created).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))} · ${esc(t.by)}</b>
       <span>${fmtHM(t.minutes)}${t.ocr!==t.minutes?` <span class="flag">KI: ${t.ocr==null ? "–" : fmtHM(t.ocr)}</span>`:""}</span>
       ${t.suspect?`<span class="flag bad">🕵️</span>`:""}${t.note?`<span class="flag">💬</span>`:""}${t.verdict===true?`<span class="flag" style="color:var(--ok)">KI ✓</span>`:t.verdict===false?`<span class="flag bad">KI ✕</span>`:""}${t.correct!=null?`<span class="flag">richtig: ${fmtHM(t.correct)}</span>`:""}
-      ${t.note ? `<div class="cmtbox"><div class="cmt">💬 <b>Kommentar von ${esc(t.by)}:</b> „${esc(t.note)}“</div>${repliesHtml("test:"+t.id)}${t.acc?`<div class="chatin" style="margin:8px 0 0"><textarea class="input" rows="1" maxlength="1000" data-rplytxt="a${t.id}" placeholder="Direkt antworten …"></textarea><button class="btn btn-flame" data-rplya="${t.acc}|a${t.id}|${esc(t.by)}">➤</button></div>`:""}</div>` : ""}
+      ${t.note ? `${cmtOpen("test:"+t.id)}<div class="cmt">💬 <b>Kommentar von ${esc(t.by)}:</b> „${esc(t.note)}“</div>${repliesHtml("test:"+t.id)}${t.acc?`<div class="chatin" style="margin:8px 0 0"><textarea class="input" rows="1" maxlength="1000" data-rplytxt="a${t.id}" placeholder="Direkt antworten …"></textarea><button class="btn btn-flame" data-rplya="${t.acc}|a${t.id}|${esc(t.by)}">➤</button></div>`:""}${cmtClose("test:"+t.id)}` : ""}
       <button class="pill" data-test="${t.id}">${t.verdict!=null?"Ändern":tAuto(t)?"Ansehen":"Prüfen"}</button><button class="pill" style="color:var(--no)" data-deltest="${t.id}">🗑️</button></div>`), "tests") || `<p class="muted small">Noch keine Tests.</p>`;
-  const queue = moreList(d.queue.map((q,i)=>`<div class="row${q.note||q.dispute?" hascmt":""}" style="flex-wrap:wrap"><b>${esc(q.emoji)} ${esc(q.name)} <span class="muted small">· ${trackBadge(q.group)} · ${esc(toDate(q.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
+  const queue = moreList(d.queue.map((q,i)=>`<div class="row${(q.note||q.dispute) && cmtOpenRow("day:"+q.member+"|"+q.day)?" hascmt":""}" style="flex-wrap:wrap"><b>${esc(q.emoji)} ${esc(q.name)} <span class="muted small">· ${trackBadge(q.group)} · ${esc(toDate(q.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
       <span>${fmtHM(q.minutes)}${q.total!=null?` · 📱 ${fmtHM(q.total)}`:""}</span>${q.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${q.edited?`<span class="flag">✏️</span>`:""}${q.date_ok===false?`<span class="flag">📅?</span>`:""}${q.suspect?`<span class="flag bad">${String(q.suspect).includes("noch nicht vorbei")?"⏰ zu früh?":"🕵️ Fake?"}</span>`:""}
       ${q.suspect?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">🕵️ ${esc(q.suspect)}</div>`:""}
-      ${(q.note||q.dispute) ? `<div class="cmtbox">${q.note?`<div class="cmt">💬 <b>Kommentar von ${esc(q.name)}:</b> „${esc(q.note)}“</div>`:""}${q.dispute?`<div class="cmt">⚖️ <b>Einspruch:</b> „${esc(q.dispute)}“</div>`:""}${repliesHtml("day:"+q.member+"|"+q.day)}${acc?.admin ? `<div class="chatin" style="margin:8px 0 0"><textarea class="input" rows="1" maxlength="1000" data-rplytxt="${q.member}|${q.day}" placeholder="Direkt antworten …"></textarea><button class="btn btn-flame" data-rply="${q.member}|${q.day}|${esc(q.name)}">➤</button></div>` : ""}</div>` : ""}
+      ${(q.note||q.dispute) ? `${cmtOpen("day:"+q.member+"|"+q.day)}${q.note?`<div class="cmt">💬 <b>Kommentar von ${esc(q.name)}:</b> „${esc(q.note)}“</div>`:""}${q.dispute?`<div class="cmt">⚖️ <b>Einspruch:</b> „${esc(q.dispute)}“</div>`:""}${repliesHtml("day:"+q.member+"|"+q.day)}${acc?.admin ? `<div class="chatin" style="margin:8px 0 0"><textarea class="input" rows="1" maxlength="1000" data-rplytxt="${q.member}|${q.day}" placeholder="Direkt antworten …"></textarea><button class="btn btn-flame" data-rply="${q.member}|${q.day}|${esc(q.name)}">➤</button></div>` : ""}${cmtClose("day:"+q.member+"|"+q.day)}` : ""}
       <span style="margin-left:auto;display:flex;gap:6px"><button class="pill qok" data-qok-m="${q.member}" data-qok-d="${q.day}">✓ Freigeben</button><button class="pill" data-q="${i}">Ansehen</button></span></div>`), "queue") || `<p class="muted small">Alles geprüft 👍</p>`;
   const accs = d.accounts.filter(a=>!accSearch || (a.email+" "+a.name).toLowerCase().includes(accSearch.toLowerCase()));
   const accRows = accs.map(a=>`<details class="accd" data-acc="${a.id}" ${accOpen.has(a.id)?"open":""} style="padding:10px 0">
@@ -2200,6 +2212,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"73", date:"14. November", items:[
+    "🔽 Beantwortete Kommentare werden klein: „✓ beantwortet von …“ – zum Aufklappen. Nur unbeantwortete stehen groß und orange"
+  ]},
   { v:"72", date:"14. November", items:[
     "↩️ Unter jedem Kommentar steht jetzt, wer schon geantwortet hat und was – oder „Noch keine Antwort“. So antwortet niemand doppelt"
   ]},
