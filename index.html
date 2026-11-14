@@ -117,7 +117,7 @@ input,textarea,select,.input{color:var(--ink)!important;-webkit-text-fill-color:
 .daystrip .day{font-size:30px;font-weight:800;letter-spacing:-.03em}
 .daystrip .pill{white-space:nowrap;flex:none;display:inline-flex;align-items:center;gap:6px;font-weight:800}.daystrip .pill svg{width:18px;height:18px}
 .devbar{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(255,122,24,.16),rgba(255,61,104,.14));border:1.5px solid rgba(255,90,60,.35);border-radius:16px;padding:12px 14px;margin-bottom:12px}.devbar .devic{font-size:30px;line-height:1}.devbar small{display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.devbar b{font-size:18px}.devsteps .steps{margin-top:0}.devchips{display:flex;flex-wrap:wrap;gap:8px}
-.tabbar button{position:relative}.tdot{position:absolute;top:4px;right:12px;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--flame2);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center;box-shadow:0 0 0 2px var(--bg)}
+.tabbar button{position:relative}.tdot.td{min-width:10px;width:10px;height:10px;padding:0;font-size:0;top:6px;right:16px}.tdot{position:absolute;top:4px;right:12px;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--flame2);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center;box-shadow:0 0 0 2px var(--bg)}
 .chat{display:flex;flex-direction:column;gap:6px;max-height:380px;overflow-y:auto;padding:4px 2px 8px;-webkit-overflow-scrolling:touch}
 .chatday{align-self:center;font-size:11.5px;font-weight:800;color:var(--muted);background:var(--soft);padding:3px 10px;border-radius:99px;margin:8px 0 2px}
 .bub{max-width:82%;padding:9px 13px;border-radius:18px;line-height:1.4;white-space:pre-wrap;word-break:break-word;font-size:15px}
@@ -442,7 +442,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "53";
+const APP_VERSION = "54";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -742,7 +742,11 @@ function renderToday(){
     if (running) html += impulseCard(idx-1, `Impuls · Tag ${idx}`);
     html += calendarCard(s, today);
   }
+  if (!acc?.hidden && pushSupported() && Notification.permission === "default" && !(()=>{ try{ return localStorage.getItem("fr_push_hint"); }catch{ return "1"; } })())
+    html = `<div class="card" id="pushHint" style="display:flex;gap:12px;align-items:center;padding:14px 16px"><div style="font-size:30px">🔔</div><div style="flex:1"><b>Erinnerung gefällig?</b><div class="muted small">Abends eine Nachricht, wenn dein Screenshot fehlt.</div></div><button class="pill" id="phYes" style="background:var(--ink);color:var(--bg)">Ja</button><button class="pill" id="phNo">✕</button></div>` + html;
   $("#vToday").innerHTML = html;
+  $("#phNo")?.addEventListener("click", ()=>{ try{ localStorage.setItem("fr_push_hint","1"); }catch{} $("#pushHint")?.remove(); });
+  $("#phYes")?.addEventListener("click", async ()=>{ try{ localStorage.setItem("fr_push_hint","1"); }catch{} try{ await pushEnable(1); toast("🔔 Erinnerungen sind an – um ca. 18:30 Uhr, wenn was fehlt"); }catch(err){ toast(err.message); } $("#pushHint")?.remove(); });
   $("#goInvite")?.addEventListener("click", invite);
   $("#goProbe")?.addEventListener("click", ()=>uploadFlow(addDays(berlinToday(),-1), true));
   $("#goIdeas")?.addEventListener("click", ()=>{ tab="ideas"; show(); window.scrollTo({top:0}); });
@@ -2046,6 +2050,11 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"54", date:"14. November", items:[
+    "🔔 Neu: Erinnerungen aufs Handy – abends um ca. 18:30 Uhr, wenn dein Screenshot noch fehlt (Einstellungen → Mein Konto)",
+    "⏰ „Letzte Chance“-Erinnerung am letzten Tag zum Nachtragen",
+    "🔴 Roter Punkt bei „Heute“ (und am App-Symbol, wo möglich), solange ein Screenshot fehlt"
+  ]},
   { v:"53", date:"13. November", items:[
     "🧪 KI-Test: Beim Prüfen kannst du die richtige Zeit selbst eintragen (bei „Beides“ auch die Gesamtzeit)",
     "✏️ Bewertung vertippt? Bei bereits geprüften Tests steht „Ändern“ – einfach nochmal öffnen und neu entscheiden"
@@ -2275,6 +2284,8 @@ function renderInfo(){
     <div class="card setacc">
       <details data-sec="konto" ${infoOpen.has("konto")?"open":""}><summary><span class="sa-t"><span class="sa-i">👤</span><span><b>Mein Konto</b><small id="kontoSub">Chat mit den Admins, Challenge, Passwort</small></span></span></summary>
         <div class="accbody">
+    <div class="card" id="cardRemind"><div class="sectionhead"><h3 style="font-size:17px">🔔 Erinnerungen</h3><span class="muted small">aufs Handy</span></div>
+      <div id="remindBox" style="margin-top:6px"></div></div>
     <div class="card" id="cardChat"><div class="sectionhead"><h3 style="font-size:17px">💬 Chat mit den Admins</h3><span class="muted small">nur du & die Admins</span></div>
       <p class="muted small" style="margin:4px 0 8px;line-height:1.45">Fragen, Probleme oder Challenge wechseln? Schreib einfach – die Antwort kommt hier rein.</p>
       <div class="chat" id="chatBox"><div class="loader"></div></div>
@@ -2382,7 +2393,7 @@ ${acc.admin || PUBLIC_UPDATES.length ? `      <details data-sec="news" ${infoOpe
   $("#chSize").onclick = e=>{ const b=e.target.closest("button"); if(b) setLook("size", b.dataset.v); };
   $("#clAll")?.addEventListener("click", ()=>{ $("#clBox").innerHTML = changelogHtml(true); $("#clAll").remove(); });
   $("#btnPw").onclick = changePw;
-  bindMyChat(); if (infoOpen.has("konto")) loadMyChat(); chatBadges();
+  bindMyChat(); if (infoOpen.has("konto")) loadMyChat(); chatBadges(); refreshRemind();
   document.querySelector('#vInfo details[data-sec="konto"]')?.addEventListener("toggle", e=>{ if (e.target.open) loadMyChat(); });
   $("#btnInstall")?.addEventListener("click", installSheet);
   $("#btnExport").onclick = async ()=>{
@@ -2393,7 +2404,7 @@ ${acc.admin || PUBLIC_UPDATES.length ? `      <details data-sec="news" ${infoOpe
       toast("📦 Deine Daten wurden heruntergeladen"); }
     catch(err){ toast(err.message); }
   };
-  $("#btnLogout").onclick = async ()=>{ try{ await rpc("sf_logout",{p_token:T()}); }catch{} logoutLocal(); };
+  $("#btnLogout").onclick = async ()=>{ await pushDisable(); try{ await rpc("sf_logout",{p_token:T()}); }catch{} logoutLocal(); };
   $("#btnDel").onclick = ()=>sheet(`<h3 style="margin-bottom:6px">Konto löschen?</h3><p class="muted small" style="margin:0 0 12px">Alle deine Daten, Screenshots und Flammen werden sofort gelöscht. Das geht nicht rückgängig.</p>
     <label class="field"><span>Zur Sicherheit: dein Passwort</span><input class="input" id="delPw" type="password" autocomplete="current-password"></label>
     <button class="btn" id="delYes" style="background:var(--no);color:#fff;margin-bottom:10px">Endgültig löschen</button><button class="btn btn-ghost" id="delNo">Abbrechen</button>`, r=>{
@@ -2439,6 +2450,77 @@ function changePw(){
       try{ await rpc("sf_change_password",{p_token:T(),p_old:r.querySelector("#pOld").value,p_new:r.querySelector("#pNew").value}); closeSheet(); toast("Passwort geändert 🔒"); }catch(err){ toast(err.message); }
     };
   });
+}
+/* ---------- Erinnerungen (Push-Benachrichtigungen) ---------- */
+const VAPID_PUB = "BDPR0Z435VIZgV-2Q1A6uWPrJ0V3JCzkODi6jAsR9XIJ7gCUqkQmgYdZfUfLZ9MFFvNTwDCSZqV_LRV5PM5cCJQ";
+const pushSupported = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+function b64u(s){ const p = "=".repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g,"+").replace(/_/g,"/")); return Uint8Array.from(b, c=>c.charCodeAt(0)); }
+let pushState = null;   // {on, freq, perm}
+async function pushInfo(){
+  if (!pushSupported()) return {on:false, perm:"unsupported"};
+  try{ const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription();
+    let freq = 1; try{ freq = +(localStorage.getItem("fr_push_freq") || 1); }catch{}
+    return {on: !!sub && Notification.permission === "granted", perm: Notification.permission, freq}; }catch{ return {on:false, perm: Notification.permission}; }
+}
+async function pushEnable(freq){
+  if (!pushSupported()) throw new Error(isIOS() && !isStandalone() ? "Auf dem iPhone geht das nur, wenn Freiraum zum Home-Bildschirm hinzugefügt ist" : "Dein Browser kann leider keine Benachrichtigungen");
+  const perm = await Notification.requestPermission();
+  if (perm !== "granted") throw new Error("Benachrichtigungen wurden nicht erlaubt – du kannst sie in den Handy-Einstellungen für diese Seite erlauben");
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(VAPID_PUB) });
+  const j = sub.toJSON();
+  await rpc("sf_push_subscribe",{p_token:T(), p_endpoint:j.endpoint, p_p256dh:j.keys.p256dh, p_auth:j.keys.auth, p_freq:freq||1});
+  try{ localStorage.setItem("fr_push_freq", String(freq||1)); }catch{}
+}
+async function pushDisable(){
+  try{ const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription();
+    if (sub){ try{ await rpc("sf_push_off",{p_token:T(), p_endpoint:sub.endpoint}); }catch{} await sub.unsubscribe(); } }catch{}
+}
+async function pushTest(){
+  const r = await fetch(`${SB_URL}/functions/v1/freiraum-push`, { method:"POST", headers:{ "apikey":SB_KEY, "Authorization":"Bearer "+SB_KEY, "Content-Type":"application/json" }, body: JSON.stringify({mode:"test", token:T()}) });
+  const d = await r.json().catch(()=>({})); if (!r.ok) throw new Error(d.error || "Test hat nicht geklappt");
+  return d;
+}
+function remindHtml(){
+  const ps = pushState;
+  if (!ps) return `<div class="loader"></div>`;
+  if (ps.perm === "unsupported") return isIOS() && !isStandalone()
+    ? `<p class="small" style="margin:0;line-height:1.5">📲 Auf dem iPhone funktionieren Erinnerungen nur, wenn Freiraum als App installiert ist: in Safari unten auf <b>Teilen</b> → <b>„Zum Home-Bildschirm“</b>. Danach Freiraum über das neue Symbol öffnen und hier einschalten.</p>`
+    : `<p class="muted small" style="margin:0">Dein Browser kann leider keine Benachrichtigungen anzeigen. Der rote Punkt bei „Heute“ erinnert dich trotzdem.</p>`;
+  if (ps.perm === "denied") return `<p class="small" style="margin:0;line-height:1.5">🚫 Benachrichtigungen sind für Freiraum blockiert. Erlaube sie in den Einstellungen deines Handys bzw. Browsers (Website-Einstellungen → Benachrichtigungen) und tippe dann hier nochmal.</p><button class="btn btn-ghost" id="pushOn" style="margin-top:10px">Nochmal versuchen</button>`;
+  return ps.on
+    ? `<div class="status ok" style="display:block;margin:0 0 10px">✅ Erinnerungen sind an – um ca. <b>18:30 Uhr</b>, wenn dein Screenshot fehlt.</div>
+       <div class="seg" id="pushFreq" style="margin:0 0 10px"><button data-f="1" class="${(ps.freq||1)==1?"on":""}">Jeden Tag</button><button data-f="2" class="${ps.freq==2?"on":""}">Alle 2 Tage</button></div>
+       <div class="btnrow" style="margin:0"><button class="btn btn-ghost" id="pushTest">🔔 Test schicken</button><button class="btn btn-ghost" id="pushOff" style="color:var(--no)">Ausschalten</button></div>`
+    : `<p class="muted small" style="margin:0 0 10px;line-height:1.5">Bekomm abends um ca. 18:30 Uhr eine Nachricht aufs Handy, wenn dein Screenshot noch fehlt – nur dann, sonst nie.</p>
+       <button class="btn btn-flame" id="pushOn">🔔 Erinnerungen einschalten</button>`;
+}
+function bindRemind(rerender){
+  $("#pushOn")?.addEventListener("click", async e=>{ const b=e.currentTarget; b.disabled = true;
+    try{ await pushEnable(1); pushState = await pushInfo(); rerender(); toast("🔔 Erinnerungen sind an"); }catch(err){ toast(err.message); pushState = await pushInfo(); rerender(); } });
+  $("#pushOff")?.addEventListener("click", async ()=>{ await pushDisable(); pushState = await pushInfo(); rerender(); toast("🔕 Erinnerungen aus"); });
+  $("#pushTest")?.addEventListener("click", async e=>{ const b=e.currentTarget; b.disabled = true;
+    try{ const d = await pushTest(); toast(d.sent ? "🔔 Gesendet – schau gleich in deine Benachrichtigungen" : "Kein Gerät gefunden – bitte aus- und wieder einschalten"); }catch(err){ toast(err.message); } b.disabled = false; });
+  $("#pushFreq")?.addEventListener("click", async e=>{ const b=e.target.closest("button"); if(!b) return;
+    try{ await pushEnable(+b.dataset.f); pushState = await pushInfo(); rerender(); toast(b.dataset.f==="2" ? "Erinnerung höchstens alle 2 Tage" : "Erinnerung jeden Tag, wenn's fehlt"); }catch(err){ toast(err.message); } });
+}
+async function refreshRemind(){
+  pushState = await pushInfo();
+  const rr = ()=>{ const b = $("#remindBox"); if (b){ b.innerHTML = remindHtml(); bindRemind(rr); } }; rr();
+}
+/* roter Punkt bei „Heute“ + Zahl am App-Symbol, wenn der Screenshot von gestern fehlt */
+function todayBadge(){
+  let n = 0;
+  try{
+    const m = acc && !acc.hidden && acc.status !== "paused" ? myMember() : null;
+    if (m){ const s = statsFor(m), t = berlinToday();
+      for (let k=1; k<=GRACE; k++){ const d = addDays(t,-k); if (inWindow(d) && !s.map[d]) n++; } }
+  }catch{}
+  const btn = document.querySelector('#tabbar [data-t="today"]');
+  if (btn){ let d = btn.querySelector(".tdot.td"); if (n){ if (!d){ d = document.createElement("span"); d.className = "tdot td"; btn.appendChild(d); } d.textContent = n; } else d?.remove(); }
+  try{ if (n) navigator.setAppBadge?.(n); else navigator.clearAppBadge?.(); }catch{}
 }
 function logoutLocal(){ try{ localStorage.removeItem("freiraum"); }catch{} auth=null; acc=null; group=null; adminData=null; tab="group"; show(); }
 
@@ -2655,6 +2737,7 @@ function show(){
   $("#tabbar").classList.toggle("hidden", !logged);
   $("#tabAdmin").classList.toggle("hidden", !(logged && acc.admin));
   $("#tabReview").classList.toggle("hidden", !(logged && isCoWorker()));
+  if (logged) todayBadge();
   $("#topPill").textContent = "bis Weihnachten 🎄";
   $("#btnHelp").classList.toggle("hidden", tutSeen());
   const needGroup = logged && !hasGroup && (tab==="today" || tab==="group");
