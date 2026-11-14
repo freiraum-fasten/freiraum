@@ -1642,6 +1642,7 @@ async function reviewSheet(item, back){
       : await rpc("sf_suspect",{p_token:T(),p_member:item.member,p_day:item.day}).catch(()=>"");
     const note = item.note !== undefined ? item.note : await rpc("sf_note",{p_token:T(),p_member:item.member,p_day:item.day}).catch(()=>null);
     const box = $("#shotBox"); $("#shotLoad")?.remove(); if (!box) return;
+    const early = !!sus && sus.includes("noch nicht vorbei") && !/gleicher screenshot|nicht wie ein|zugeschnitten|falsche ansicht/i.test(sus);
     box.innerHTML = `${img && img.startsWith("data:image/jpeg;base64,") ? `<img class="full" src="${img}" alt="Screenshot">` : `<p class="muted">Kein Bild vorhanden.</p>`}
       ${item.dispute?`<div class="status warn" style="margin:0 0 10px">💬 Einspruch: „${esc(item.dispute)}“</div>`:""}
       ${note?`<div class="status warn" style="display:block;margin:0 0 10px">💬 Kommentar: „${esc(note)}“</div>`:""}
@@ -1651,8 +1652,9 @@ async function reviewSheet(item, back){
       ${(item.ocr!==item.minutes || (BOTH && item.ocr_total!==undefined && item.ocr_total!==item.total))?`<div class="status warn" style="display:block;margin:0 0 10px;line-height:1.5">✏️ <b>Zeit von Hand geändert.</b> Der Tag zählt erst nach deiner Freigabe – mit der Zeit unten.</div>`:""}
       <div class="minutes" style="margin-top:0"><label>${BOTH?"📵 Social Media":"Zeit, die zählen soll"} (falls nötig korrigieren)</label><div class="hmin"><input id="revH" type="number" inputmode="numeric" min="0" max="24" value="${Math.floor(item.minutes/60)}"><span>Std.</span><input id="revM" type="number" inputmode="numeric" min="0" max="59" value="${item.minutes%60}"><span>Min.</span></div></div>
       ${BOTH ? `<div class="minutes"><label>📱 Gesamte Handyzeit</label><div class="hmin"><input id="revH2" type="number" inputmode="numeric" min="0" max="24" value="${item.total==null?"":Math.floor(item.total/60)}"><span>Std.</span><input id="revM2" type="number" inputmode="numeric" min="0" max="59" value="${item.total==null?"":item.total%60}"><span>Min.</span></div></div>` : ""}
-      ${sus!=null?`<div class="status bad" style="display:block;margin:10px 0 0;line-height:1.5">🕵️ <b>Die KI vermutet einen Fake.</b>${sus?`<br>${esc(sus)}`:""}<br><b>Liegt die KI richtig?</b></div>`:""}
-      <div class="choice"><button class="yes" data-v="1"><span class="ic">✓</span>${sus!=null?"Echt – freigeben":"Freigeben"}</button><button class="no" data-v="0"><span class="ic">✕</span>${sus!=null?"Fake – ablehnen":"Ablehnen"}</button></div>
+      ${sus!=null && !early?`<div class="status bad" style="display:block;margin:10px 0 0;line-height:1.5">🕵️ <b>Die KI vermutet einen Fake.</b>${sus?`<br>${esc(sus)}`:""}<br><b>Liegt die KI richtig?</b></div>`:""}
+      ${early?`<div class="status warn" style="display:block;margin:10px 0 0;line-height:1.5">⏰ <b>Wahrscheinlich zu früh fotografiert.</b><br>${esc(sus)}</div>`:""}
+      <div class="choice"><button class="yes" data-v="1"><span class="ic">✓</span>${sus!=null && !early?"Echt – freigeben":"Freigeben"}</button><button class="no" data-v="0"><span class="ic">✕</span>${sus!=null && !early?"Fake – ablehnen":"Ablehnen"}</button></div>
       <button class="btn btn-ghost" id="backBtn" style="margin-top:10px">Zurück</button>
       ${isCoWorker() ? `<button class="btn btn-ghost" id="askDay" style="margin-top:10px">💬 Frage an die Admins zu diesem Tag</button>` : ""}
       ${acc?.admin ? `<button class="btn btn-ghost" id="delShot" style="margin-top:10px;color:var(--no)">🗑️ Screenshot löschen</button>` : ""}`;
@@ -1824,7 +1826,7 @@ function renderReview(){
     Promise.all([rpc("sf_review_queue",{p_token:T()}), rpc("sf_cw_messages",{p_token:T()})]).then(([q,mm])=>{ reviewData = q || []; cwMsgs = mm || []; if (tab==="review") renderReview(); }).catch(err=>{ toast(err.message); v.innerHTML = `<p class="muted">${esc(err.message)}</p>`; }); return; }
   const q = reviewData;
   const rows = q.slice(0,80).map((x,i)=>`<div class="row rv-open" style="flex-wrap:wrap"><b>${esc(x.emoji)} ${esc(x.name)} <span class="muted small">· ${trackBadge(x.group)} · ${esc(toDate(x.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
-      <span>${fmtHM(x.minutes)}${x.total!=null?` · 📱 ${fmtHM(x.total)}`:""}</span>${x.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${x.edited?`<span class="flag">✏️ KI: ${x.ocr==null?"–":fmtHM(x.ocr)}</span>`:""}${x.date_ok===false?`<span class="flag">📅?</span>`:""}${x.suspect?`<span class="flag bad">🕵️ Fake?</span>`:""}
+      <span>${fmtHM(x.minutes)}${x.total!=null?` · 📱 ${fmtHM(x.total)}`:""}</span>${x.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${x.edited?`<span class="flag">✏️ KI: ${x.ocr==null?"–":fmtHM(x.ocr)}</span>`:""}${x.date_ok===false?`<span class="flag">📅?</span>`:""}${x.suspect?`<span class="flag bad">${String(x.suspect).includes("noch nicht vorbei")?"⏰ zu früh?":"🕵️ Fake?"}</span>`:""}
       ${x.note?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">💬 Kommentar: „${esc(x.note)}“</div>`:""}
       ${x.dispute?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">💬 Einspruch: „${esc(x.dispute)}“</div>`:""}
       <span style="margin-left:auto;display:flex;gap:6px"><button class="pill qok" data-qok-m="${x.member}" data-qok-d="${x.day}">✓ Freigeben</button><button class="pill" data-rq="${i}">Ansehen</button></span></div>`).join("") || `<p class="muted small">Alles geprüft 👍 Danke fürs Helfen!</p>`;
@@ -1850,7 +1852,7 @@ function renderAdmin(){
       ${t.suspect?`<span class="flag bad">🕵️</span>`:""}${t.note?`<span class="flag">💬</span>`:""}${t.verdict===true?`<span class="flag" style="color:var(--ok)">KI ✓</span>`:t.verdict===false?`<span class="flag bad">KI ✕</span>`:""}${t.correct!=null?`<span class="flag">richtig: ${fmtHM(t.correct)}</span>`:""}
       <button class="pill" data-test="${t.id}">${t.verdict==null?"Prüfen":"Ändern"}</button><button class="pill" style="color:var(--no)" data-deltest="${t.id}">🗑️</button></div>`), "tests") || `<p class="muted small">Noch keine Tests.</p>`;
   const queue = moreList(d.queue.map((q,i)=>`<div class="row" style="flex-wrap:wrap"><b>${esc(q.emoji)} ${esc(q.name)} <span class="muted small">· ${trackBadge(q.group)} · ${esc(toDate(q.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
-      <span>${fmtHM(q.minutes)}${q.total!=null?` · 📱 ${fmtHM(q.total)}`:""}</span>${q.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${q.edited?`<span class="flag">✏️</span>`:""}${q.date_ok===false?`<span class="flag">📅?</span>`:""}${q.suspect?`<span class="flag bad">🕵️ Fake?</span>`:""}
+      <span>${fmtHM(q.minutes)}${q.total!=null?` · 📱 ${fmtHM(q.total)}`:""}</span>${q.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${q.edited?`<span class="flag">✏️</span>`:""}${q.date_ok===false?`<span class="flag">📅?</span>`:""}${q.suspect?`<span class="flag bad">${String(q.suspect).includes("noch nicht vorbei")?"⏰ zu früh?":"🕵️ Fake?"}</span>`:""}
       ${q.suspect?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">🕵️ ${esc(q.suspect)}</div>`:""}
       ${q.note?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">💬 Kommentar: „${esc(q.note)}“</div>`:""}
       ${q.dispute?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">💬 „${esc(q.dispute)}“</div>`:""}
