@@ -469,7 +469,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "65";
+const APP_VERSION = "66";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -996,6 +996,7 @@ function parseScreenTime(text){
   return apps;
 }
 function dateMatches(text, day){
+  const shown = shownDate(text); if (shown) return shown === day;   // „Gestern, 12. November“ → zählt das Datum, nicht das Wort
   const t = text.toLowerCase(), today = berlinToday(), dt = toDate(day);
   const pats = [];
   if (day===today) pats.push("heute","today");
@@ -1337,13 +1338,14 @@ function fakeSignals(files, loaded, text, ocrOk, apps, day, isT=false, total=0){
   const out = [];
   const UI = /bildschirmzeit|screen\s?time|wellbeing|wohlbefinden|bildschirm|nutzung|aktivit|most used|meistgenutzt|häufigsten|pickups|aktivierungen|benachrichtigungen|notifications|limits|dashboard|verwendet|aktualisiert|updated|kategorien|categories|geräte|devices|soziale netze|social|produktivit|productivit|unterhaltung|entertainment|app-aktivit|digital/i;
   if (ocrOk && !apps.length && !(isT && total > 0) && !UI.test(text)) out.push("Sieht nicht wie ein Bildschirmzeit-Screenshot aus");
-  const end = toDate(day); end.setUTCDate(end.getUTCDate()+1);
+  const ref = (ocrOk && shownDate(text)) || day;   // Tag, der auf dem Screenshot zu sehen ist
+  const end = toDate(ref); end.setUTCDate(end.getUTCDate()+1);
   const dayEnd = new Date(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()).getTime();   // Mitternacht nach dem Tag (Gerätezeit)
   const early = files.map(f=>f.lastModified).filter(t=>t && t < dayEnd - 2*3600e3);
   if (early.length){ const t = new Date(Math.min(...early));
     out.push(`Screenshot wurde am ${t.toLocaleDateString("de-DE",{day:"numeric",month:"numeric"})} um ${t.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})} Uhr gemacht – da war der Tag noch nicht vorbei`); }
   // Tagesüberschrift „Heute“ (nicht „Aktualisiert: heute …“) = am selben Tag fotografiert, der Tag war noch nicht vorbei
-  if (ocrOk && day < berlinToday() && text.split(/\n/).some(l=>{ const t=l.trim(); return /^\W{0,4}(heute|today)\b/i.test(t) && !/aktualis|updated|anzeigen|show|bisher|so far/i.test(t); }))
+  if (ocrOk && ref < berlinToday() && !shownDate(text) && text.split(/\n/).some(l=>{ const t=l.trim(); return /^\W{0,4}(heute|today)\b/i.test(t) && !/aktualis|updated|anzeigen|show|bisher|so far/i.test(t); }))
     out.push("Screenshot zeigt „Heute“ – er wurde am selben Tag gemacht, der Tag war noch nicht vorbei");
   if (loaded.some(x=>x.im.height < x.im.width*1.25)) out.push("Bild ist stark zugeschnitten oder kein Handy-Screenshot");
   return out;
@@ -1382,6 +1384,7 @@ async function analyse(root, files, day, test){
     if (tot != null && (tot < total || totalMissing)) { tot = null; totalMissing = true; } }
   if (isT && apps.length && total < Math.max(...apps.map(a=>a.min))) totalMissing = true;
   const ocrTot = ocrOk && tot != null ? tot : null, hasTot = ocrTot != null;
+  if (test && ocrOk){ const sd = shownDate(text); if (sd && sd < berlinToday()) day = sd; }
   const dateOk = ocrOk ? dateMatches(text, day) : false;
   const shown = ocrOk && !dateOk ? shownDate(text) : null;
   const wv = ocrOk && !(isT && total>0) ? wrongView(text, apps) : null;
@@ -2150,6 +2153,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"66", date:"14. November", items:[
+    "🐞 Datumsprüfung korrigiert: Steht ein Datum auf dem Screenshot (z. B. „Gestern, 12. November“), zählt dieses Datum – nicht das Wort „Gestern“",
+    "🐞 „Zu früh fotografiert“ vergleicht jetzt mit dem Tag auf dem Bild – keine Fehlalarme mehr bei später hochgeladenen Screenshots"
+  ]},
   { v:"65", date:"14. November", items:[
     "💬 Kommentare und Einsprüche stehen in „Zu prüfen“ jetzt orange hervorgehoben – mit Antwortfeld direkt darunter, ohne den Screenshot zu öffnen"
   ]},
