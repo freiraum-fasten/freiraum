@@ -336,6 +336,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 .tabbar button.on{background:var(--soft);color:var(--ink)}
 
 /* Toast + sheet */
+.pbox{border-radius:16px;padding:12px 14px;margin:0 0 10px}.pbox.bad{background:rgba(229,72,77,.08);box-shadow:inset 0 0 0 1.5px rgba(229,72,77,.35)}.pbox.ok{background:rgba(20,160,107,.09);box-shadow:inset 0 0 0 1.5px rgba(20,160,107,.4)}.pbh{font-weight:800;margin-bottom:8px}.pbox.bad .pbh{color:var(--no)}.pbox.ok .pbh{color:var(--ok)}.pg{margin:8px 0 0}.pgt{font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:5px}.pgl{display:flex;flex-wrap:wrap;gap:6px}.pgl span{background:var(--soft);border-radius:99px;padding:5px 10px;font-size:13.5px;font-weight:600}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translate(-50%,-160%);visibility:hidden;background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:14px;font-weight:600;font-size:14px;transition:transform .35s ease,visibility 0s .35s;z-index:50;max-width:90vw;text-align:center}
 .toast.show{transform:translate(-50%,0);visibility:visible;transition:transform .35s ease}
 .sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:40;display:flex;align-items:flex-end;justify-content:center}
@@ -491,7 +492,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "76";
+const APP_VERSION = "77";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1926,6 +1927,26 @@ document.addEventListener("click", async e=>{
   b.disabled = false;
 });
 const testsArchived = () => berlinToday() >= START;   // ab dem Start: Probe-Uploads nur noch unten zum Aufklappen
+/* Übersicht für Co-Worker: was zählt als Social Media, was nicht */
+function platformsGroupedHtml(){
+  const g = (t, l) => `<div class="pg"><div class="pgt">${t}</div><div class="pgl">${l.map(x=>`<span>${x}</span>`).join("")}</div></div>`;
+  return `<details class="card archbox" id="platBox"><summary><b>📋 Was zählt als Social Media?</b><span class="muted small">Spickzettel</span></summary>
+    <div style="margin-top:12px">
+    <div class="pbox bad"><div class="pbh">❌ Zählt – zusammen max. ${limitOf("social")} Min./Tag</div>
+      ${g("⭐ Die Großen",["Instagram","TikTok","YouTube & Shorts","Snapchat","Facebook"])}
+      ${g("💬 Text & Diskussion",["X / Twitter","Threads","Bluesky","Mastodon","Reddit","Tumblr","Jodel"])}
+      ${g("📸 Bilder & Lifestyle",["Pinterest","BeReal","Lemon8","VSCO","Likee"])}
+      ${g("🎮 Streaming & Community",["Twitch","Kick","Discord"])}
+      ${g("💼 Beruflich",["LinkedIn"])}
+      <div class="muted small" style="margin-top:8px">…und ähnliche Apps – auch über den Browser (z. B. Instagram in Safari).</div></div>
+    <div class="pbox ok"><div class="pbh">✅ Zählt nicht – normal erlaubt</div>
+      ${g("💬 Messenger",["WhatsApp","Telegram","Signal","Threema","iMessage","FB Messenger","SMS"])}
+      ${g("📞 Anrufe & Mail",["Telefon","FaceTime","E-Mail"])}
+      ${g("🎵 Musik",["Spotify","YouTube Music","Apple Music"])}
+      ${g("🧭 Alltag",["Navi","Schule","Banking","Kamera & Fotos"])}</div>
+    <div class="muted small" style="line-height:1.5;margin-top:10px">💡 <b>Merke:</b> YouTube zählt, YouTube Music nicht. Übermalte App + Kommentar „keine Social Media“ → auf Vertrauen freigeben. Bei der Handyzeit-Challenge zählt alles zusammen – da ist die Liste egal.</div>
+    </div></details>`;
+}
 function isCoWorker(){ return !!(acc && acc.reviewer && !acc.admin); }
 function renderReview(){
   const v = $("#vReview");
@@ -1941,6 +1962,7 @@ function renderReview(){
     <div class="card"><p class="muted small" style="margin:0 0 8px">✏️ = Zeit von Hand geändert · 📅? = Datum nicht erkannt · 🕵️ = KI vermutet einen Fake · 💬 = Kommentar/Einspruch</p>
       <div class="daylist">${rows}</div>
       <button class="btn btn-ghost" id="rqReload" style="margin-top:10px">🔄 Aktualisieren</button></div>
+    ${platformsGroupedHtml()}
     <div class="card"><div class="sectionhead"><h3 style="font-size:17px">💬 Fragen an die Admins</h3>${cwMsgs.filter(g=>g.answer).length?`<span class="muted small">${cwMsgs.filter(g=>g.answer).length} beantwortet</span>`:""}</div>
       <p class="muted small" style="margin:6px 0 10px;line-height:1.5">Unsicher bei einem Tag? Beim Prüfen gibt's unten „Frage zu diesem Tag“. Hier kannst du auch allgemein etwas fragen.</p>
       <button class="btn btn-primary" id="askGen">💬 Allgemeine Frage stellen</button>
@@ -2219,6 +2241,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"77", date:"14. November", items:[
+    "📋 Co-Worker: Spickzettel „Was zählt als Social Media?“ im Prüfen-Tab – übersichtlich nach Gruppen"
+  ]},
   { v:"76", date:"14. November", items:[
     "🧽 Kleiner weißer Fleck oben am Bildschirmrand entfernt"
   ]},
