@@ -452,7 +452,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "57";
+const APP_VERSION = "58";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -831,7 +831,7 @@ function flameCelebrate(title="Du hast eine Flamme bekommen!", sub=""){
 function reviewLine(e){
   if (e.disputed) return `<div class="status warn" style="margin-top:12px">💬 Dein Einspruch wird von einem Admin geprüft.</div>`;
   if (e.reviewed) return `<div class="status ${e.valid?"ok":"bad"}" style="margin-top:12px">${e.valid?"✅ Von einem Admin bestätigt":"❌ Von einem Admin abgelehnt"}</div>`;
-  if (isPending(e)) return `<div class="status warn" style="margin-top:12px;display:block;line-height:1.5">⏳ <b>Wartet auf Freigabe</b> – du hast die Zeit geändert (KI: ${e.ocr==null?"nichts erkannt":fmtHM(e.ocr)} · eingetragen: ${fmtHM(e.minutes)}). Sobald ein Admin freigibt, zählt der Tag.</div>`;
+  if (isPending(e)) return `<div class="status warn" style="margin-top:12px;display:block;line-height:1.5">⏳ <b>Wartet auf Freigabe</b> – ${e.ocr===e.minutes && (e.total==null) ? "ein Admin schaut sich deinen Screenshot noch an (z. B. weil er gemacht wurde, bevor der Tag vorbei war)" : `du hast die Zeit geändert (KI: ${e.ocr==null?"nichts erkannt":fmtHM(e.ocr)} · eingetragen: ${fmtHM(e.minutes)})`}. Sobald ein Admin freigibt, zählt der Tag.</div>`;
   if (e.joker && e.success) return `<div class="status ok" style="margin-top:12px">🃏 Mit Joker gerettet – die Flamme zählt.</div>`;
   if (e.suspect) return `<div class="status warn" style="margin-top:12px">⏳ Zählt schon – ein Admin schaut sich deinen Screenshot noch genauer an.</div>`;
   if (e.date_ok !== true) return `<div class="status warn" style="margin-top:12px">⏳ Zählt schon – ein Admin schaut noch kurz drüber (Datum nicht erkannt).</div>`;
@@ -859,7 +859,7 @@ function checkinCard(s, day, today){
     return `<div class="card"><div class="done">
       <div class="badge" style="background:var(--warnbg,#fff4d6)">⏳</div>
       <div style="flex:1"><b style="font-size:17px">Wartet auf Freigabe</b>
-      <div class="muted small" style="margin-top:2px">${fmtHM(e.minutes)} eingetragen – ein Admin prüft deine Änderung.</div></div>
+      <div class="muted small" style="margin-top:2px">${fmtHM(e.minutes)} eingetragen – ein Admin prüft noch.</div></div>
     </div>${reviewLine(e)}
     <div style="display:flex;gap:16px;flex-wrap:wrap"><button class="linkbtn" data-up="${day}">Screenshot nochmal hochladen</button><button class="linkbtn" data-delday="${day}" style="color:var(--no)">Löschen</button></div></div>`;
   }
@@ -1288,6 +1288,9 @@ function fakeSignals(files, loaded, text, ocrOk, apps, day, isT=false, total=0){
   const early = files.map(f=>f.lastModified).filter(t=>t && t < dayEnd - 2*3600e3);
   if (early.length){ const t = new Date(Math.min(...early));
     out.push(`Screenshot wurde am ${t.toLocaleDateString("de-DE",{day:"numeric",month:"numeric"})} um ${t.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})} Uhr gemacht – da war der Tag noch nicht vorbei`); }
+  // Tagesüberschrift „Heute“ (nicht „Aktualisiert: heute …“) = am selben Tag fotografiert, der Tag war noch nicht vorbei
+  if (ocrOk && day < berlinToday() && text.split(/\n/).some(l=>{ const t=l.trim(); return /^\W{0,4}(heute|today)\b/i.test(t) && !/aktualis|updated|anzeigen|show|bisher|so far/i.test(t); }))
+    out.push("Screenshot zeigt „Heute“ – er wurde am selben Tag gemacht, der Tag war noch nicht vorbei");
   if (loaded.some(x=>x.im.height < x.im.width*1.25)) out.push("Bild ist stark zugeschnitten oder kein Handy-Screenshot");
   return out;
 }
@@ -1343,6 +1346,7 @@ async function analyse(root, files, day, test){
     <div class="status ${dateOk?"ok":"warn"}" style="display:block;line-height:1.5">${dateOk ? "✅ Datum passt" : shown && shown!==day
       ? `⚠️ Auf dem Screenshot steht <b>${esc(fmtDate(shown))}</b> – gebraucht wird der Screenshot von <b>${esc(fmtDate(day))}</b>. Bitte in der Bildschirmzeit den richtigen Tag auswählen.`
       : "⚠️ Datum im Screenshot nicht erkannt – wird von einem Admin geprüft."}</div>
+    ${sus.some(x=>x.includes("noch nicht vorbei")) ? `<div class="status bad" style="display:block;line-height:1.5">⏰ <b>Zu früh fotografiert?</b> Dieser Screenshot wurde gemacht, bevor ${test?"der Tag":esc(fmtDate(day))} vorbei war – dann fehlt die Zeit vom Rest des Tages.<br>Mach ihn am besten <b>am nächsten Tag</b> unter <b>„Gestern“</b>. Du kannst ihn trotzdem eintragen – dann zählt der Tag erst, wenn ein Admin ihn geprüft hat.</div>` : ""}
     ${test && acc?.admin ? `<div class="status ${sus.length?"bad":"ok"}" style="display:block">${sus.length ? "🕵️ <b>KI-Verdacht:</b> "+sus.map(esc).join(" · ") : "🕵️ Kein Fake-Verdacht"}</div>` : ""}
     <div class="minutes"><label for="minIn">${TR.unit}<div class="muted small" style="font-weight:500;margin-top:2px">${ocrOk && (apps.length || (isT && total>0)) ? "🤖 Von der KI ausgefüllt – nur ändern, wenn's nicht stimmt" : "Nichts erkannt – bitte selbst eintragen"}</div></label><div class="hmin"><input id="hIn" type="number" inputmode="numeric" min="0" max="24" value="${ocrOk && (apps.length || (isT && total>0)) ? Math.floor(total/60) : ""}" placeholder="0"><span>Std.</span><input id="mIn2" type="number" inputmode="numeric" min="0" max="59" value="${ocrOk && (apps.length || (isT && total>0)) ? total%60 : ""}" placeholder="0"><span>Min.</span></div><input id="minIn" type="hidden" value="${ocrOk && (apps.length || (isT && total>0)) ? total : ""}"></div>
     ${isB ? `<div class="minutes"><label>📱 Gesamte Handyzeit<div class="muted small" style="font-weight:500;margin-top:2px">${hasTot ? "🤖 Von der KI ausgefüllt – nur ändern, wenn's nicht stimmt" : "Nicht erkannt – bitte selbst eintragen"}</div></label><div class="hmin"><input id="hIn3" type="number" inputmode="numeric" min="0" max="24" value="${hasTot ? Math.floor(tot/60) : ""}" placeholder="0"><span>Std.</span><input id="mIn3" type="number" inputmode="numeric" min="0" max="59" value="${hasTot ? tot%60 : ""}" placeholder="0"><span>Min.</span></div><input id="totIn" type="hidden" value="${hasTot ? tot : ""}"></div>` : ""}
@@ -1358,7 +1362,7 @@ async function analyse(root, files, day, test){
   const totVal = ()=> isB ? parseInt(root.querySelector("#totIn").value,10) : null;
   const upd = ()=>{ const v = parseInt(root.querySelector("#minIn").value,10); const li = root.querySelector("#limitInfo");
     const tv = totVal(), edited = v !== ocrMin || (isB && (Number.isNaN(tv) ? null : tv) !== ocrTot);
-    autoNote.innerHTML = (!test && (root.querySelector("#noteIn")?.value||"").trim()) ? "💬 Mit Kommentar – ein Admin schaut sich das an." : (!test && sus.length) ? "⏳ Zählt sofort – ein Admin schaut sich den Screenshot noch kurz an." : (!edited && dateOk) ? "🤖 Passt alles – die KI gibt den Tag <b>automatisch frei</b>." : (edited && !test) ? "✏️ Du hast die Zeit geändert – deine Zeit wird gespeichert, der Tag <b>zählt aber erst, wenn ein Admin freigibt</b>." : "⏳ Zählt sofort – weil " + (edited ? "du die Minuten geändert hast" : "das Datum nicht erkannt wurde") + ", schaut ein Admin noch kurz drüber.";
+    autoNote.innerHTML = (!test && (root.querySelector("#noteIn")?.value||"").trim()) ? "💬 Mit Kommentar – ein Admin schaut sich das an." : (!test && sus.some(x=>x.includes("noch nicht vorbei"))) ? "⏳ Weil der Screenshot zu früh gemacht wurde, <b>zählt der Tag erst nach Prüfung</b> durch einen Admin." : (!test && sus.length) ? "⏳ Zählt sofort – ein Admin schaut sich den Screenshot noch kurz an." : (!edited && dateOk) ? "🤖 Passt alles – die KI gibt den Tag <b>automatisch frei</b>." : (edited && !test) ? "✏️ Du hast die Zeit geändert – deine Zeit wird gespeichert, der Tag <b>zählt aber erst, wenn ein Admin freigibt</b>." : "⏳ Zählt sofort – weil " + (edited ? "du die Minuten geändert hast" : "das Datum nicht erkannt wurde") + ", schaut ein Admin noch kurz drüber.";
     if (Number.isNaN(v)){ li.textContent=""; li.className="status"; return; }
     if (isT){ li.className="status ok"; li.textContent=`📱 ${fmtHM(v)} Handyzeit – wird so in die Rangliste eingetragen.`; }
     else if (v <= LIMIT){ li.className="status ok"; li.textContent=`✅ GÜLTIG – ${fmtHM(v)} ${TR.word}, max. ${LIMIT} Min. erlaubt. Das gibt eine Flamme! 🔥`; }
@@ -1390,7 +1394,7 @@ async function analyse(root, files, day, test){
       }
       await rpc("sf_upload",{p_token:T(),p_day:day,p_minutes:minutes,p_shot:shot,p_ocr_minutes:ocrMin,p_date_ok:dateOk,p_suspect:sus.length ? sus.join(" · ") : null,p_note:note,p_total:tmin,p_ocr_total:isB?ocrTot:null});
       closeSheet(); done(); await refresh(); show();
-      if (minutes !== ocrMin || (isB && tmin !== ocrTot)){ toast("⏳ Gespeichert – wartet auf Freigabe durch einen Admin"); return; }
+      if (minutes !== ocrMin || (isB && tmin !== ocrTot) || sus.some(x=>x.includes("noch nicht vorbei"))){ toast("⏳ Gespeichert – wartet auf Freigabe durch einen Admin"); return; }
       if (isT) flameCelebrate("Eingetragen!", `${fmtHM(minutes)} Handyzeit – ab in die Rangliste 📱`);
       else if (minutes <= LIMIT){ $("#bigFlame")?.classList.add("pop"); flameCelebrate("Du hast eine Flamme bekommen!", `${fmtHM(minutes)} – stark! 🔥${isB ? ` · 📱 ${fmtHM(tmin)} Handyzeit` : ""}`); }
       else if (jokersLeft() > 0) jokerSheet(day);
@@ -1611,6 +1615,7 @@ async function reviewSheet(item, back){
     box.innerHTML = `${img && img.startsWith("data:image/jpeg;base64,") ? `<img class="full" src="${img}" alt="Screenshot">` : `<p class="muted">Kein Bild vorhanden.</p>`}
       ${item.dispute?`<div class="status warn" style="margin:0 0 10px">💬 Einspruch: „${esc(item.dispute)}“</div>`:""}
       ${note?`<div class="status warn" style="display:block;margin:0 0 10px">💬 Kommentar: „${esc(note)}“</div>`:""}
+      ${sus && sus.includes("noch nicht vorbei") ? `<div class="status warn" style="display:block;margin:0 0 10px;line-height:1.45">🕐 <b>Prüf-Tipp:</b> Schau aufs Stunden-Diagramm im Screenshot. Gehen die Balken bis in den Abend? Hören sie mittags auf, wurde der Screenshot gemacht, bevor der Tag vorbei war.</div>` : ""}
       <div class="muted small" style="margin:0 0 10px;line-height:1.45">🤝 Ist eine App übermalt und im Kommentar steht, dass es keine Social Media ist: <b>auf Vertrauensbasis freigeben</b>, nicht nachfragen. Privatsphäre geht vor.</div>
       <div class="muted small" style="margin:0 0 8px">${BOTH?"📵 ":""}KI erkannt: <b>${item.ocr==null ? "–" : fmtHM(item.ocr)}</b> · eingetragen: <b>${fmtHM(item.minutes)}</b>${BOTH ? `<br>📱 KI erkannt: <b>${item.ocr_total==null ? "–" : fmtHM(item.ocr_total)}</b> · eingetragen: <b>${item.total==null ? "–" : fmtHM(item.total)}</b>` : ""}${item.date_ok===false?" · 📅 Datum nicht erkannt":""}</div>
       ${(item.ocr!==item.minutes || (BOTH && item.ocr_total!==undefined && item.ocr_total!==item.total))?`<div class="status warn" style="display:block;margin:0 0 10px;line-height:1.5">✏️ <b>Zeit von Hand geändert.</b> Der Tag zählt erst nach deiner Freigabe – mit der Zeit unten.</div>`:""}
@@ -2061,6 +2066,11 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"58", date:"14. November", items:[
+    "⏰ Schutz gegen zu früh fotografierte Screenshots: Zeigt das Bild „Heute“ oder wurde es vor 22 Uhr am selben Tag gemacht, zählt der Tag erst nach Prüfung",
+    "💬 Die Teilnehmenden sehen beim Hochladen direkt den Hinweis „Zu früh fotografiert?“ – und können es gleich richtig machen",
+    "🕐 Prüf-Tipp für Admins: aufs Stunden-Diagramm schauen, ob die Balken bis in den Abend gehen"
+  ]},
   { v:"57", date:"14. November", items:[
     "🧭 Einstellungen übersichtlicher: zwei Gruppen „Mein Freiraum“ und „Hilfe & Infos“",
     "💬 Chat, 🔔 Erinnerungen und 👤 Mein Konto sind jetzt eigene Abteile – nicht mehr alles in einem",
