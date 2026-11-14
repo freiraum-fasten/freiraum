@@ -459,7 +459,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "59";
+const APP_VERSION = "60";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1273,33 +1273,38 @@ function platformsHtml(){
 }
 
 /* Kurz-Anleitung „So lädst du richtig hoch“ – beim Hochladen und in den Regeln */
-function howtoSteps(trk){
+function howtoSteps(trk, day){
   trk = trk || trackOf();
+  const late = day && day < addDays(berlinToday(), -1);   // Nachtragen: älterer Tag als gestern
+  const dname = day ? esc(fmtDate(day)) : "";
   const what = trk==="total" ? "die <b>Gesamtzeit</b> – die große Zahl oben" : trk==="both" ? "die <b>Gesamtzeit</b> und die <b>App-Liste</b>" : "die <b>App-Liste mit Minuten</b>";
   return `<div class="howto">
-    <div class="hs"><span class="hn">1</span><div><b>Erst am nächsten Tag</b><small>Der Tag muss vorbei sein – z. B. am Montag den Sonntag hochladen.</small></div></div>
-    <div class="hs"><span class="hn">2</span><div><b>„Gestern“ auswählen</b><small>In der Bildschirmzeit die Tagesansicht von gestern – das Datum muss drauf sein.</small></div></div>
+    <div class="hs"><span class="hn">1</span><div><b>Erst am nächsten Tag</b><small>Der Tag muss vorbei sein – z. B. am Montag den Sonntag hochladen. Vergessen? Bis zu 3 Tage später nachtragen geht auch.</small></div></div>
+    ${late ? `<div class="hs"><span class="hn">2</span><div><b>„${dname}“ auswählen</b><small>In der Bildschirmzeit zu diesem Tag zurückblättern (Pfeil ‹ oder Balken antippen) – das Datum muss drauf sein.</small></div></div>`
+           : `<div class="hs"><span class="hn">2</span><div><b>„Gestern“ auswählen</b><small>In der Bildschirmzeit die Tagesansicht von gestern – beim Nachtragen den richtigen Tag. Das Datum muss drauf sein.</small></div></div>`}
     <div class="hs"><span class="hn">3</span><div><b>Das muss zu sehen sein</b><small>${what}. Bei langer Liste: bis zu 5 Bilder.</small></div></div>
   </div>`;
 }
 let howtoHidden = false; try{ howtoHidden = localStorage.getItem("fr_howto") === "1"; }catch{}
-function howtoCard(trk){
-  if (howtoHidden) return `<button class="linkbtn" id="howtoShow" style="display:block;margin:0 auto 12px">ℹ️ So geht's richtig</button><div id="howtoBox"></div>`;
-  return `<div id="howtoBox" class="howcard"><div class="howhead">📸 So geht's richtig</div>${howtoSteps(trk)}
+function howtoCard(trk, day){
+  const late = day && day < addDays(berlinToday(), -1);
+  const lateNote = late ? `<div class="status warn" style="display:block;margin:0 0 12px;line-height:1.45">📅 <b>Nachtragen:</b> Wähle in der Bildschirmzeit <b>${esc(fmtDate(day))}</b> – nicht „Gestern“.</div>` : "";
+  if (howtoHidden) return lateNote +  `<button class="linkbtn" id="howtoShow" style="display:block;margin:0 auto 12px">ℹ️ So geht's richtig</button><div id="howtoBox"></div>`;
+  return lateNote + `<div id="howtoBox" class="howcard"><div class="howhead">📸 So geht's richtig</div>${howtoSteps(trk, day)}
     <label class="howno"><input type="checkbox" id="howtoNo"> Nicht mehr anzeigen</label></div>`;
 }
-function bindHowto(root, trk){
+function bindHowto(root, trk, day){
   root.querySelector("#howtoNo")?.addEventListener("change", e=>{ howtoHidden = e.target.checked; try{ localStorage.setItem("fr_howto", e.target.checked ? "1" : "0"); }catch{} if (e.target.checked) toast("Okay – findest du jederzeit unter „So funktioniert's“"); });
-  root.querySelector("#howtoShow")?.addEventListener("click", e=>{ e.target.remove(); const b = root.querySelector("#howtoBox"); b.className = "howcard"; b.innerHTML = `<div class="howhead">📸 So geht's richtig</div>${howtoSteps(trk)}`; });
+  root.querySelector("#howtoShow")?.addEventListener("click", e=>{ e.target.remove(); const b = root.querySelector("#howtoBox"); b.className = "howcard"; b.innerHTML = `<div class="howhead">📸 So geht's richtig</div>${howtoSteps(trk, day)}`; });
 }
 function uploadFlow(day, test=false){
   sheet(`<h3 style="margin-bottom:4px">${test ? (acc?.admin ? "🧪 Test-Upload (Admin)" : "🧪 Probe-Upload") : "Screenshot für "+esc(fmtDate(day))}</h3>
     ${test ? `<p class="muted small" style="margin:0 0 10px">${acc?.admin ? "Läuft genauso wie später bei allen – zählt aber nirgends. Danach kannst du prüfen, ob die KI richtig lag." : "Läuft genauso wie ab dem 15.11. – zählt aber noch nicht. Nimm den Screenshot von <b>gestern</b> (Tagesansicht)."}</p>` : ""}
-    <div id="shotGuide">${howtoCard((test && testTrack) || trackOf())}</div>
+    <div id="shotGuide">${howtoCard((test && testTrack) || trackOf(), test ? null : day)}</div>
     <label class="btn btn-flame" style="cursor:pointer;margin:6px 0 10px">📷 Screenshot(s) auswählen<input type="file" accept="image/*" multiple id="shotIn" hidden></label>
     <button class="linkbtn" id="shotHelp" style="display:block;margin:0 auto 12px">📱 Wo finde ich die Bildschirmzeit?</button>
     <div id="shotRes"></div>`, root=>{
-    bindHowto(root, (test && testTrack) || trackOf());
+    bindHowto(root, (test && testTrack) || trackOf(), test ? null : day);
     root.querySelector("#shotHelp").onclick = guideSheet;
     root.querySelector("#shotIn").onchange = e => {
       const files = [...e.target.files].slice(0,5);
@@ -2098,6 +2103,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"60", date:"14. November", items:[
+    "📅 Nachtragen: Beim Hochladen eines älteren Tages sagt die Anleitung genau, welchen Tag man in der Bildschirmzeit wählen muss (statt „Gestern“)"
+  ]},
   { v:"59", date:"14. November", items:[
     "📸 Beim Hochladen erklärt eine Kurz-Anleitung in 3 Schritten, wie's richtig geht – mit „Nicht mehr anzeigen“",
     "📖 „So funktioniert's“ neu: kurze Themen-Kästen statt langer Liste – und die Anleitung zum Nachlesen",
