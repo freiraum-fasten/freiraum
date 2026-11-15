@@ -492,7 +492,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "77";
+const APP_VERSION = "78";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -557,7 +557,9 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const params = new URLSearchParams(location.search);
 /* Live-Countdown bis 0 Uhr (Gerätezeit) – danach baut sich die Seite von selbst neu */
-function nextMidnight(){ const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()+1).getTime(); }
+function nextMidnight(){   // nächste Mitternacht in deutscher Zeit – egal, wie die Handy-Uhr eingestellt ist
+  const now = Date.now(), p = {}; new Intl.DateTimeFormat("de-DE",{timeZone:"Europe/Berlin",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"}).formatToParts(new Date(now)).forEach(x=>p[x.type]=+x.value||0);
+  return now - now%1000 + (86400 - (p.hour*3600 + p.minute*60 + p.second))*1000; }
 function cdText(ms){ ms = Math.max(0, ms); const t = Math.floor(ms/1000), h = Math.floor(t/3600), m = Math.floor(t%3600/60), x = t%60; return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(x).padStart(2,"0")}`; }
 function cdHtml(title, sub, target){ target = target || nextMidnight();
   return `<div class="card cdcard"><div class="cdtitle">${title}</div><div class="cdnum" data-cd="${target}">${cdText(target-Date.now())}</div><div class="muted small" style="line-height:1.45">${sub}</div></div>`; }
@@ -2241,6 +2243,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"78", date:"15. November", items:[
+    "⏱️ Countdown zählt immer bis Mitternacht deutscher Zeit – auch wenn die Handy-Uhr anders eingestellt ist"
+  ]},
   { v:"77", date:"14. November", items:[
     "📋 Co-Worker: Spickzettel „Was zählt als Social Media?“ im Prüfen-Tab – übersichtlich nach Gruppen"
   ]},
