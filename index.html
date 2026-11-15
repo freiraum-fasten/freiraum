@@ -492,7 +492,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "78";
+const APP_VERSION = "79";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1498,13 +1498,14 @@ async function analyse(root, files, day, test){
 
 /* ---------- Rangliste (eine gemeinsame Gruppe für alle) ---------- */
 let viewTrack = null, testTrack = null, groupView = "rank";
+function avgMin(m){ const c = (m.checkins||[]).filter(x=>x.valid!==false && !isPending(x)); return c.length ? Math.round(c.reduce((a,x)=>a+(x.minutes||0),0)/c.length) : 1e9; }
 function rankRows(){
   const vt = viewTrack||"social";
   let rows = group.members.filter(m=>inView(m, vt)).map(m=>viewMember(m, vt)).map(m=>({m, s:statsFor(m)}));
   // Handyzeit: wer im Schnitt am wenigsten am Handy ist, steht vorn (ohne Uploads ganz hinten)
   const key = viewTrack==="total" ? (r=>{ const a = avgOfStats(r.s); return [a==null ? -1e9 : -a, r.s.validDays]; })
-    : rankMode==="streak" ? (r=>[r.s.streak, r.s.total]) : (r=>[r.s.validDays, -r.s.minutes]);
-  const better = (a,b)=>{ const ka=key(a), kb=key(b); return ka[0]>kb[0] || (ka[0]===kb[0] && ka[1]>kb[1]); };
+    : rankMode==="streak" ? (r=>[r.s.streak, r.s.total, -avgMin(r.m)]) : (r=>[r.s.validDays, -r.s.minutes]);
+  const better = (a,b)=>{ const ka=key(a), kb=key(b); for (let i=0;i<ka.length;i++){ if (ka[i]!==kb[i]) return ka[i]>kb[i]; } return false; };
   rows.forEach(r=>{ r.rank = 1 + rows.filter(o=>better(o,r)).length; });   // Gleichstand = gleicher Platz
   rows.sort((a,b)=> a.rank-b.rank || a.m.name.localeCompare(b.m.name));
   return rows;
@@ -1596,7 +1597,7 @@ function renderGroup(){
       <div class="strip">${strip}</div>
     </div>` : ""}
     ${VT ? `<p class="muted small" style="margin:0 4px 12px;line-height:1.5">📱 <b>Handyzeit-Challenge:</b> Wer im Schnitt am wenigsten Handyzeit pro Tag hat, steht vorn. Gezählt werden alle hochgeladenen Tage. <span class="unsure">Rote Zeiten⏳</span> = noch nicht bestätigt – ein Admin prüft noch.${canReview?" <b>Admin:</b> Tippe auf eine Person, um Screenshots zu prüfen.":""}</p>` : `<div class="seg" id="segRank"><button data-r="streak" class="${rankMode==="streak"?"on":""}">🔥 Flammen</button><button data-r="comp" class="${rankMode==="comp"?"on":""}">🏆 Wettbewerb</button></div>
-    <p class="muted small" style="margin:-6px 4px 12px;line-height:1.5">${rankMode==="streak" ? `Sortiert nach Flammen in Folge (Tage mit max. ${vLimit} Min. ${TRACKS[viewTrack].word}). Gleichstand = gleicher Platz.` : `Wer die meisten geschafften Tage hat, liegt vorn. Bei Gleichstand gewinnt, wer weniger Minuten hatte. Ungültige Tage zählen nicht.`} <span class="unsure">Rote Zeiten⏳</span> = noch nicht bestätigt – ein Admin prüft noch.${canReview?" <b>Admin:</b> Tippe auf eine Person, um Screenshots zu prüfen.":""}</p>`}
+    <p class="muted small" style="margin:-6px 4px 12px;line-height:1.5">${rankMode==="streak" ? `Sortiert nach Flammen in Folge (Tage mit max. ${vLimit} Min. ${TRACKS[viewTrack].word}). Gleich viele Flammen? Dann liegt vorn, wer im Schnitt <b>weniger Minuten</b> hatte.` : `Wer die meisten geschafften Tage hat, liegt vorn. Bei Gleichstand gewinnt, wer weniger Minuten hatte. Ungültige Tage zählen nicht.`} <span class="unsure">Rote Zeiten⏳</span> = noch nicht bestätigt – ein Admin prüft noch.${canReview?" <b>Admin:</b> Tippe auf eine Person, um Screenshots zu prüfen.":""}</p>`}
     <div class="card" style="padding:8px 20px"><ul class="lb">${list || `<li><div class="who"><span>Noch niemand ${mine?"sonst ":""}in dieser Gruppe – lade Freunde ein!</span></div></li>`}</ul></div>
     <button class="btn btn-flame" id="btnInvite" style="margin-bottom:14px">Freunde einladen</button>`;
   $("#btnInvite").onclick = invite;
@@ -2243,6 +2244,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"79", date:"15. November", items:[
+    "🏆 Rangliste: Bei gleich vielen Flammen liegt vorn, wer im Schnitt weniger Minuten hatte"
+  ]},
   { v:"78", date:"15. November", items:[
     "⏱️ Countdown zählt immer bis Mitternacht deutscher Zeit – auch wenn die Handy-Uhr anders eingestellt ist"
   ]},
