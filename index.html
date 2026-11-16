@@ -500,7 +500,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "85";
+const APP_VERSION = "86";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -592,6 +592,19 @@ function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("sh
 function load(){ try { return JSON.parse(localStorage.getItem("freiraum")||"null"); } catch { return null; } }
 function save(v){ try { localStorage.setItem("freiraum", JSON.stringify(v)); } catch {} }
 
+/* Fehler-Meldung an David (nur unerwartete Fehler, gedrosselt, ohne persönliche Daten außer dem Namen) */
+const errSent = new Set();
+function reportErr(msg, place){
+  try{
+    msg = String(msg||"").slice(0,300); if (!msg) return;
+    if (/script error|resizeobserver|load failed|failed to fetch|networkerror|network request failed|abort|cancel|verbindung fehlgeschlagen|quota|extension|webkit-masked-url/i.test(msg)) return;
+    if (errSent.has(msg) || errSent.size >= 5) return; errSent.add(msg);
+    fetch(`${SB_URL}/rest/v1/rpc/sf_report_error`, { method:"POST", headers:{ "apikey":SB_KEY, "Authorization":"Bearer "+SB_KEY, "Content-Type":"application/json" },
+      body: JSON.stringify({ p_token: auth?.token || null, p_msg: msg, p_place: String(place||"").slice(0,120), p_ver: APP_VERSION, p_ua: navigator.userAgent.slice(0,160) }) }).catch(()=>{});
+  }catch{}
+}
+window.addEventListener("error", e=>reportErr(e.message, (e.filename||"").split("/").pop()+":"+(e.lineno||"")));
+window.addEventListener("unhandledrejection", e=>reportErr(e.reason?.message || e.reason, "promise"));
 async function rpc(fn, args){
   const r = await fetch(`${SB_URL}/rest/v1/rpc/${fn}`, {
     method:"POST", headers:{ "apikey":SB_KEY, "Authorization":"Bearer "+SB_KEY, "Content-Type":"application/json" },
@@ -599,7 +612,11 @@ async function rpc(fn, args){
   });
   const txt = await r.text();
   let data = null; try { data = txt ? JSON.parse(txt) : null; } catch {}
-  if (!r.ok) throw new Error((data && data.message) || "Verbindung fehlgeschlagen");
+  if (!r.ok){
+    // P0001 = unsere eigenen Hinweise („Für diesen Tag hast du schon …“) – kein Fehler. Alles andere wird gemeldet.
+    if (fn !== "sf_report_error" && !(data && data.code === "P0001")) reportErr(`Server ${r.status} bei ${fn}: ${(data && (data.message||data.code)) || "?"}`, fn);
+    throw new Error((data && data.message) || "Verbindung fehlgeschlagen");
+  }
   return data;
 }
 
@@ -1809,9 +1826,10 @@ async function loadAdmin(){
   if (!acc?.admin) { adminData = null; return; }
   try { [adminData, cwMsgs, chatThreads] = await Promise.all([rpc("sf_admin_overview",{p_token:T()}), rpc("sf_cw_messages",{p_token:T()}).catch(()=>[]), rpc("sf_chat_threads",{p_token:T()}).catch(()=>[])]); chatThreads ||= [];
     joinReqs = await rpc("sf_admin_requests",{p_token:T()}).catch(()=>[]) || [];
+    ownerErrs = acc.owner ? (await rpc("sf_owner_errors",{p_token:T()}).catch(()=>[]) || []) : [];
     await Promise.all([loadRevLog(), loadReplies()]); } catch(err){ toast(err.message); }
 }
-let accSearch = ""; const accOpen = new Set();
+let accSearch = ""; const accOpen = new Set(); let ownerErrs = [];
 /* ---------- Chat mit den Admins ---------- */
 function chatTime(t){ const d = new Date(t); return d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}); }
 function chatDay(t){ const d = new Date(t), td = new Date(); const y = new Date(td); y.setDate(td.getDate()-1);
@@ -2111,6 +2129,10 @@ function renderAdmin(){
       <button class="btn btn-primary" id="btnTestT" style="margin-top:8px">📱 Test: Handyzeit-Screenshot (gesamt)</button>
       <button class="btn btn-ghost" id="btnTestB" style="margin-top:8px">🔥 Test: Beides (Social Media + Handyzeit)</button>
       <div class="daylist" style="margin-top:10px">${tests}</div></div></details>` : ""}
+    ${acc.owner ? `<details class="card archbox" id="errBox"${ownerErrs.length?" open":""}><summary><b>🐞 Fehler-Meldungen</b><span class="muted small">${ownerErrs.length ? `<span style="color:var(--no);font-weight:800">${ownerErrs.length} neu</span>` : "alles ruhig ✅"}</span></summary>
+      <div style="margin-top:10px"><p class="muted small" style="margin:0 0 8px;line-height:1.5">Nur du siehst das. Wenn bei jemandem etwas schiefgeht, landet es hier – und du bekommst eine Push-Nachricht (gleicher Fehler höchstens alle 6 Std.). Nach 30 Tagen wird alles gelöscht.</p>
+      ${ownerErrs.length ? `<div class="daylist">${ownerErrs.map(e=>`<div class="row" style="flex-wrap:wrap;display:block"><div class="muted small">${esc(new Date(e.at).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))} · ${esc(e.who||"nicht angemeldet")} · v${esc(e.ver||"?")}${e.place?` · ${esc(e.place)}`:""}</div><div style="margin-top:4px;line-height:1.4;word-break:break-word">${esc(e.msg)}</div><div class="muted small" style="margin-top:4px;word-break:break-word">${esc(e.ua||"")}</div></div>`).join("")}</div>
+        <button class="btn btn-ghost" id="errClear" style="margin-top:10px">✓ Alle als erledigt markieren</button>` : `<p class="muted small" style="margin:0">Keine neuen Fehler. 👍</p>`}</div></details>` : ""}
     ${acc.owner ? `<div class="card"><h3 style="font-size:17px;margin-bottom:6px">⏱️ Zeit in Freiraum</h3>
       <p class="muted small" style="margin:0 0 10px">Live-Zähler, wie lange alle zusammen in der App waren. Nur du kannst ihn zurücksetzen.</p>
       <button class="btn btn-ghost" id="btnResetApp" style="color:var(--no)">Zähler auf 0 zurücksetzen</button></div>` : ""}`;
@@ -2205,6 +2227,7 @@ function renderAdmin(){
       await refresh(); await loadAdmin(); show(); toast("Gespeichert");
     }catch(err){ toast(err.message); }
   };
+  $("#errClear")?.addEventListener("click", async ()=>{ try{ await rpc("sf_owner_errors_clear",{p_token:T()}); ownerErrs = []; toast("Erledigt ✓"); renderAdmin(); }catch(err){ toast(err.message); } });
   $("#btnResetApp")?.addEventListener("click", ()=>confirmSheet("Den Zähler „Zeit in Freiraum“ für alle auf 0 zurücksetzen?", async ()=>{
     try{ const r = await rpc("sf_admin_reset_app_time",{p_token:T()}); appTime = r; appTimeAt = Date.now(); appShown = 0; toast("⏱️ Zähler zurückgesetzt"); }catch(err){ toast(err.message); }
   }));
@@ -2304,6 +2327,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"86", date:"16. November", items:[
+    "🔔 Admins & Co-Worker bekommen eine Push-Nachricht bei neuen Kommentaren, Einsprüchen und Predigten",
+    "🐞 David bekommt eine Nachricht, wenn bei jemandem ein Fehler in der App passiert – mit Liste im Admin-Bereich"
+  ]},
   { v:"85", date:"16. November", items:[
     "🤝 Rangliste: Gleichstand an der Spitze – beide stehen auf Gold, der Nächste ist Platz 2 (nicht 3)",
     "👑 Mehr als 3 gleichauf? Dann gibt's eine goldene „Spitzengruppe“ statt Treppchen"
