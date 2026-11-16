@@ -236,15 +236,22 @@ html,body{max-width:100%;overflow-x:hidden}
 .pod{display:flex;flex-direction:column;align-items:center;text-align:center;min-width:0;cursor:default}
 .pod-av{position:relative;width:58px;height:58px;border-radius:20px;background:var(--soft);display:grid;place-items:center;font-size:30px;overflow:visible}
 .pod-av img{width:100%;height:100%;border-radius:20px;object-fit:cover}
-.pod.p1 .pod-av{width:72px;height:72px;font-size:38px;box-shadow:0 0 0 3px #FFC83D}
+.pod.k1 .pod-av{width:72px;height:72px;font-size:38px}.pod.k1 .pod-av{box-shadow:0 0 0 3px #FFC83D}
 .pod-medal{position:absolute;bottom:-8px;right:-8px;font-size:22px}
 .pod b{margin-top:10px;font-size:14.5px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pod span{font-size:12.5px;color:var(--muted);font-weight:600}
 .pod-step{width:100%;margin-top:8px;border-radius:14px 14px 6px 6px;display:grid;place-items:center;font-weight:800;font-size:22px;color:#fff}
-.pod.p1 .pod-step{height:78px;background:linear-gradient(180deg,#FFC83D,#FF8A1F)}
-.pod.p2 .pod-step{height:58px;background:linear-gradient(180deg,#C9CED6,#9AA1AC)}
-.pod.p3 .pod-step{height:44px;background:linear-gradient(180deg,#E3A06B,#B86B34)}
+.pod.k1 .pod-step{height:78px;background:linear-gradient(180deg,#FFC83D,#FF8A1F)}
+.pod.k2 .pod-step{height:58px;background:linear-gradient(180deg,#C9CED6,#9AA1AC)}
+.pod.k3 .pod-step{height:44px;background:linear-gradient(180deg,#E3A06B,#B86B34)}
 .pod.me b{color:var(--flame2)}
+.tieband{margin:0 auto 10px;width:max-content;max-width:100%;padding:7px 14px;border-radius:99px;font-size:13px;font-weight:800;color:#7A4A00;background:linear-gradient(90deg,#FFE08A,#FFC83D);box-shadow:0 4px 14px rgba(255,200,61,.35);text-align:center}
+.topgrp{border-radius:24px;padding:16px 14px 14px;margin:4px 0 16px;background:linear-gradient(160deg,rgba(255,200,61,.20),rgba(255,138,31,.10));box-shadow:inset 0 0 0 2px rgba(255,200,61,.55),0 10px 30px rgba(255,170,40,.18)}
+.tg-head{display:flex;gap:12px;align-items:center;margin-bottom:14px}.tg-crown{font-size:34px;filter:drop-shadow(0 4px 8px rgba(255,180,0,.5))}
+.tg-head b{display:block;font-size:18px}.tg-head span{font-size:13px;color:var(--muted);font-weight:600}
+.tg-list{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 6px}
+.tg-p{display:flex;flex-direction:column;align-items:center;text-align:center;min-width:0}.tg-p .pod-av{width:52px;height:52px;font-size:26px;box-shadow:0 0 0 2.5px #FFC83D}.tg-p .pod-medal{font-size:17px;bottom:-6px;right:-6px}
+.tg-p b{margin-top:8px;font-size:13px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tg-p span{font-size:11.5px;color:var(--muted);font-weight:600;line-height:1.3}.tg-p.me b{color:var(--flame2)}
 .konfi{background:linear-gradient(135deg,rgba(255,138,31,.14),rgba(255,61,90,.14));border:1.5px solid rgba(255,90,60,.35)}
 .wc .wc-head{display:flex;gap:12px;align-items:center}
 .wc .wc-ico{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:28px;background:var(--soft);flex:none}
@@ -493,7 +500,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "84";
+const APP_VERSION = "85";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1553,7 +1560,8 @@ function rankRows(){
   const key = viewTrack==="total" ? (r=>{ const a = avgOfStats(r.s); return [a==null ? -1e9 : -a, r.s.validDays]; })
     : rankMode==="streak" ? (r=>[r.s.streak, r.s.total, -avgMin(r.m)]) : (r=>[r.s.validDays, -r.s.minutes]);
   const better = (a,b)=>{ const ka=key(a), kb=key(b); for (let i=0;i<ka.length;i++){ if (ka[i]!==kb[i]) return ka[i]>kb[i]; } return false; };
-  rows.forEach(r=>{ r.rank = 1 + rows.filter(o=>better(o,r)).length; });   // Gleichstand = gleicher Platz
+  // Gleichstand = gleicher Platz, danach geht's ohne Lücke weiter (1, 1, 2 – nicht 1, 1, 3)
+  rows.forEach(r=>{ r.rank = 1 + new Set(rows.filter(o=>better(o,r)).map(o=>JSON.stringify(key(o)))).size; });
   rows.sort((a,b)=> a.rank-b.rank || a.m.name.localeCompare(b.m.name));
   return rows;
 }
@@ -1591,8 +1599,10 @@ function renderGroup(){
     : `<div style="text-align:right"><b style="font-size:17px">${r.s.validDays}</b><div class="muted small">${hmU(r.s.minutes, anyUnsure(r.m))}</div></div>`;
   const medal = k => k===1?"🥇":k===2?"🥈":k===3?"🥉":k;
   const hasData = r => VT ? r.s.validDays > 0 : (r.s.streak > 0 || r.s.total > 0);
-  const podium = rows.filter(hasData).slice(0,3);
-  const podIds = new Set(podium.length===3 ? podium.map(r=>r.m.id) : []);
+  const tops = rows.filter(r=>hasData(r) && r.rank===1);
+  const bigTie = tops.length > 3;                      // mehr als 3 gleichauf → Spitzengruppe statt Treppchen
+  const podium = bigTie ? [] : rows.filter(hasData).slice(0,3);
+  const podIds = new Set(bigTie ? tops.map(r=>r.m.id) : podium.length===3 ? podium.map(r=>r.m.id) : []);
   const list = rows.filter(r=>r!==mine && !podIds.has(r.m.id)).map(r=>{
     const flags = canReview ? (r.m.checkins||[]).filter(c=>!c.reviewed && (c.edited || c.date_ok===false)).length : 0;
     return `<li class="${canReview?"tap":""}" data-mid="${r.m.id}"><div class="rank">${medal(r.rank)}</div><div class="av">${avatarHtml(r.m)}</div>
@@ -1620,9 +1630,12 @@ function renderGroup(){
       ${needShot ? `<button class="btn h2-cta" id="heroUp">📸 Screenshot von gestern hochladen</button>`
         : today < START ? `<button class="btn h2-cta" id="heroProbe">🧪 Probe-Upload ausprobieren</button>` : ""}
     </div>`;
-  const podHtml = podium.length===3 ? `<div class="podium">${[1,0,2].map(i=>{ const r = podium[i];
-      return `<div class="pod p${i+1} ${r===mine?"me":""}" data-mid="${r.m.id}"><div class="pod-av">${avatarHtml(r.m)}<span class="pod-medal">${["🥇","🥈","🥉"][Math.min(r.rank,3)-1]}</span></div>
-        <b>${esc(r.m.name)}</b><span>${VT ? (avgOfStats(r.s)!=null?hmU(avgOfStats(r.s), anyUnsure(r.m))+" Ø":"–") : rankMode==="streak" ? r.s.streak+" 🔥" : r.s.validDays+" Tage"}${!VT && avgAll(r)!=null ? `<br><small class="muted">Ø ${hmU(Math.round(avgAll(r)), anyUnsure(r.m))}</small>` : ""}</span><div class="pod-step">${r.rank}</div></div>`; }).join("")}</div>` : "";
+  const podVal = r => `${VT ? (avgOfStats(r.s)!=null?hmU(avgOfStats(r.s), anyUnsure(r.m))+" Ø":"–") : rankMode==="streak" ? r.s.streak+" 🔥" : r.s.validDays+" Tage"}${!VT && avgAll(r)!=null ? `<br><small class="muted">Ø ${hmU(Math.round(avgAll(r)), anyUnsure(r.m))}</small>` : ""}`;
+  const podHtml = bigTie ? `<div class="topgrp"><div class="tg-head"><span class="tg-crown">👑</span><div><b>Spitzengruppe</b><span>${tops.length} Leute teilen sich Platz 1 🤝</span></div></div>
+      <div class="tg-list">${tops.map(r=>`<div class="tg-p ${r===mine?"me":""}" data-mid="${r.m.id}"><div class="pod-av">${avatarHtml(r.m)}<span class="pod-medal">🥇</span></div><b>${esc(r.m.name)}</b><span>${podVal(r)}</span></div>`).join("")}</div></div>`
+    : podium.length===3 ? `${tops.length>=2 ? `<div class="tieband">🤝 Gleichstand an der Spitze – ${tops.length===2?"beide":"alle drei"} auf Platz 1</div>` : ""}<div class="podium">${[1,0,2].map(i=>{ const r = podium[i], k = Math.min(r.rank,3);
+      return `<div class="pod p${i+1} k${k} ${r===mine?"me":""}" data-mid="${r.m.id}"><div class="pod-av">${avatarHtml(r.m)}<span class="pod-medal">${["🥇","🥈","🥉"][k-1]}</span></div>
+        <b>${esc(r.m.name)}</b><span>${podVal(r)}</span><div class="pod-step">${r.rank}</div></div>`; }).join("")}</div>` : "";
   $("#vGroup").innerHTML = `
     ${hero}
     ${head}
@@ -1651,7 +1664,7 @@ function renderGroup(){
   bindHead();
   $("#heroUp")?.addEventListener("click", ()=>uploadFlow(yd));
   $("#heroProbe")?.addEventListener("click", ()=>uploadFlow(yd, true));
-  if (canReview) document.querySelectorAll("#vGroup .pod[data-mid]").forEach(el=>el.onclick=()=>memberSheet(el.dataset.mid));
+  if (canReview) document.querySelectorAll("#vGroup .pod[data-mid], #vGroup .tg-p[data-mid]").forEach(el=>el.onclick=()=>memberSheet(el.dataset.mid));
   if ($("#segRank")) $("#segRank").onclick = e => { const b=e.target.closest("button"); if(!b) return; rankMode=b.dataset.r; renderGroup(); };
 
   if (canReview) document.querySelectorAll("#vGroup .lb li[data-mid]").forEach(li=>li.onclick=()=>memberSheet(li.dataset.mid));
@@ -2291,6 +2304,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"85", date:"16. November", items:[
+    "🤝 Rangliste: Gleichstand an der Spitze – beide stehen auf Gold, der Nächste ist Platz 2 (nicht 3)",
+    "👑 Mehr als 3 gleichauf? Dann gibt's eine goldene „Spitzengruppe“ statt Treppchen"
+  ]},
   { v:"84", date:"16. November", items:[
     "📣 Neu-Nachricht für alle: Predigt & Online-Gottesdienst – Predigt-Häkchen ist jetzt für alle freigeschaltet"
   ]},
