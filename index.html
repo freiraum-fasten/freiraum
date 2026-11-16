@@ -316,6 +316,7 @@ a.btn{color:inherit}
 .lb{list-style:none;margin:0;padding:0}
 .lb li{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
 .lb li:last-child{border-bottom:0}
+.lb li.me{margin:4px -10px;padding:12px 10px;border-radius:16px;border-bottom:0;background:linear-gradient(90deg,rgba(255,138,31,.16),rgba(255,61,90,.12));box-shadow:inset 0 0 0 2px rgba(255,110,60,.55)}.lb li.me b{color:var(--flame2)}.lb li.me .youtag{color:#fff}.youtag.sm{font-size:10px;padding:2px 7px;vertical-align:2px;margin-left:4px}
 .lb .rank{width:28px;font-weight:800;color:var(--muted);text-align:center;font-size:17px}
 .lb .av{width:42px;height:42px;border-radius:14px;background:var(--soft);display:grid;place-items:center;font-size:22px;flex:none}
 .lb .who{flex:1;min-width:0}
@@ -500,7 +501,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "86";
+const APP_VERSION = "87";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1620,10 +1621,10 @@ function renderGroup(){
   const bigTie = tops.length > 3;                      // mehr als 3 gleichauf → Spitzengruppe statt Treppchen
   const podium = bigTie ? [] : rows.filter(hasData).slice(0,3);
   const podIds = new Set(bigTie ? tops.map(r=>r.m.id) : podium.length===3 ? podium.map(r=>r.m.id) : []);
-  const list = rows.filter(r=>r!==mine && !podIds.has(r.m.id)).map(r=>{
+  const list = rows.filter(r=>!podIds.has(r.m.id)).map(r=>{   // man selbst steht zusätzlich auch in der Liste (hervorgehoben)
     const flags = canReview ? (r.m.checkins||[]).filter(c=>!c.reviewed && (c.edited || c.date_ok===false)).length : 0;
-    return `<li class="${canReview?"tap":""}" data-mid="${r.m.id}"><div class="rank">${medal(r.rank)}</div><div class="av">${avatarHtml(r.m)}</div>
-      <div class="who"><b>${esc(r.m.name)}</b><span>${statusOf(r) || (r.s.total+" 🔥 gesamt")}${flags?` · <span class="flag">⚠️ ${flags}</span>`:""}</span></div>${valueOf(r)}</li>`;
+    return `<li class="${canReview?"tap":""}${r===mine?" me":""}" data-mid="${r.m.id}"${r===mine?' id="meRow"':""}><div class="rank">${medal(r.rank)}</div><div class="av">${avatarHtml(r.m)}</div>
+      <div class="who"><b>${esc(r.m.name)}${r===mine?` <span class="youtag sm">DU</span>`:""}</b><span>${statusOf(r) || (r.s.total+" 🔥 gesamt")}${flags?` · <span class="flag">⚠️ ${flags}</span>`:""}</span></div>${valueOf(r)}</li>`;
   }).join("");
   // eigene 40-Tage-Leiste
   let strip = "";
@@ -2327,6 +2328,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"87", date:"16. November", items:[
+    "📍 Rangliste: Du stehst jetzt zusätzlich auch in der Liste – farbig hervorgehoben mit „DU“"
+  ]},
   { v:"86", date:"16. November", items:[
     "🔔 Admins & Co-Worker bekommen eine Push-Nachricht bei neuen Kommentaren, Einsprüchen und Predigten",
     "🐞 David bekommt eine Nachricht, wenn bei jemandem ein Fehler in der App passiert – mit Liste im Admin-Bereich"
