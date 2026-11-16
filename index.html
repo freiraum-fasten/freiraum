@@ -501,7 +501,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "87";
+const APP_VERSION = "88";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1878,7 +1878,7 @@ function bindMyChat(){
 }
 async function checkChat(){
   if (!auth?.token || !acc) return;
-  try{ const u = await rpc("sf_chat_unread",{p_token:T()}); if (u){ chatUnread = u; chatBadges(); } }catch{}
+  try{ const u = await rpc("sf_chat_unread",{p_token:T()}); if (u){ chatUnread = u; chatBadges(); todayBadge(); } }catch{}
 }
 function chatBadges(){
   const set = (btn, n)=>{ if (!btn) return; let d = btn.querySelector(".tdot"); if (n>0){ if (!d){ d = document.createElement("span"); d.className = "tdot"; btn.appendChild(d); } d.textContent = n>9?"9+":n; } else d?.remove(); };
@@ -2328,6 +2328,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"88", date:"16. November", items:[
+    "🔴 Punkt am App-Symbol zeigt jetzt auch ungelesene Chat-Nachrichten – und verschwindet, sobald alles erledigt ist"
+  ]},
   { v:"87", date:"16. November", items:[
     "📍 Rangliste: Du stehst jetzt zusätzlich auch in der Liste – farbig hervorgehoben mit „DU“"
   ]},
@@ -2987,7 +2990,12 @@ function todayBadge(){
   }catch{}
   const btn = document.querySelector('#tabbar [data-t="today"]');
   if (btn){ let d = btn.querySelector(".tdot.td"); if (n){ if (!d){ d = document.createElement("span"); d.className = "tdot td"; btn.appendChild(d); } d.textContent = n; } else d?.remove(); }
-  try{ if (n) navigator.setAppBadge?.(n); else navigator.clearAppBadge?.(); }catch{}
+  // Punkt am App-Symbol: fehlende Screenshots + ungelesene Chat-Antworten (+ für Prüfer: offene Kommentare)
+  let total = n;
+  try{ total += (chatUnread?.mine||0) + ((acc?.admin && chatUnread?.admin) || 0); }catch{}
+  try{ if (total) navigator.setAppBadge?.(total); else navigator.clearAppBadge?.(); }catch{}
+  // Alles erledigt → alte Freiraum-Benachrichtigungen schließen, damit der Punkt (Android) verschwindet
+  if (!total) navigator.serviceWorker?.getRegistration?.().then(r=>r?.getNotifications?.()).then(l=>(l||[]).forEach(x=>x.close())).catch(()=>{});
 }
 function logoutLocal(){ try{ localStorage.removeItem("freiraum"); }catch{} auth=null; acc=null; group=null; adminData=null; tab="group"; show(); }
 
