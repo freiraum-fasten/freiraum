@@ -493,7 +493,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "83";
+const APP_VERSION = "84";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -2291,8 +2291,11 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"84", date:"16. November", items:[
+    "📣 Neu-Nachricht für alle: Predigt & Online-Gottesdienst – Predigt-Häkchen ist jetzt für alle freigeschaltet"
+  ]},
   { v:"83", date:"16. November", items:[
-    "🙏 Predigt auf YouTube geschaut? Häkchen setzen, Predigt + Kernaussage angeben – die Minuten werden abgezogen und der Tag zählt sofort (erst nur für Admins zum Testen)"
+    "🙏 Predigt auf YouTube geschaut? Häkchen setzen, Predigt + Kernaussage angeben – die Minuten werden abgezogen und der Tag zählt sofort"
   ]},
   { v:"82", date:"16. November", items:[
     "📱 KI: Diagramm-Beschriftung („4h“) wird nicht mehr als Gesamtzeit gelesen",
@@ -2595,7 +2598,7 @@ const CHANGELOG = [
 ];
 /* „Was ist neu“: Admins sehen alles. Alle anderen nur Einträge, die freigegeben sind (PUBLIC_UPDATES) – freigeben nur auf Ansage von David. */
 const PUBLIC_UPDATES = ["55"];
-const SERMON_PUBLIC = false;   // Predigt-Abzug: erst nur Admins zum Testen – auf true, wenn David freigibt
+const SERMON_PUBLIC = true;    // Predigt-Abzug: erst nur Admins zum Testen – auf true, wenn David freigibt
 const isPubUpdate = c => PUBLIC_UPDATES.includes(c.v);
 const visibleLog = () => acc?.admin ? CHANGELOG : CHANGELOG.filter(isPubUpdate);
 function changelogHtml(all, pick){
@@ -2627,11 +2630,31 @@ function annHtml(){
     <p class="an-foot">Fragen? Schreib uns im Chat unter <b>Einstellungen → Chat mit den Admins</b>.<br><b style="color:var(--ink)">Viel Erfolg – wir glauben an euch! 🔥</b></p>
     <button class="btn btn-flame" id="annOk">Verstanden</button>`;
 }
+/* Neu-Nachricht: Predigt / Online-Gottesdienst (kommt einmal, nach dem „Wichtig“-Popup) */
+const NEWS_ID = "neu-predigt";
+function newsHtml(){
+  const pt = (n,b,t) => `<div class="an-pt"><div class="an-n">${n}</div><div><b>${b}</b><span>${t}</span></div></div>`;
+  return `<div class="an-ic" style="font-size:34px">🙏</div><h3 class="an-h">Neu: Predigt & Online-Gottesdienst</h3><div class="an-from">📣 Von David · Admin-Team</div>
+    <p class="an-intro">Du schaust eine <b>Predigt</b> oder einen <b>Gottesdienst</b> auf YouTube? Das soll natürlich nicht als Social Media zählen. 💛</p>
+    ${pt(1, "Beim Hochladen Häkchen setzen", "„🙏 Ich habe eine Predigt / einen Gottesdienst auf YouTube geschaut“")}
+    ${pt(2, "Kurz eintragen", "Welche Predigt, die <b>Kernaussage</b> in 1–2 Sätzen und wie viele Minuten es waren.")}
+    ${pt(3, "Wird automatisch abgezogen", "Die Minuten gehen von deiner Social-Media-Zeit ab – <b>der Tag zählt sofort</b>. Ein Admin schaut kurz drüber.")}
+    <p class="an-foot">Abgezogen wird höchstens so viel, wie auf dem Screenshot bei YouTube steht.<br><b style="color:var(--ink)">Wir vertrauen euch! 🤝</b></p>
+    <button class="btn btn-flame" id="annOk">Super, verstanden</button>`;
+}
+function maybeShowNews(){
+  let seen = null; try{ seen = localStorage.getItem("fr_news"); }catch{}
+  if (seen === NEWS_ID || !acc || $("#annBg") || berlinToday() < START || trackOf() === "total") return false;
+  const bg = document.createElement("div"); bg.id = "annBg"; bg.innerHTML = `<div id="ann">${newsHtml()}</div>`; document.body.appendChild(bg);
+  bg.querySelector("#annOk").onclick = ()=>{ try{ localStorage.setItem("fr_news", NEWS_ID); }catch{} bg.classList.add("out"); setTimeout(()=>bg.remove(), 250); };
+  return true;
+}
 function maybeShowAnn(){
   let seen = null; try{ seen = localStorage.getItem("fr_ann"); }catch{}
+  if (seen === annId() && acc && !$("#annBg")) return maybeShowNews();
   if (seen === annId() || !acc || $("#annBg")) return false;
   const bg = document.createElement("div"); bg.id = "annBg"; bg.innerHTML = `<div id="ann">${annHtml()}</div>`; document.body.appendChild(bg);
-  bg.querySelector("#annOk").onclick = ()=>{ try{ localStorage.setItem("fr_ann", annId()); }catch{} bg.classList.add("out"); setTimeout(()=>bg.remove(), 250); };
+  bg.querySelector("#annOk").onclick = ()=>{ try{ localStorage.setItem("fr_ann", annId()); }catch{} bg.classList.add("out"); setTimeout(()=>{ bg.remove(); maybeShowNews(); }, 260); };
   return true;
 }
 function maybeShowWhatsNew(){
