@@ -492,7 +492,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "80";
+const APP_VERSION = "81";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1025,7 +1025,15 @@ function parseTotalTime(text){
 function parseScreenTime(text){
   const lines = text.split(/\n/).map(l=>l.trim()).filter(Boolean);
   const apps = [];
+  // Abschnitte mit eingestellten Limits / Auszeiten zeigen keine echte Nutzung („YouTube, YouTube Kids und 1 w… 28 Min.“) → überspringen
+  const LIMIT_HEAD = /^\W{0,3}(app-?)?limits?\b|^\W{0,3}(zeit|app)limits?\b|^\W{0,3}(auszeit|downtime|bildschirmzeit-?limits?|nutzungslimits?)\b|^\W{0,3}app[- ]?timer/i;
+  const NEXT_HEAD = /häufigsten|meistgenutzt|most used|verwendet|kategorien|categories|apps?\s*&|benachrichtigungen|notifications|aktivierungen|pickups|zeige|show/i;
+  let inLimits = false;
   lines.forEach((l,i)=>{
+    if (LIMIT_HEAD.test(l)){ inLimits = true; return; }
+    if (inLimits && NEXT_HEAD.test(l)) inLimits = false;
+    if (inLimits) return;
+    if (/\bund \d+ w|\band \d+ more|\bund \d+ weitere/i.test(l)) return;   // Sammel-Zeile mehrerer Apps = Limit, keine Nutzung
     // Symbol-Reste vor dem Namen („[7] TikTok“, „© WhatsApp“) ignorieren, dann: Text vor der ersten Zahl = App-Name
     const namePart = l.replace(/^[^A-Za-zÄÖÜäöüß]{1,6}(?=[A-Za-zÄÖÜäöüß])/, "").split(/\d/)[0];
     for (const [name,re] of SOCIAL){
@@ -2253,6 +2261,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"81", date:"16. November", items:[
+    "🤖 KI: Eingestellte App-Limits (z. B. „YouTube … 28 Min.“) werden nicht mehr als Social-Media-Zeit gezählt"
+  ]},
   { v:"80", date:"16. November", items:[
     "🤖 KI: Mehrere Ausschnitte (z. B. Diagramm + App-Liste) gelten nicht mehr als „zugeschnitten“",
     "📱 KI erkennt die Gesamtzeit bei Samsung jetzt auch, wenn App-Zeiten doppelt auf dem Bild stehen"
