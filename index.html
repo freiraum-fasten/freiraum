@@ -492,7 +492,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "79";
+const APP_VERSION = "80";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -996,14 +996,20 @@ function durNear(lines, i){
   return null;
 }
 /* Handyzeit-Gruppe: Gesamtzeit = größte Zeitangabe auf dem Screenshot (die große Zahl oben/in der Mitte) */
+/* Steht neben dieser Zeile das Datum oder „insgesamt“/„Bildschirmzeit“? Dann ist die Zahl die Gesamtzeit oben */
+function headerNear(lines, i){
+  const HEAD = /insgesamt|gesamt|total|bildschirmzeit|screen\s?time|\b(mo|di|mi|do|fr|sa|so)\.?,|\d{1,2}\.\s*(jan|feb|mär|mar|apr|mai|may|jun|jul|aug|sep|okt|oct|nov|dez|dec)|heute|today|gestern|yesterday/i;
+  return [i-1, i+1].some(k => lines[k] && HEAD.test(lines[k]) && !/durchschnitt|average/i.test(lines[k]));
+}
 function parseTotalTime(text){
   const lines = text.split(/\n/).map(l=>l.trim()).filter(Boolean);
-  let best = null, sum = 0, n = 0, bestHM = null;
+  let best = null, sum = 0, n = 0, bestHM = null, bestHead = null;
   for (const l of lines){
     if (/^\D{0,3}(0|30|60)\s*(min|m)\.?\s*$/i.test(l)) continue;     // Achsenbeschriftung im Diagramm
     if (/^\D{0,3}\d{1,2}\s*(h|std)\.?\s*$/i.test(l)) continue;        // Achsenbeschriftung „8h“ / „4 Std.“
     if (/durchschnitt|average|woche|week/i.test(l)) continue;           // Wochenschnitt nicht zählen
     const d = parseDur(l); if (d == null) continue;
+    if (lines.indexOf(l) >= 0 && headerNear(lines, lines.indexOf(l)) && (bestHead == null || d > bestHead)) bestHead = d;
     n++; sum += d; if (best == null || d > best) best = d;
     if (/\d\s*(h|std)\.?\s*\d{1,2}\s*(m|min)/i.test(normDur(l)) && (bestHM == null || d > bestHM)) bestHM = d;   // „4h 59min“ = echte Gesamtzeit
   }
@@ -1011,7 +1017,9 @@ function parseTotalTime(text){
   const maxAll = best;
   if (bestHM != null) best = bestHM;
   // Warnen nur, wenn keine eindeutige „Xh Ymin“-Gesamtzahl gefunden wurde, die zugleich die größte Zahl ist
-  const missing = best != null && !(bestHM != null && bestHM >= maxAll) && n > 2 && (sum - best) > best * 1.15;
+  // Steht die größte Zahl direkt beim Datum oder bei „insgesamt“, ist es sicher die Gesamtzeit (z. B. Samsung „49 min“)
+  const headOk = bestHead != null && bestHead >= maxAll;
+  const missing = best != null && !headOk && !(bestHM != null && bestHM >= maxAll) && n > 2 && (sum - best) > best * 1.15;
   return { total: best, missing };
 }
 function parseScreenTime(text){
@@ -1383,7 +1391,8 @@ function fakeSignals(files, loaded, text, ocrOk, apps, day, isT=false, total=0){
   // Tagesüberschrift „Heute“ (nicht „Aktualisiert: heute …“) = am selben Tag fotografiert, der Tag war noch nicht vorbei
   if (ocrOk && ref < berlinToday() && !shownDate(text) && text.split(/\n/).some(l=>{ const t=l.trim(); return /^\W{0,4}(heute|today)\b/i.test(t) && !/aktualis|updated|anzeigen|show|bisher|so far/i.test(t); }))
     out.push("Screenshot zeigt „Heute“ – er wurde am selben Tag gemacht, der Tag war noch nicht vorbei");
-  if (loaded.some(x=>x.im.height < x.im.width*1.25)) out.push("Bild ist stark zugeschnitten oder kein Handy-Screenshot");
+  // Nur bei EINEM Bild prüfen: Wer mehrere Ausschnitte hochlädt (z. B. Diagramm + App-Liste), schneidet bewusst zu – das ist erlaubt
+  if (loaded.length === 1 && loaded[0].im.height < loaded[0].im.width*1.25) out.push("Bild ist stark zugeschnitten oder kein Handy-Screenshot");
   return out;
 }
 function stitch(ims){
@@ -2244,6 +2253,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"80", date:"16. November", items:[
+    "🤖 KI: Mehrere Ausschnitte (z. B. Diagramm + App-Liste) gelten nicht mehr als „zugeschnitten“",
+    "📱 KI erkennt die Gesamtzeit bei Samsung jetzt auch, wenn App-Zeiten doppelt auf dem Bild stehen"
+  ]},
   { v:"79", date:"15. November", items:[
     "🏆 Rangliste: Bei gleich vielen Flammen liegt vorn, wer im Schnitt weniger Minuten hatte"
   ]},
