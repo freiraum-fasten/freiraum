@@ -492,7 +492,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "81";
+const APP_VERSION = "82";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -999,7 +999,7 @@ function durNear(lines, i){
 /* Steht neben dieser Zeile das Datum oder „insgesamt“/„Bildschirmzeit“? Dann ist die Zahl die Gesamtzeit oben */
 function headerNear(lines, i){
   const HEAD = /insgesamt|gesamt|total|bildschirmzeit|screen\s?time|\b(mo|di|mi|do|fr|sa|so)\.?,|\d{1,2}\.\s*(jan|feb|mär|mar|apr|mai|may|jun|jul|aug|sep|okt|oct|nov|dez|dec)|heute|today|gestern|yesterday/i;
-  return [i-1, i+1].some(k => lines[k] && HEAD.test(lines[k]) && !/durchschnitt|average/i.test(lines[k]));
+  return [i-1, i+1].some(k => lines[k] && HEAD.test(lines[k]) && !/durchschnitt|average|aktualis|updated|zuletzt|last/i.test(lines[k]));
 }
 function parseTotalTime(text){
   const lines = text.split(/\n/).map(l=>l.trim()).filter(Boolean);
@@ -1016,6 +1016,8 @@ function parseTotalTime(text){
   // Wenn die Summe der übrigen Zeiten deutlich größer ist, fehlt die Gesamtzeit vermutlich auf dem Bild
   const maxAll = best;
   if (bestHM != null) best = bestHM;
+  // Zahl direkt beim Datum / „insgesamt“ ist die Gesamtzeit – auch wenn eine Diagramm-Beschriftung („4h“) größer gelesen wurde
+  if (bestHead != null && (bestHM == null || bestHead >= bestHM)) return { total: bestHead, missing: false };
   // Warnen nur, wenn keine eindeutige „Xh Ymin“-Gesamtzahl gefunden wurde, die zugleich die größte Zahl ist
   // Steht die größte Zahl direkt beim Datum oder bei „insgesamt“, ist es sicher die Gesamtzeit (z. B. Samsung „49 min“)
   const headOk = bestHead != null && bestHead >= maxAll;
@@ -1444,6 +1446,9 @@ async function analyse(root, files, day, test){
   const ocrMin = ocrOk ? total : null;
   const sus = fakeSignals(files, loaded, text, ocrOk, apps, day, isT, total);
   if (wv) sus.unshift(`Falsche Ansicht: „${wv}“ statt Bildschirmzeit`);
+  // Keine Social-Media-App auf einem echten Bildschirmzeit-Screenshot = 0 Min. → vorausfüllen (sonst müsste man „0“ selbst tippen)
+  const zeroOk = ocrOk && !isT && !apps.length && !wv && !sus.some(x=>x.startsWith("Sieht nicht wie"));
+  const pre = (ocrOk && (apps.length || (isT && total>0))) || zeroOk;
   res.innerHTML = `<div class="shotwrap"><div style="display:flex;flex-direction:column;gap:6px">${thumbs}</div><div style="flex:1">
       ${isT ? `<div class="approw"><span>📱 Handyzeit gesamt</span><span>${fmtHM(total)}</span></div>${apps.map(a=>`<div class="approw muted" style="font-weight:500"><span>davon ${esc(a.name)}</span><span>${a.min} Min.</span></div>`).join("")}
           ${totalMissing?`<div class="status warn" style="margin-top:8px">⚠️ Die Gesamtzeit ist evtl. nicht auf dem Screenshot. Nimm den Bildschirm mit der großen Gesamtzahl – oder trag sie unten selbst ein.</div>`:""}`
@@ -1458,7 +1463,7 @@ async function analyse(root, files, day, test){
       : "⚠️ Datum im Screenshot nicht erkannt – wird von einem Admin geprüft."}</div>
     ${sus.some(x=>x.includes("noch nicht vorbei")) ? `<div class="status bad" style="display:block;line-height:1.5">⏰ <b>Zu früh fotografiert?</b> Dieser Screenshot wurde gemacht, bevor ${test?"der Tag":esc(fmtDate(day))} vorbei war – dann fehlt die Zeit vom Rest des Tages.<br>Mach ihn am besten <b>am nächsten Tag</b> unter <b>„Gestern“</b>. Du kannst ihn trotzdem eintragen – dann zählt der Tag erst, wenn ein Admin ihn geprüft hat.</div>` : ""}
     ${test && acc?.admin ? `<div class="status ${sus.length?"bad":"ok"}" style="display:block">${sus.length ? "🕵️ <b>KI-Verdacht:</b> "+sus.map(esc).join(" · ") : "🕵️ Kein Fake-Verdacht"}</div>` : ""}
-    <div class="minutes"><label for="minIn">${TR.unit}<div class="muted small" style="font-weight:500;margin-top:2px">${ocrOk && (apps.length || (isT && total>0)) ? "🤖 Von der KI ausgefüllt – nur ändern, wenn's nicht stimmt" : "Nichts erkannt – bitte selbst eintragen"}</div></label><div class="hmin"><input id="hIn" type="number" inputmode="numeric" min="0" max="24" value="${ocrOk && (apps.length || (isT && total>0)) ? Math.floor(total/60) : ""}" placeholder="0"><span>Std.</span><input id="mIn2" type="number" inputmode="numeric" min="0" max="59" value="${ocrOk && (apps.length || (isT && total>0)) ? total%60 : ""}" placeholder="0"><span>Min.</span></div><input id="minIn" type="hidden" value="${ocrOk && (apps.length || (isT && total>0)) ? total : ""}"></div>
+    <div class="minutes"><label for="minIn">${TR.unit}<div class="muted small" style="font-weight:500;margin-top:2px">${zeroOk ? "🤖 Keine Social-Media-App gefunden – 0 Min. 🎉 Nur ändern, wenn's nicht stimmt" : pre ? "🤖 Von der KI ausgefüllt – nur ändern, wenn's nicht stimmt" : "Nichts erkannt – bitte selbst eintragen"}</div></label><div class="hmin"><input id="hIn" type="number" inputmode="numeric" min="0" max="24" value="${pre ? Math.floor(total/60) : ""}" placeholder="0"><span>Std.</span><input id="mIn2" type="number" inputmode="numeric" min="0" max="59" value="${pre ? total%60 : ""}" placeholder="0"><span>Min.</span></div><input id="minIn" type="hidden" value="${pre ? total : ""}"></div>
     ${isB ? `<div class="minutes"><label>📱 Gesamte Handyzeit<div class="muted small" style="font-weight:500;margin-top:2px">${hasTot ? "🤖 Von der KI ausgefüllt – nur ändern, wenn's nicht stimmt" : "Nicht erkannt – bitte selbst eintragen"}</div></label><div class="hmin"><input id="hIn3" type="number" inputmode="numeric" min="0" max="24" value="${hasTot ? Math.floor(tot/60) : ""}" placeholder="0"><span>Std.</span><input id="mIn3" type="number" inputmode="numeric" min="0" max="59" value="${hasTot ? tot%60 : ""}" placeholder="0"><span>Min.</span></div><input id="totIn" type="hidden" value="${hasTot ? tot : ""}"></div>` : ""}
     <div class="status" id="limitInfo" style="font-size:15px"></div>
     <div class="muted small" style="margin:8px 4px 0">${isT ? "In deiner Gruppe zählt die gesamte Bildschirmzeit des Tages – alle Apps." : "Messenger wie WhatsApp oder Telegram zählen nicht."} Änderst du die Zahl, sehen das die Prüfer.</div>
@@ -1487,7 +1492,7 @@ async function analyse(root, files, day, test){
   root.querySelector("#noteIn").oninput = upd; upd();
   root.querySelector("#sendShot").onclick = async ()=>{
     const btn = root.querySelector("#sendShot"); btn.disabled = true;
-    const minutes = Math.max(0, Math.min(1440, parseInt(root.querySelector("#minIn").value,10)));
+    const minutes = Math.max(0, Math.min(1440, parseInt(root.querySelector("#minIn").value || "0",10)));
     const note = (root.querySelector("#noteIn")?.value || "").trim().slice(0,300) || null;
     if (Number.isNaN(minutes)){ toast("Bitte Minuten eintragen"); btn.disabled=false; return; }
     const tmin = isB ? Math.max(0, Math.min(1440, totVal())) : null;
@@ -2261,6 +2266,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"82", date:"16. November", items:[
+    "📱 KI: Diagramm-Beschriftung („4h“) wird nicht mehr als Gesamtzeit gelesen",
+    "0️⃣ Keine Social Media genutzt? Die KI trägt jetzt automatisch 0 Min. ein – kein „Bitte Minuten eintragen“ mehr"
+  ]},
   { v:"81", date:"16. November", items:[
     "🤖 KI: Eingestellte App-Limits (z. B. „YouTube … 28 Min.“) werden nicht mehr als Social-Media-Zeit gezählt"
   ]},
