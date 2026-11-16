@@ -337,6 +337,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 
 /* Toast + sheet */
 .pbox{border-radius:16px;padding:12px 14px;margin:0 0 10px}.pbox.bad{background:rgba(229,72,77,.08);box-shadow:inset 0 0 0 1.5px rgba(229,72,77,.35)}.pbox.ok{background:rgba(20,160,107,.09);box-shadow:inset 0 0 0 1.5px rgba(20,160,107,.4)}.pbh{font-weight:800;margin-bottom:8px}.pbox.bad .pbh{color:var(--no)}.pbox.ok .pbh{color:var(--ok)}.pg{margin:8px 0 0}.pgt{font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:5px}.pgl{display:flex;flex-wrap:wrap;gap:6px}.pgl span{background:var(--soft);border-radius:99px;padding:5px 10px;font-size:13.5px;font-weight:600}
+.serbox{margin-top:12px;border-radius:16px;padding:12px 14px;background:var(--soft)}.serchk{display:flex;gap:10px;align-items:flex-start;line-height:1.4;cursor:pointer}.serchk input{width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--ok)}#serFields .input{margin-top:8px;width:100%}#serMin{width:76px}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translate(-50%,-160%);visibility:hidden;background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:14px;font-weight:600;font-size:14px;transition:transform .35s ease,visibility 0s .35s;z-index:50;max-width:90vw;text-align:center}
 .toast.show{transform:translate(-50%,0);visibility:visible;transition:transform .35s ease}
 .sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:40;display:flex;align-items:flex-end;justify-content:center}
@@ -492,7 +493,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "82";
+const APP_VERSION = "83";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1449,6 +1450,7 @@ async function analyse(root, files, day, test){
   // Keine Social-Media-App auf einem echten Bildschirmzeit-Screenshot = 0 Min. → vorausfüllen (sonst müsste man „0“ selbst tippen)
   const zeroOk = ocrOk && !isT && !apps.length && !wv && !sus.some(x=>x.startsWith("Sieht nicht wie"));
   const pre = (ocrOk && (apps.length || (isT && total>0))) || zeroOk;
+  const sermonOk = (acc?.admin || SERMON_PUBLIC) && !isT && !test && ocrOk && apps.length > 0;
   res.innerHTML = `<div class="shotwrap"><div style="display:flex;flex-direction:column;gap:6px">${thumbs}</div><div style="flex:1">
       ${isT ? `<div class="approw"><span>📱 Handyzeit gesamt</span><span>${fmtHM(total)}</span></div>${apps.map(a=>`<div class="approw muted" style="font-weight:500"><span>davon ${esc(a.name)}</span><span>${a.min} Min.</span></div>`).join("")}
           ${totalMissing?`<div class="status warn" style="margin-top:8px">⚠️ Die Gesamtzeit ist evtl. nicht auf dem Screenshot. Nimm den Bildschirm mit der großen Gesamtzahl – oder trag sie unten selbst ein.</div>`:""}`
@@ -1465,6 +1467,13 @@ async function analyse(root, files, day, test){
     ${test && acc?.admin ? `<div class="status ${sus.length?"bad":"ok"}" style="display:block">${sus.length ? "🕵️ <b>KI-Verdacht:</b> "+sus.map(esc).join(" · ") : "🕵️ Kein Fake-Verdacht"}</div>` : ""}
     <div class="minutes"><label for="minIn">${TR.unit}<div class="muted small" style="font-weight:500;margin-top:2px">${zeroOk ? "🤖 Keine Social-Media-App gefunden – 0 Min. 🎉 Nur ändern, wenn's nicht stimmt" : pre ? "🤖 Von der KI ausgefüllt – nur ändern, wenn's nicht stimmt" : "Nichts erkannt – bitte selbst eintragen"}</div></label><div class="hmin"><input id="hIn" type="number" inputmode="numeric" min="0" max="24" value="${pre ? Math.floor(total/60) : ""}" placeholder="0"><span>Std.</span><input id="mIn2" type="number" inputmode="numeric" min="0" max="59" value="${pre ? total%60 : ""}" placeholder="0"><span>Min.</span></div><input id="minIn" type="hidden" value="${pre ? total : ""}"></div>
     ${isB ? `<div class="minutes"><label>📱 Gesamte Handyzeit<div class="muted small" style="font-weight:500;margin-top:2px">${hasTot ? "🤖 Von der KI ausgefüllt – nur ändern, wenn's nicht stimmt" : "Nicht erkannt – bitte selbst eintragen"}</div></label><div class="hmin"><input id="hIn3" type="number" inputmode="numeric" min="0" max="24" value="${hasTot ? Math.floor(tot/60) : ""}" placeholder="0"><span>Std.</span><input id="mIn3" type="number" inputmode="numeric" min="0" max="59" value="${hasTot ? tot%60 : ""}" placeholder="0"><span>Min.</span></div><input id="totIn" type="hidden" value="${hasTot ? tot : ""}"></div>` : ""}
+    ${sermonOk ? `<div class="serbox"><label class="serchk"><input type="checkbox" id="serChk"> <span>🙏 Ich habe eine <b>Predigt / einen Gottesdienst</b> auf YouTube geschaut</span></label>
+      <div id="serFields" class="hidden">
+        <input class="input" id="serTitle" maxlength="90" placeholder="Welche Predigt? (Titel oder Prediger)">
+        <textarea class="input" id="serCore" rows="2" maxlength="160" placeholder="Kernaussage in 1–2 Sätzen"></textarea>
+        <div class="hmin" style="margin-top:8px"><span style="flex:1;font-weight:600">Davon Predigt</span><input id="serMin" type="number" inputmode="numeric" min="1" max="${ocrMin||0}" placeholder="0"><span>Min.</span></div>
+        <div class="muted small" style="margin:6px 2px 0;line-height:1.45">Wird von der Social-Media-Zeit abgezogen (höchstens ${fmtHM(ocrMin||0)}). Zählt sofort – ein Admin schaut kurz drüber.</div>
+      </div></div>` : ""}
     <div class="status" id="limitInfo" style="font-size:15px"></div>
     <div class="muted small" style="margin:8px 4px 0">${isT ? "In deiner Gruppe zählt die gesamte Bildschirmzeit des Tages – alle Apps." : "Messenger wie WhatsApp oder Telegram zählen nicht."} Änderst du die Zahl, sehen das die Prüfer.</div>
     ${test && acc?.admin ? `<details style="margin-top:8px"><summary class="small">Erkannter Text (für Admins)</summary><pre style="white-space:pre-wrap;font-size:11px;max-height:180px;overflow:auto">${esc(text)}</pre></details>` : ""}
@@ -1475,9 +1484,11 @@ async function analyse(root, files, day, test){
   const autoNote = document.createElement("div"); autoNote.className = "muted small"; autoNote.style.margin = "8px 4px 0";
   root.querySelector("#limitInfo").after(autoNote);
   const totVal = ()=> isB ? parseInt(root.querySelector("#totIn").value,10) : null;
+  const serOn = ()=> !!root.querySelector("#serChk")?.checked;
+  const serVal = ()=> serOn() ? Math.max(0, Math.min(ocrMin||0, parseInt(root.querySelector("#serMin").value,10)||0)) : 0;
   const upd = ()=>{ const v = parseInt(root.querySelector("#minIn").value,10); const li = root.querySelector("#limitInfo");
-    const tv = totVal(), edited = v !== ocrMin || (isB && (Number.isNaN(tv) ? null : tv) !== ocrTot);
-    autoNote.innerHTML = (!test && (root.querySelector("#noteIn")?.value||"").trim()) ? "💬 Mit Kommentar – ein Admin schaut sich das an." : (!test && sus.some(x=>x.includes("noch nicht vorbei"))) ? "⏳ Weil der Screenshot zu früh gemacht wurde, <b>zählt der Tag erst nach Prüfung</b> durch einen Admin." : (!test && sus.length) ? "⏳ Zählt sofort – ein Admin schaut sich den Screenshot noch kurz an." : (!edited && dateOk) ? "🤖 Passt alles – die KI gibt den Tag <b>automatisch frei</b>." : (edited && !test) ? "✏️ Du hast die Zeit geändert – deine Zeit wird gespeichert, der Tag <b>zählt aber erst, wenn ein Admin freigibt</b>." : "⏳ Zählt sofort – weil " + (edited ? "du die Minuten geändert hast" : "das Datum nicht erkannt wurde") + ", schaut ein Admin noch kurz drüber.";
+    const tv = totVal(), edited = v !== (ocrMin == null ? null : ocrMin - serVal()) || (isB && (Number.isNaN(tv) ? null : tv) !== ocrTot);
+    autoNote.innerHTML = (!test && serVal() > 0 && !edited) ? "🙏 Predigt wird abgezogen – <b>zählt sofort</b>, ein Admin schaut kurz drüber." : (!test && (root.querySelector("#noteIn")?.value||"").trim()) ? "💬 Mit Kommentar – ein Admin schaut sich das an." : (!test && sus.some(x=>x.includes("noch nicht vorbei"))) ? "⏳ Weil der Screenshot zu früh gemacht wurde, <b>zählt der Tag erst nach Prüfung</b> durch einen Admin." : (!test && sus.length) ? "⏳ Zählt sofort – ein Admin schaut sich den Screenshot noch kurz an." : (!edited && dateOk) ? "🤖 Passt alles – die KI gibt den Tag <b>automatisch frei</b>." : (edited && !test) ? "✏️ Du hast die Zeit geändert – deine Zeit wird gespeichert, der Tag <b>zählt aber erst, wenn ein Admin freigibt</b>." : "⏳ Zählt sofort – weil " + (edited ? "du die Minuten geändert hast" : "das Datum nicht erkannt wurde") + ", schaut ein Admin noch kurz drüber.";
     if (Number.isNaN(v)){ li.textContent=""; li.className="status"; return; }
     if (isT){ li.className="status ok"; li.textContent=`📱 ${fmtHM(v)} Handyzeit – wird so in die Rangliste eingetragen.`; }
     else if (v <= LIMIT){ li.className="status ok"; li.textContent=`✅ GÜLTIG – ${fmtHM(v)} ${TR.word}, max. ${LIMIT} Min. erlaubt. Das gibt eine Flamme! 🔥`; }
@@ -1489,13 +1500,27 @@ async function analyse(root, files, day, test){
   if (isB){ const syncT = ()=>{ const hv = root.querySelector("#hIn3").value, mv = root.querySelector("#mIn3").value;
       root.querySelector("#totIn").value = (hv==="" && mv==="") ? "" : Math.min(1440, (parseInt(hv,10)||0)*60 + (parseInt(mv,10)||0)); upd(); };
     root.querySelector("#hIn3").oninput = syncT; root.querySelector("#mIn3").oninput = syncT; }
-  root.querySelector("#noteIn").oninput = upd; upd();
+  root.querySelector("#noteIn").oninput = upd;
+  if (sermonOk){
+    const setMin = ()=>{ const v = Math.max(0, (ocrMin||0) - serVal()); root.querySelector("#minIn").value = v; root.querySelector("#hIn").value = Math.floor(v/60); root.querySelector("#mIn2").value = v%60; upd(); };
+    root.querySelector("#serChk").onchange = ()=>{ root.querySelector("#serFields").classList.toggle("hidden", !serOn()); setMin(); if (serOn()) root.querySelector("#serTitle").focus(); };
+    root.querySelector("#serMin").oninput = setMin;
+  }
+  upd();
   root.querySelector("#sendShot").onclick = async ()=>{
     const btn = root.querySelector("#sendShot"); btn.disabled = true;
     const minutes = Math.max(0, Math.min(1440, parseInt(root.querySelector("#minIn").value || "0",10)));
     const note = (root.querySelector("#noteIn")?.value || "").trim().slice(0,300) || null;
     if (Number.isNaN(minutes)){ toast("Bitte Minuten eintragen"); btn.disabled=false; return; }
     const tmin = isB ? Math.max(0, Math.min(1440, totVal())) : null;
+    const ser = serVal(); let noteOut = note;
+    if (serOn()){
+      const st = (root.querySelector("#serTitle").value||"").trim(), sc = (root.querySelector("#serCore").value||"").trim();
+      if (st.length < 3){ toast("Bitte schreib, welche Predigt du geschaut hast"); btn.disabled=false; return; }
+      if (sc.length < 10){ toast("Bitte schreib kurz die Kernaussage dazu"); btn.disabled=false; return; }
+      if (ser < 1){ toast("Bitte die Minuten der Predigt eintragen"); btn.disabled=false; return; }
+      noteOut = (`🙏 Predigt (−${ser} Min.): ${st} — Kernaussage: ${sc}` + (note ? ` · ${note}` : "")).slice(0,300);
+    }
     if (isB && Number.isNaN(tmin)){ toast("Bitte auch deine gesamte Handyzeit eintragen"); btn.disabled=false; return; }
     try{
       const shot = compressShot(loaded.length===1 ? loaded[0].im : stitch(loaded.map(x=>x.im)));
@@ -1507,7 +1532,7 @@ async function analyse(root, files, day, test){
         else { show(); toast("🧪 Probe gespeichert – zählt noch nicht. Ab dem 15.11. geht's richtig los! 🔥"); }
         return;
       }
-      await rpc("sf_upload",{p_token:T(),p_day:day,p_minutes:minutes,p_shot:shot,p_ocr_minutes:ocrMin,p_date_ok:dateOk,p_suspect:sus.length ? sus.join(" · ") : null,p_note:note,p_total:tmin,p_ocr_total:isB?ocrTot:null});
+      await rpc("sf_upload3",{p_token:T(),p_day:day,p_minutes:minutes,p_shot:shot,p_ocr_minutes:ocrMin,p_date_ok:dateOk,p_suspect:sus.length ? sus.join(" · ") : null,p_note:noteOut,p_total:tmin,p_ocr_total:isB?ocrTot:null,p_sermon:ser});
       closeSheet(); done(); await refresh(); show();
       if (minutes !== ocrMin || (isB && tmin !== ocrTot) || sus.some(x=>x.includes("noch nicht vorbei"))){ toast("⏳ Gespeichert – wartet auf Freigabe durch einen Admin"); return; }
       if (isT) flameCelebrate("Eingetragen!", `${fmtHM(minutes)} Handyzeit – ab in die Rangliste 📱`);
@@ -1979,7 +2004,7 @@ function renderReview(){
     Promise.all([rpc("sf_review_queue",{p_token:T()}), rpc("sf_cw_messages",{p_token:T()}), loadRevLog(), loadReplies()]).then(([q,mm])=>{ reviewData = q || []; cwMsgs = mm || []; if (tab==="review") renderReview(); }).catch(err=>{ toast(err.message); v.innerHTML = `<p class="muted">${esc(err.message)}</p>`; }); return; }
   const q = reviewData;
   const rows = q.slice(0,80).map((x,i)=>`<div class="row rv-open${(x.note||x.dispute) && cmtOpenRow("day:"+x.member+"|"+x.day)?" hascmt":""}" style="flex-wrap:wrap"><b>${esc(x.emoji)} ${esc(x.name)} <span class="muted small">· ${trackBadge(x.group)} · ${esc(toDate(x.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
-      <span>${fmtHM(x.minutes)}${x.total!=null?` · 📱 ${fmtHM(x.total)}`:""}</span>${x.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${x.edited?`<span class="flag">✏️ KI: ${x.ocr==null?"–":fmtHM(x.ocr)}</span>`:""}${x.date_ok===false?`<span class="flag">📅?</span>`:""}${x.suspect?`<span class="flag bad">${String(x.suspect).includes("noch nicht vorbei")?"⏰ zu früh?":"🕵️ Fake?"}</span>`:""}
+      <span>${fmtHM(x.minutes)}${x.total!=null?` · 📱 ${fmtHM(x.total)}`:""}</span>${x.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${String(x.note||"").startsWith("🙏")?`<span class="flag" style="color:var(--ok)">🙏 Predigt</span>`:""}${x.edited?`<span class="flag">✏️ KI: ${x.ocr==null?"–":fmtHM(x.ocr)}</span>`:""}${x.date_ok===false?`<span class="flag">📅?</span>`:""}${x.suspect?`<span class="flag bad">${String(x.suspect).includes("noch nicht vorbei")?"⏰ zu früh?":"🕵️ Fake?"}</span>`:""}
       ${(x.note||x.dispute) ? `${cmtOpen("day:"+x.member+"|"+x.day)}${x.note?`<div class="cmt">💬 <b>Kommentar von ${esc(x.name)}:</b> „${esc(x.note)}“</div>`:""}${x.dispute?`<div class="cmt">⚖️ <b>Einspruch:</b> „${esc(x.dispute)}“</div>`:""}${repliesHtml("day:"+x.member+"|"+x.day)}${acc?.admin ? `<div class="chatin" style="margin:8px 0 0"><textarea class="input" rows="1" maxlength="1000" data-rplytxt="${x.member}|${x.day}" placeholder="Direkt antworten …"></textarea><button class="btn btn-flame" data-rply="${x.member}|${x.day}|${esc(x.name)}">➤</button></div>` : ""}${cmtClose("day:"+x.member+"|"+x.day)}` : ""}
       <span style="margin-left:auto;display:flex;gap:6px"><button class="pill qok" data-qok-m="${x.member}" data-qok-d="${x.day}">✓ Freigeben</button><button class="pill" data-rq="${i}">Ansehen</button></span></div>`).join("") || `<p class="muted small">Alles geprüft 👍 Danke fürs Helfen!</p>`;
   v.innerHTML = `<div class="card"><div class="sectionhead"><h3>🧑‍⚖️ Prüfen</h3><span class="muted small">${q.length} offen</span></div>
@@ -2007,7 +2032,7 @@ function renderAdmin(){
       ${t.note ? `${cmtOpen("test:"+t.id)}<div class="cmt">💬 <b>Kommentar von ${esc(t.by)}:</b> „${esc(t.note)}“</div>${repliesHtml("test:"+t.id)}${t.acc?`<div class="chatin" style="margin:8px 0 0"><textarea class="input" rows="1" maxlength="1000" data-rplytxt="a${t.id}" placeholder="Direkt antworten …"></textarea><button class="btn btn-flame" data-rplya="${t.acc}|a${t.id}|${esc(t.by)}">➤</button></div>`:""}${cmtClose("test:"+t.id)}` : ""}
       <button class="pill" data-test="${t.id}">${t.verdict!=null?"Ändern":tAuto(t)?"Ansehen":"Prüfen"}</button><button class="pill" style="color:var(--no)" data-deltest="${t.id}">🗑️</button></div>`), "tests") || `<p class="muted small">Noch keine Tests.</p>`;
   const queue = moreList(d.queue.map((q,i)=>`<div class="row${(q.note||q.dispute) && cmtOpenRow("day:"+q.member+"|"+q.day)?" hascmt":""}" style="flex-wrap:wrap"><b>${esc(q.emoji)} ${esc(q.name)} <span class="muted small">· ${trackBadge(q.group)} · ${esc(toDate(q.day).toLocaleDateString("de-DE",{day:"numeric",month:"short",timeZone:"UTC"}))}</span></b>
-      <span>${fmtHM(q.minutes)}${q.total!=null?` · 📱 ${fmtHM(q.total)}`:""}</span>${q.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${q.edited?`<span class="flag">✏️</span>`:""}${q.date_ok===false?`<span class="flag">📅?</span>`:""}${q.suspect?`<span class="flag bad">${String(q.suspect).includes("noch nicht vorbei")?"⏰ zu früh?":"🕵️ Fake?"}</span>`:""}
+      <span>${fmtHM(q.minutes)}${q.total!=null?` · 📱 ${fmtHM(q.total)}`:""}</span>${q.disputed?`<span class="flag bad">💬 Einspruch</span>`:""}${String(q.note||"").startsWith("🙏")?`<span class="flag" style="color:var(--ok)">🙏 Predigt</span>`:""}${q.edited?`<span class="flag">✏️</span>`:""}${q.date_ok===false?`<span class="flag">📅?</span>`:""}${q.suspect?`<span class="flag bad">${String(q.suspect).includes("noch nicht vorbei")?"⏰ zu früh?":"🕵️ Fake?"}</span>`:""}
       ${q.suspect?`<div class="muted small" style="flex:1 1 100%;margin-top:4px">🕵️ ${esc(q.suspect)}</div>`:""}
       ${(q.note||q.dispute) ? `${cmtOpen("day:"+q.member+"|"+q.day)}${q.note?`<div class="cmt">💬 <b>Kommentar von ${esc(q.name)}:</b> „${esc(q.note)}“</div>`:""}${q.dispute?`<div class="cmt">⚖️ <b>Einspruch:</b> „${esc(q.dispute)}“</div>`:""}${repliesHtml("day:"+q.member+"|"+q.day)}${acc?.admin ? `<div class="chatin" style="margin:8px 0 0"><textarea class="input" rows="1" maxlength="1000" data-rplytxt="${q.member}|${q.day}" placeholder="Direkt antworten …"></textarea><button class="btn btn-flame" data-rply="${q.member}|${q.day}|${esc(q.name)}">➤</button></div>` : ""}${cmtClose("day:"+q.member+"|"+q.day)}` : ""}
       <span style="margin-left:auto;display:flex;gap:6px"><button class="pill qok" data-qok-m="${q.member}" data-qok-d="${q.day}">✓ Freigeben</button><button class="pill" data-q="${i}">Ansehen</button></span></div>`), "queue") || `<p class="muted small">Alles geprüft 👍</p>`;
@@ -2266,6 +2291,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"83", date:"16. November", items:[
+    "🙏 Predigt auf YouTube geschaut? Häkchen setzen, Predigt + Kernaussage angeben – die Minuten werden abgezogen und der Tag zählt sofort (erst nur für Admins zum Testen)"
+  ]},
   { v:"82", date:"16. November", items:[
     "📱 KI: Diagramm-Beschriftung („4h“) wird nicht mehr als Gesamtzeit gelesen",
     "0️⃣ Keine Social Media genutzt? Die KI trägt jetzt automatisch 0 Min. ein – kein „Bitte Minuten eintragen“ mehr"
@@ -2567,6 +2595,7 @@ const CHANGELOG = [
 ];
 /* „Was ist neu“: Admins sehen alles. Alle anderen nur Einträge, die freigegeben sind (PUBLIC_UPDATES) – freigeben nur auf Ansage von David. */
 const PUBLIC_UPDATES = ["55"];
+const SERMON_PUBLIC = false;   // Predigt-Abzug: erst nur Admins zum Testen – auf true, wenn David freigibt
 const isPubUpdate = c => PUBLIC_UPDATES.includes(c.v);
 const visibleLog = () => acc?.admin ? CHANGELOG : CHANGELOG.filter(isPubUpdate);
 function changelogHtml(all, pick){
