@@ -245,6 +245,11 @@ html,body{max-width:100%;overflow-x:hidden}
 .pod.k2 .pod-step{height:58px;background:linear-gradient(180deg,#C9CED6,#9AA1AC)}
 .pod.k3 .pod-step{height:44px;background:linear-gradient(180deg,#E3A06B,#B86B34)}
 .pod.me b{color:var(--flame2)}
+.frgoal{background:linear-gradient(150deg,rgba(124,92,255,.22),rgba(20,160,107,.16));box-shadow:inset 0 0 0 1.5px rgba(124,92,255,.45)}
+.fg-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.fg-k{font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#A895FF}
+.fg-n{font-size:34px;font-weight:800;letter-spacing:-.03em;margin-top:2px}.fg-n span{font-size:15px;font-weight:600;color:var(--muted);letter-spacing:0}.fg-ic{font-size:34px;filter:drop-shadow(0 4px 10px rgba(124,92,255,.6))}
+.fg-bar{height:10px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin:12px 0 10px}.fg-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#7C5CFF,#14A06B)}
+.fg-sub{font-size:13.5px;color:var(--muted);line-height:1.5}.fg-sub b{color:var(--ink)}.fg-btn{margin-top:12px;background:rgba(124,92,255,.22);color:var(--ink);font-weight:800}
 .tieband{margin:0 auto 10px;width:max-content;max-width:100%;padding:7px 14px;border-radius:99px;font-size:13px;font-weight:800;color:#7A4A00;background:linear-gradient(90deg,#FFE08A,#FFC83D);box-shadow:0 4px 14px rgba(255,200,61,.35);text-align:center}
 .topgrp{border-radius:24px;padding:16px 14px 14px;margin:4px 0 16px;background:linear-gradient(160deg,rgba(255,200,61,.20),rgba(255,138,31,.10));box-shadow:inset 0 0 0 2px rgba(255,200,61,.55),0 10px 30px rgba(255,170,40,.18)}
 .tg-head{display:flex;gap:12px;align-items:center;margin-bottom:14px}.tg-crown{font-size:34px;filter:drop-shadow(0 4px 8px rgba(255,180,0,.5))}
@@ -501,7 +506,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "89";
+const APP_VERSION = "90";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1289,8 +1294,10 @@ function renderIdeas(){
 function bindFr(scope, rerender){
   document.querySelectorAll(scope+" .fritem").forEach(el=>el.addEventListener("click", e=>{
     if (e.target.closest("a")) return;
-    const on = frToggle(berlinToday(), +el.dataset.fr);
+    const n = +el.dataset.fr, on = frToggle(berlinToday(), n);
     if (on){ navigator.vibrate?.(20); toast("✓ Stark – Freiraum genutzt!"); }
+    if (frGroup){ frGroup.total = Math.max(0, frGroup.total + (on?1:-1)); frGroup.today = Math.max(0, frGroup.today + (on?1:-1)); frGroup.mine = Math.max(0,(frGroup.mine||0) + (on?1:-1)); }
+    rpc("sf_fr_toggle",{p_token:T(),p_day:berlinToday(),p_n:n,p_on:on}).then(loadFrGroup).catch(()=>{});
     rerender();
   }));
 }
@@ -1663,6 +1670,7 @@ function renderGroup(){
         <b>${esc(r.m.name)}</b><span>${podVal(r)}</span><div class="pod-step">${r.rank}</div></div>`; }).join("")}</div>` : "";
   $("#vGroup").innerHTML = `
     ${hero}
+    ${frGoalHtml()}
     ${head}
     ${podHtml}
     ${acc.hidden ? `<div class="hint" style="display:block;margin-bottom:16px"><b>🕶️ Unsichtbar-Modus aktiv</b><br><span class="muted small">Du beobachtest nur – niemand sieht dich in der Rangliste. Ausschalten im Admin-Bereich.</span></div>` : ""}
@@ -1689,6 +1697,7 @@ function renderGroup(){
   bindHead();
   $("#heroUp")?.addEventListener("click", ()=>uploadFlow(yd));
   $("#heroProbe")?.addEventListener("click", ()=>uploadFlow(yd, true));
+  $("#frGoalGo")?.addEventListener("click", ()=>{ tab="ideas"; show(); window.scrollTo({top:0}); });
   if (canReview) document.querySelectorAll("#vGroup .pod[data-mid], #vGroup .tg-p[data-mid]").forEach(el=>el.onclick=()=>memberSheet(el.dataset.mid));
   if ($("#segRank")) $("#segRank").onclick = e => { const b=e.target.closest("button"); if(!b) return; rankMode=b.dataset.r; renderGroup(); };
 
@@ -2335,6 +2344,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"90", date:"17. November", items:[
+    "🤝 Neu auf der Startseite: „Zusammen erlebt“ – wie viele Freiräume die ganze Gruppe schon genutzt hat, mit gemeinsamem Ziel"
+  ]},
   { v:"89", date:"17. November", items:[
     "🤖 KI: Findet App-Zeiten jetzt auch, wenn ein ⏳-Limit-Symbol oder ein blasser Balken stört (z. B. Instagram)"
   ]},
@@ -3268,6 +3280,28 @@ function decodeState(st){
     checkins: cs.map(([d,min,f,ocr,tot])=>({ total: tot ?? null, day:addDays(START,d), minutes:min, success:!!(f&1), valid:!!(f&2), edited:!!(f&4),
       date_ok: f&8 ? true : f&32 ? false : null, reviewed:!!(f&16), disputed:!!(f&64), suspect:!!(f&128), joker:!!(f&256), ocr })) })) };
 }
+/* Gruppenziel „Zusammen erlebt“ – Freiräume aller Teilnehmer */
+let frGroup = null;
+async function loadFrGroup(){
+  try{
+    let synced = null; try{ synced = localStorage.getItem("fr_synced"); }catch{}
+    if (!synced){ const all = JSON.parse(localStorage.getItem("fr_done")||"{}"), items = [];
+      Object.entries(all).forEach(([d,l])=>(l||[]).forEach(n=>items.push([d,n])));
+      if (items.length) await rpc("sf_fr_sync",{p_token:T(),p_items:items.slice(0,300)});
+      try{ localStorage.setItem("fr_synced","1"); }catch{} }
+    frGroup = await rpc("sf_fr_group",{p_token:T()});
+    if (tab==="group") renderGroup();
+  }catch{ /* Server-Teil noch nicht da → Karte bleibt einfach weg */ }
+}
+function frGoalHtml(){
+  if (!frGroup || !group || berlinToday() < START) return "";
+  const people = group.members.length, goal = Math.max(100, Math.ceil(people*6/50)*50), pct = Math.min(100, frGroup.total/goal*100);
+  return `<div class="card frgoal"><div class="fg-top"><div><div class="fg-k">🤝 Zusammen erlebt</div>
+      <div class="fg-n">${frGroup.total.toLocaleString("de-DE")} <span>von ${goal} Freiräumen</span></div></div><div class="fg-ic">✨</div></div>
+    <div class="fg-bar"><i style="width:${pct}%"></i></div>
+    <div class="fg-sub">${frGroup.today ? `Heute schon <b>${frGroup.today}</b> ✨` : "Heute noch keiner – sei der Erste! 💪"} · ${frGroup.people} ${frGroup.people===1?"Person macht":"Leute machen"} mit${frGroup.mine ? ` · du: <b>${frGroup.mine}</b>` : ""}</div>
+    <button class="btn fg-btn" id="frGoalGo">🔥 Freiraum-Idee für heute ansehen</button></div>`;
+}
 async function refresh(){
   if (!auth?.token) return;
   try {
@@ -3276,6 +3310,7 @@ async function refresh(){
     LIMIT = acc.limit || 30;
     group = acc.member_id ? decodeState(await rpc("sf_state2",{p_token:T()})) : null;
     loadAvatars().then(()=>{ if (tab==="group") renderGroup(); });
+    loadFrGroup();
     startPing();
   } catch(err){
     if (/anmelden/i.test(err.message)) { logoutLocal(); toast("Bitte neu anmelden"); }
