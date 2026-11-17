@@ -245,6 +245,7 @@ html,body{max-width:100%;overflow-x:hidden}
 .pod.k2 .pod-step{height:58px;background:linear-gradient(180deg,#C9CED6,#9AA1AC)}
 .pod.k3 .pod-step{height:44px;background:linear-gradient(180deg,#E3A06B,#B86B34)}
 .pod.me b{color:var(--flame2)}
+.frday{display:flex;align-items:center;gap:10px;margin-top:12px}.frday span{font-weight:700;font-size:14px;white-space:nowrap}.frday select{flex:1;padding:10px 12px}
 .frgoal{background:linear-gradient(150deg,rgba(124,92,255,.22),rgba(20,160,107,.16));box-shadow:inset 0 0 0 1.5px rgba(124,92,255,.45)}
 .fg-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.fg-k{font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#A895FF}
 .fg-n{font-size:34px;font-weight:800;letter-spacing:-.03em;margin-top:2px}.fg-n span{font-size:15px;font-weight:600;color:var(--muted);letter-spacing:0}.fg-ic{font-size:34px;filter:drop-shadow(0 4px 10px rgba(124,92,255,.6))}
@@ -506,7 +507,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "90";
+const APP_VERSION = "91";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1269,8 +1270,15 @@ function weeklyHtml(){
       </div>`; }).join("")}`;
 }
 let ideasView = "ideas";
+let frDay = null;   // Tag, für den in „Freiräume“ abgehakt wird (Standard: heute, Nachtragen möglich)
 function renderIdeas(){
-  const today = berlinToday(), done = frDone(today);
+  const today = berlinToday();
+  if (!frDay || frDay > today || frDay < START) frDay = today;
+  const done = frDone(frDay), isToday = frDay === today;
+  const days = []; for (let d = today; d >= START && days.length < 40; d = addDays(d,-1)) days.push(d);
+  const dayLabel = d => d===today ? "Heute" : d===addDays(today,-1) ? "Gestern" : toDate(d).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"numeric",timeZone:"UTC"});
+  const daySel = today >= START && days.length > 1 ? `<div class="frday"><span>📅 Abhaken für</span><select id="frDaySel" class="input">${days.map(d=>`<option value="${d}"${d===frDay?" selected":""}>${dayLabel(d)}${frDone(d).length?` · ${frDone(d).length} ✓`:""}</option>`).join("")}</select></div>
+      ${!isToday ? `<div class="hint" style="display:block;margin:8px 0 0">🕰️ Du trägst gerade für <b>${esc(fmtDate(frDay))}</b> nach. Tippe an, was du an dem Tag gemacht hast.</div>` : `<div class="muted small" style="margin-top:6px">Vergessen abzuhaken? Wähl oben einen früheren Tag aus.</div>`}` : "";
   const seg = `<div class="seg" id="segIdeas"><button data-v="ideas" class="${ideasView==="ideas"?"on":""}">💡 Ideen</button><button data-v="weekly" class="${ideasView==="weekly"?"on":""}">🎁 Wochenchallenges</button></div>`;
   if (ideasView === "weekly"){
     $("#vIdeas").innerHTML = seg + weeklyHtml();
@@ -1283,21 +1291,23 @@ function renderIdeas(){
       <h2 style="font-size:24px;line-height:1.2">🔥 Freiräume – <span class="grad">Mach was draus!</span></h2>
       <p style="font-weight:700;margin:8px 0 6px">40 Tage. Weniger Feed. Mehr Leben.</p>
       <p class="muted" style="margin:0 0 8px;line-height:1.55;font-size:15px">Weniger Social Media bedeutet mehr Zeit für die Dinge, die wirklich zählen. Such dir jeden Tag mindestens eine Aktion aus und mach was aus deiner gewonnenen Zeit. Du kannst jede Aufgabe beliebig oft wiederholen, auch mehrere an einem Tag.</p>
-      <div class="stats3" style="margin:12px 0 0"><div><b>${done.length}</b><span>heute erledigt</span></div><div><b>${frTotal()}</b><span>insgesamt</span></div><div><b>40</b><span>Ideen</span></div></div>
+      ${daySel}
+      <div class="stats3" style="margin:12px 0 0"><div><b>${done.length}</b><span>${isToday?"heute erledigt":"an dem Tag"}</span></div><div><b>${frTotal()}</b><span>insgesamt</span></div><div><b>40</b><span>Ideen</span></div></div>
     </div>
     ${FR_CATS.map((c,ci)=>`<div class="card"><h3 style="font-size:19px">${c.icon} ${esc(c.title)}</h3><p class="muted small" style="margin:4px 0 10px;font-style:italic">${esc(c.sub)}</p>
       ${FR.filter(f=>f.cat===ci).map(f=>frItemHtml(f, done.includes(f.n))).join("")}</div>`).join("")}
-    <p class="muted small" style="text-align:center">Tippe eine Idee an, um sie für heute abzuhaken ✓</p>`;
-  bindFr("#vIdeas", renderIdeas);
+    <p class="muted small" style="text-align:center">Tippe eine Idee an, um sie für ${isToday?"heute":esc(fmtDate(frDay))} abzuhaken ✓</p>`;
+  bindFr("#vIdeas", renderIdeas, frDay);
+  $("#frDaySel")?.addEventListener("change", e=>{ frDay = e.target.value; renderIdeas(); });
   $("#segIdeas").onclick = e=>{ const b=e.target.closest("button"); if(!b) return; ideasView=b.dataset.v; renderIdeas(); window.scrollTo({top:0}); };
 }
-function bindFr(scope, rerender){
+function bindFr(scope, rerender, day){
   document.querySelectorAll(scope+" .fritem").forEach(el=>el.addEventListener("click", e=>{
     if (e.target.closest("a")) return;
-    const n = +el.dataset.fr, on = frToggle(berlinToday(), n);
-    if (on){ navigator.vibrate?.(20); toast("✓ Stark – Freiraum genutzt!"); }
-    if (frGroup){ frGroup.total = Math.max(0, frGroup.total + (on?1:-1)); frGroup.today = Math.max(0, frGroup.today + (on?1:-1)); frGroup.mine = Math.max(0,(frGroup.mine||0) + (on?1:-1)); }
-    rpc("sf_fr_toggle",{p_token:T(),p_day:berlinToday(),p_n:n,p_on:on}).then(loadFrGroup).catch(()=>{});
+    const d = day || berlinToday(), n = +el.dataset.fr, on = frToggle(d, n);
+    if (on){ navigator.vibrate?.(20); toast(d===berlinToday() ? "✓ Stark – Freiraum genutzt!" : "✓ Nachgetragen!"); }
+    if (frGroup){ frGroup.total = Math.max(0, frGroup.total + (on?1:-1)); if (d===berlinToday()) frGroup.today = Math.max(0, frGroup.today + (on?1:-1)); frGroup.mine = Math.max(0,(frGroup.mine||0) + (on?1:-1)); }
+    rpc("sf_fr_toggle",{p_token:T(),p_day:d,p_n:n,p_on:on}).then(loadFrGroup).catch(()=>{});
     rerender();
   }));
 }
@@ -2344,6 +2354,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"91", date:"17. November", items:[
+    "🕰️ Freiräume nachtragen: Vergessen abzuhaken? Einfach oben einen früheren Tag wählen"
+  ]},
   { v:"90", date:"17. November", items:[
     "🤝 Neu auf der Startseite: „Zusammen erlebt“ – wie viele Freiräume die ganze Gruppe schon genutzt hat, mit gemeinsamem Ziel"
   ]},
