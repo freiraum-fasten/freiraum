@@ -245,6 +245,10 @@ html,body{max-width:100%;overflow-x:hidden}
 .pod.k2 .pod-step{height:58px;background:linear-gradient(180deg,#C9CED6,#9AA1AC)}
 .pod.k3 .pod-step{height:44px;background:linear-gradient(180deg,#E3A06B,#B86B34)}
 .pod.me b{color:var(--flame2)}
+.chatban{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin:0 0 14px;padding:13px 14px;border:0;border-radius:18px;color:#fff;font:inherit;cursor:pointer;background:linear-gradient(120deg,#7C5CFF,#FF3D5A);box-shadow:0 10px 26px rgba(124,92,255,.35);animation:cbPulse 2.4s ease-in-out infinite}
+.chatban .cb-ic{position:relative;font-size:28px;line-height:1}.chatban .cb-ic i{position:absolute;top:-6px;right:-10px;min-width:20px;height:20px;padding:0 5px;border-radius:99px;background:#fff;color:#FF3D5A;font-style:normal;font-size:12px;font-weight:800;display:grid;place-items:center}
+.chatban .cb-tx{flex:1;min-width:0}.chatban .cb-tx b{display:block;font-size:15.5px}.chatban .cb-tx small{opacity:.9;font-size:12.5px}.chatban .cb-go{font-weight:800;background:rgba(255,255,255,.22);padding:7px 12px;border-radius:99px;white-space:nowrap;font-size:13.5px}
+@keyframes cbPulse{0%,100%{box-shadow:0 10px 26px rgba(124,92,255,.35)}50%{box-shadow:0 10px 34px rgba(255,61,90,.55)}}
 .frday{display:flex;align-items:center;gap:10px;margin-top:12px}.frday span{font-weight:700;font-size:14px;white-space:nowrap}.frday select{flex:1;padding:10px 12px}
 .frgoal{background:linear-gradient(150deg,rgba(124,92,255,.22),rgba(20,160,107,.16));box-shadow:inset 0 0 0 1.5px rgba(124,92,255,.45)}
 .fg-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.fg-k{font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#A895FF}
@@ -507,7 +511,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "91";
+const APP_VERSION = "92";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1910,6 +1914,15 @@ function chatBadges(){
   const set = (btn, n)=>{ if (!btn) return; let d = btn.querySelector(".tdot"); if (n>0){ if (!d){ d = document.createElement("span"); d.className = "tdot"; btn.appendChild(d); } d.textContent = n>9?"9+":n; } else d?.remove(); };
   set(document.querySelector('#tabbar [data-t="info"]'), chatUnread.mine||0);
   set($("#tabAdmin"), acc?.admin ? (chatUnread.admin||0) : 0);
+  // Gut sichtbarer Hinweis oben auf Start- und Heute-Seite, solange eine Admin-Nachricht ungelesen ist
+  const n = chatUnread.mine||0;
+  document.querySelectorAll("#vGroup, #vToday").forEach(v=>{
+    let b = v.querySelector(":scope > .chatban");
+    if (n > 0 && acc){ if (!b){ b = document.createElement("button"); b.className = "chatban"; v.prepend(b);
+        b.onclick = ()=>{ tab = "info"; infoOpen.add("chat"); show(); setTimeout(()=>$("#chatBox")?.scrollIntoView({behavior:"smooth", block:"center"}), 350); }; }
+      b.innerHTML = `<span class="cb-ic">💬<i>${n>9?"9+":n}</i></span><span class="cb-tx"><b>${n===1?"Neue Nachricht":n+" neue Nachrichten"} von den Admins</b><small>Tippe hier, um ${n===1?"sie":"sie"} zu lesen</small></span><span class="cb-go">Lesen ›</span>`; }
+    else b?.remove();
+  });
   const sm = $("#chatSub"); if (sm) sm.innerHTML = chatUnread.mine ? `<span style="color:var(--flame2);font-weight:800">${chatUnread.mine} neue Nachricht${chatUnread.mine===1?"":"en"} von den Admins</span>` : "Fragen, Probleme, Wünsche";
 }
 function threadsHtml(){
@@ -2354,6 +2367,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"92", date:"17. November", items:[
+    "💬 Neue Nachricht von den Admins? Jetzt mit gut sichtbarem Hinweis oben auf der Start- und Heute-Seite – ein Tipp öffnet den Chat"
+  ]},
   { v:"91", date:"17. November", items:[
     "🕰️ Freiräume nachtragen: Vergessen abzuhaken? Einfach oben einen früheren Tag wählen"
   ]},
@@ -3271,7 +3287,7 @@ function show(){
   $("#tabbar").classList.toggle("hidden", !logged);
   $("#tabAdmin").classList.toggle("hidden", !(logged && acc.admin));
   $("#tabReview").classList.toggle("hidden", !(logged && isCoWorker()));
-  if (logged) todayBadge();
+  if (logged){ todayBadge(); chatBadges(); }
   $("#topPill").textContent = "bis Weihnachten 🎄";
   $("#btnHelp").classList.toggle("hidden", tutSeen());
   const needGroup = logged && !hasGroup && (tab==="today" || tab==="group");
