@@ -501,7 +501,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "88";
+const APP_VERSION = "89";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1107,8 +1107,8 @@ function wrongView(text, apps){
   return null;
 }
 function loadImage(file){ return new Promise((res,rej)=>{ const url=URL.createObjectURL(file); const im=new Image(); im.onload=()=>res({im,url}); im.onerror=rej; im.src=url; }); }
-function ocrCanvas(im, boost=false){
-  const scale = Math.min(1, 1400/im.width), c = document.createElement("canvas");
+function ocrCanvas(im, boost=false, maxW=1400){
+  const scale = Math.min(1, maxW/im.width), c = document.createElement("canvas");
   c.width = Math.round(im.width*scale); c.height = Math.round(im.height*scale);
   const g = c.getContext("2d"); g.drawImage(im,0,0,c.width,c.height);
   const px = g.getImageData(0,0,c.width,c.height), d = px.data;
@@ -1128,6 +1128,13 @@ async function ocrRead(w, im){
     try{ await w.setParameters({tessedit_pageseg_mode:"11"}); text += "\n" + ((await w.recognize(c.dark ? c : ocrCanvas(im, true))).data.text || ""); }
     catch(e){ console.warn(e); }
     finally{ try{ await w.setParameters({tessedit_pageseg_mode:"6"}); }catch{} }
+  }
+  // Social-Media-App erkannt, aber ohne Zeit (z. B. Instagram mit ⏳-Limit-Symbol, blasse Zeit unter dem Balken)?
+  // → noch ein Durchgang in kleinerer Auflösung: da verschwimmen Balken & Symbole, die Zeit wird lesbar
+  const seen = SOCIAL.filter(([,re])=>text.split(/\n/).some(l=>re.test(l.split(/\d/)[0]))).map(([n])=>n);
+  const got = parseScreenTime(text).map(a=>a.name);
+  if (seen.some(n=>!got.includes(n))){
+    try{ text += "\n" + ((await w.recognize(ocrCanvas(im, false, 700))).data.text || ""); }catch(e){ console.warn(e); }
   }
   return text;
 }
@@ -2328,6 +2335,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"89", date:"17. November", items:[
+    "🤖 KI: Findet App-Zeiten jetzt auch, wenn ein ⏳-Limit-Symbol oder ein blasser Balken stört (z. B. Instagram)"
+  ]},
   { v:"88", date:"16. November", items:[
     "🔴 Punkt am App-Symbol zeigt jetzt auch ungelesene Chat-Nachrichten – und verschwindet, sobald alles erledigt ist"
   ]},
