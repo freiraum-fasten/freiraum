@@ -512,7 +512,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "93";
+const APP_VERSION = "94";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1023,7 +1023,10 @@ function parseDur(str){
   return found ? Math.min(1440, h*60+m) : null;
 }
 function durNear(lines, i){
+  const LT = /weniger als\s*1\s*min|less than\s*1\s*min|<\s*1\s*min/i;   // „Weniger als 1 Minute“ = 0 Min.
+  if (LT.test(lines[i])) return 0;
   const d = parseDur(lines[i]); if (d != null) return d;
+  if (lines[i+1] && LT.test(lines[i+1])) return 0;
   for (let k=1;k<=2;k++){
     const nx = lines[i+k]; if (!nx) break;
     const head = nx.split(/\d/)[0];
@@ -1035,40 +1038,31 @@ function durNear(lines, i){
 /* Handyzeit-Gruppe: Gesamtzeit = größte Zeitangabe auf dem Screenshot (die große Zahl oben/in der Mitte) */
 /* Steht neben dieser Zeile das Datum oder „insgesamt“/„Bildschirmzeit“? Dann ist die Zahl die Gesamtzeit oben */
 function headerNear(lines, i){
-  const HEAD = /insgesamt|gesamt|total|bildschirmzeit|screen\s?time|\b(mo|di|mi|do|fr|sa|so)\.?,|\d{1,2}\.\s*(jan|feb|mär|mar|apr|mai|may|jun|jul|aug|sep|okt|oct|nov|dez|dec)|heute|today|gestern|yesterday/i;
+  const HEAD = /insgesamt|gesamt|total|bildschirmzeit|screen\s?time|\b(mo|di|mi|do|fr|sa|so)\.?,|\d{1,2}\.\s*(jan|feb|mär|mar|apr|mai|may|jun|jul|aug|sep|okt|oct|nov|dez|dec)|heute|today|gestern|yesterday|^\W{0,3}(januar|februar|märz|april|mai|juni|juli|august|september|oktober|november|dezember)\W{0,3}$/i;
   return [i-1, i+1].some(k => lines[k] && HEAD.test(lines[k]) && !/durchschnitt|average|aktualis|updated|zuletzt|last/i.test(lines[k]));
 }
 function parseTotalTime(text){
   const lines = text.split(/\n/).map(l=>l.trim()).filter(Boolean);
-  let best = null, sum = 0, n = 0, bestHM = null, bestHead = null;
-  for (const l of lines){
-    if (/^\D{0,3}(0|30|60)\s*(min|m)\.?\s*$/i.test(l)) continue;     // Achsenbeschriftung im Diagramm
-    if (/^\D{0,3}\d{1,2}\s*(h|std)\.?\s*$/i.test(l)) continue;        // Achsenbeschriftung „8h“ / „4 Std.“
-    if (/durchschnitt|average|woche|week/i.test(l)) continue;           // Wochenschnitt nicht zählen
-    const d = parseDur(l); if (d == null) continue;
-    if (lines.indexOf(l) >= 0 && headerNear(lines, lines.indexOf(l)) && (bestHead == null || d > bestHead)) bestHead = d;
-    n++; sum += d; if (best == null || d > best) best = d;
-    if (/\d\s*(h|std)\.?\s*\d{1,2}\s*(m|min)/i.test(normDur(l)) && (bestHM == null || d > bestHM)) bestHM = d;   // „4h 59min“ = echte Gesamtzeit
+  const axis = l => /^\D{0,3}(0|30|60)\s*(min|m)\.?\s*$/i.test(l) || /^\D{0,3}\d{1,2}\s*(h|std)\.?\s*$/i.test(l)
+    || (/^[^0-9]*\b(2|4|6|8|10|12|24)\s*(h|std)\.?\s*$/i.test(normDur(l).trim()) && !/min/i.test(l));   // „i i i 8h“ = Achse, keine Zeit
+  for (let i=0;i<lines.length;i++){
+    const l = lines[i];
+    if (axis(l) || /durchschnitt|average|woche|week|aktualis|updated/i.test(l)) continue;
+    const d = parseDur(l); if (d == null || d <= 0 || d > 1440) continue;
+    if (headerNear(lines, i)) return { total: d, missing: false };   // erste Zahl direkt beim Datum / „insgesamt“ = Gesamtzeit
   }
-  // Wenn die Summe der übrigen Zeiten deutlich größer ist, fehlt die Gesamtzeit vermutlich auf dem Bild
-  const maxAll = best;
-  if (bestHM != null) best = bestHM;
-  // Zahl direkt beim Datum / „insgesamt“ ist die Gesamtzeit – auch wenn eine Diagramm-Beschriftung („4h“) größer gelesen wurde
-  if (bestHead != null && (bestHM == null || bestHead >= bestHM)) return { total: bestHead, missing: false };
-  // Warnen nur, wenn keine eindeutige „Xh Ymin“-Gesamtzahl gefunden wurde, die zugleich die größte Zahl ist
-  // Steht die größte Zahl direkt beim Datum oder bei „insgesamt“, ist es sicher die Gesamtzeit (z. B. Samsung „49 min“)
-  const headOk = bestHead != null && bestHead >= maxAll;
-  const missing = best != null && !headOk && !(bestHM != null && bestHM >= maxAll) && n > 2 && (sum - best) > best * 1.15;
-  return { total: best, missing };
+  // Keine eindeutige Gesamtzahl gefunden (z. B. weggescrollt) → nicht raten, lieber selbst eintragen lassen
+  return { total: null, missing: true };
 }
-function parseScreenTime(text){
+function parseScreenTime(text, seen){
   const lines = text.split(/\n/).map(l=>l.trim()).filter(Boolean);
   const apps = [];
   // Abschnitte mit eingestellten Limits / Auszeiten zeigen keine echte Nutzung („YouTube, YouTube Kids und 1 w… 28 Min.“) → überspringen
   const LIMIT_HEAD = /^\W{0,3}(app-?)?limits?\b|^\W{0,3}(zeit|app)limits?\b|^\W{0,3}(auszeit|downtime|bildschirmzeit-?limits?|nutzungslimits?)\b|^\W{0,3}app[- ]?timer/i;
   const NEXT_HEAD = /häufigsten|meistgenutzt|most used|verwendet|kategorien|categories|apps?\s*&|benachrichtigungen|notifications|aktivierungen|pickups|zeige|show/i;
-  let inLimits = false;
+  let inLimits = false, inList = false;
   lines.forEach((l,i)=>{
+    if (/häufigsten|meistgenutzt|most used|alle apps|apps suchen|bildschirmzeit$/i.test(l)) inList = true;
     if (LIMIT_HEAD.test(l)){ inLimits = true; return; }
     if (inLimits && NEXT_HEAD.test(l)) inLimits = false;
     if (inLimits) return;
@@ -1078,9 +1072,10 @@ function parseScreenTime(text){
     for (const [name,re] of SOCIAL){
       if (apps.some(a=>a.name===name)) continue;
       const cleaned = namePart.replace(/^[^A-Za-z]+/,"").trim();
+      if ((name==="X / Twitter"||name==="Kick") && !inList) continue;
       if (re.test((name==="X / Twitter"||name==="Kick") ? cleaned : namePart)){
         const d = durNear(lines, i);
-        if (d != null) apps.push({name, min:d});
+        if (d != null) apps.push({name, min:d}); else if (seen) seen.add(name);
       }
     }
   });
@@ -1114,27 +1109,31 @@ function wrongView(text, apps){
   if (apps.length) return null;
   const n = (text.match(/benachrichtigung|notification/gi)||[]).length, u = (text.match(/entsperr|unlock|aktivierung|pickup/gi)||[]).length;
   if (n >= 3) return "Benachrichtigungen";
-  if (u >= 3) return "Entsperrungen";
+  if (u >= 3) return /aktivierung/i.test(text) ? "Aktivierungen" : "Entsperrungen";
   return null;
 }
 function loadImage(file){ return new Promise((res,rej)=>{ const url=URL.createObjectURL(file); const im=new Image(); im.onload=()=>res({im,url}); im.onerror=rej; im.src=url; }); }
-function ocrCanvas(im, boost=false, maxW=1400){
-  const scale = Math.min(1, maxW/im.width), c = document.createElement("canvas");
+function ocrCanvas(im, boost=false, maxW=1400, soft=false){
+  // „soft“: auf ~1100 px Breite bringen (kleine Bilder werden vergrößert) und nur sanft Kontrast anheben –
+  // liest Dunkelmodus-Screenshots (graue Schrift auf Schwarz) viel zuverlässiger als die harte Kurve
+  const scale = soft ? Math.min(2.5, 1100/im.width) : Math.min(1, maxW/im.width), c = document.createElement("canvas");
   c.width = Math.round(im.width*scale); c.height = Math.round(im.height*scale);
-  const g = c.getContext("2d"); g.drawImage(im,0,0,c.width,c.height);
+  const g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(im,0,0,c.width,c.height);
   const px = g.getImageData(0,0,c.width,c.height), d = px.data;
   let sum=0; for (let i=0;i<d.length;i+=16) sum += (d[i]+d[i+1]+d[i+2])/3;
   const dark = sum/(d.length/16) < 110; // Dark Mode → invertieren
   // Dark Mode oder „boost“: Kontrast-Kurve, damit kleine graue Zeiten („20min“) dunkel genug für die Texterkennung werden
-  const gamma = dark ? 3 : boost ? 2.2 : 1;
+  const gamma = soft ? 1.6 : dark ? 3 : boost ? 2.2 : 1;
   for (let i=0;i<d.length;i+=4){ let v=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; if(dark) v=255-v; if(gamma!==1) v=255*Math.pow(v/255,gamma); d[i]=d[i+1]=d[i+2]=v; }
   g.putImageData(px,0,0); c.dark = dark; return c;
 }
 /* Text lesen – egal welches Handy: erster Durchgang normal. Wenn Dunkelmodus oder keine Social-Media-Zeit gefunden wurde,
    zweiter Durchgang mit verstärktem Kontrast im Modus „verstreuter Text“ (findet kleine Zeiten unter Balken, ungewöhnliche Layouts). */
 async function ocrRead(w, im){
+  let text = (await w.recognize(ocrCanvas(im, false, 1400, true))).data.text || "";
   const c = ocrCanvas(im);
-  let text = (await w.recognize(c)).data.text || "";
+  const missingApp = t => { const g = parseScreenTime(t).map(a=>a.name); return SOCIAL.some(([n,re])=>!g.includes(n) && t.split(/\n/).some(l=>re.test(l.split(/\d/)[0]))); };
+  if (!parseScreenTime(text).length || missingApp(text)) text += "\n" + ((await w.recognize(c)).data.text || "");
   if (c.dark || !parseScreenTime(text).length){
     try{ await w.setParameters({tessedit_pageseg_mode:"11"}); text += "\n" + ((await w.recognize(c.dark ? c : ocrCanvas(im, true))).data.text || ""); }
     catch(e){ console.warn(e); }
@@ -1486,6 +1485,8 @@ async function analyse(root, files, day, test){
   }catch(err){ ocrOk = false; console.warn(err); }
   ocrProgress = null;
   const apps = Object.entries(found).map(([name,min])=>({name,min}));
+  const noTime = new Set(); if (ocrOk) parseScreenTime(text, noTime);
+  const lost = [...noTime].filter(n=>!apps.some(a=>a.name===n));   // Name gelesen, Minuten nicht
   const trk = (test && testTrack) || trackOf(), isT = trk==="total", isB = trk==="both", TR = TRACKS[trk];
   let total = apps.reduce((a,x)=>a+x.min,0), totalMissing = false, tot = null;
   if (isT){ const r = parseTotalTime(text); total = r.total ?? 0; totalMissing = r.missing || r.total == null; }
@@ -1501,6 +1502,7 @@ async function analyse(root, files, day, test){
   const ocrMin = ocrOk ? total : null;
   const sus = fakeSignals(files, loaded, text, ocrOk, apps, day, isT, total);
   if (wv) sus.unshift(`Falsche Ansicht: „${wv}“ statt Bildschirmzeit`);
+  if (lost.length && !isT) sus.push(`KI hat ${lost.join(", ")} gesehen, aber die Minuten nicht lesen können – bitte prüfen`);
   // Keine Social-Media-App auf einem echten Bildschirmzeit-Screenshot = 0 Min. → vorausfüllen (sonst müsste man „0“ selbst tippen)
   const zeroOk = ocrOk && !isT && !apps.length && !wv && !sus.some(x=>x.startsWith("Sieht nicht wie"));
   const pre = (ocrOk && (apps.length || (isT && total>0))) || zeroOk;
@@ -1513,6 +1515,7 @@ async function analyse(root, files, day, test){
       ${isB ? `<div class="approw" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line)"><span>📱 Handyzeit gesamt</span><span>${hasTot ? fmtHM(tot) : "–"}</span></div>
           ${totalMissing ? `<div class="status warn" style="margin-top:8px">⚠️ Die Gesamtzeit wurde nicht sicher erkannt. Trag sie unten bitte selbst ein – das ist die große Zahl ganz oben auf dem Screenshot (z. B. „1h 38min“).</div>` : ""}` : ""}
     </div></div>
+    ${lost.length && !isT ? `<div class="status warn" style="display:block;line-height:1.5">⚠️ <b>${esc(lost.join(", "))}</b> ist auf deinem Screenshot, aber die Minuten konnte die KI nicht lesen. Bitte <b>selbst dazurechnen</b> und unten eintragen.</div>` : ""}
     ${wv ? `<div class="status bad" style="display:block;line-height:1.5">❌ Das ist die Ansicht <b>„${esc(wv)}“</b> – da stehen keine Minuten. Tippe oben auf „${esc(wv)}“, wähle <b>„Bildschirmzeit“</b> und mach dann einen neuen Screenshot.</div>` : ""}
     <div class="status ${dateOk?"ok":"warn"}" style="display:block;line-height:1.5">${dateOk ? "✅ Datum passt" : shown && shown!==day
       ? `⚠️ Auf dem Screenshot steht <b>${esc(fmtDate(shown))}</b> – gebraucht wird der Screenshot von <b>${esc(fmtDate(day))}</b>. Bitte in der Bildschirmzeit den richtigen Tag auswählen.`
@@ -2371,6 +2374,12 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"94", date:"20. November", items:[
+    "🤖 KI liest Dunkelmodus-Screenshots jetzt viel zuverlässiger (App-Liste wurde oft gar nicht erkannt)",
+    "📱 Handyzeit: Diagramm-Beschriftungen („8h“) und App-Zeilen werden nicht mehr als Gesamtzeit gelesen – fehlt die Gesamtzahl, fragt die App lieber nach",
+    "🐦 Kein falsches „Twitter/X“ mehr durch Schließen-Kreuze",
+    "⚠️ Erkennt die KI eine App, kann aber die Minuten nicht lesen, sagt sie das jetzt – und ein Admin schaut drüber"
+  ]},
   { v:"93", date:"18. November", items:[
     "💬 Admins: Beim Prüfen zu jedem Screenshot eine Frage stellen – auch ohne Kommentar (z. B. „Woher kommen die 25 Min.?“)",
     "🟣 In allen Prüf-Listen sieht man „💬 Frage gestellt · Name“ – so fragt niemand doppelt"
