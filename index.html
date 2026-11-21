@@ -512,7 +512,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "94";
+const APP_VERSION = "95";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -657,21 +657,28 @@ const T = () => auth?.token;
 function isUnsure(c){ return !!c && !c.reviewed && c.valid!==false && !c.joker && !!(c.edited || c.date_ok!==true || c.suspect || c.disputed); }
 const anyUnsure = m => (m.checkins||[]).some(c=>isUnsure(c) && !isPending(c));   // nur Tage, die schon mitzählen
 const hmU = (min, u) => u ? `<span class="unsure" title="Noch nicht bestätigt – ein Admin prüft noch">${fmtHM(min)}<i>⏳</i></span>` : fmtHM(min);
+/* Bis wann darf ein Tag hochgeladen werden? Normal 3 Tage danach.
+   Wer sich nach dem Start anmeldet, kann eine Woche lang alle Tage seit dem 15.11. nachtragen. */
+function uploadDeadline(d, mine=true){
+  const normal = addDays(d, GRACE), j = mine ? acc?.joined : null;
+  if (j && j > START && d <= j){ const late = addDays(j, 7); return late > normal ? late : normal; }
+  return normal;
+}
 function isPending(e){ return !!e && e.edited && !e.reviewed && e.valid!==false && !e.joker && !e.success; }  // Zeit von Hand geändert → wartet auf Admin
 function statsFor(m){
   const map = {}; (m.checkins||[]).forEach(c => map[c.day] = c);
-  const today = berlinToday();
+  const today = berlinToday(), me = !!acc && m.id === acc.member_id;
   let streak = 0;
   // Tage, deren Frist noch läuft und die noch fehlen, unterbrechen die Serie nicht
   let d = addDays(today,-1);
-  while (!map[d] && diffDays(today,d) <= GRACE && d >= START) d = addDays(d,-1);
+  while (!map[d] && today <= uploadDeadline(d, me) && d >= START) d = addDays(d,-1);
   while (inWindow(d) && map[d] && (map[d].success || isPending(map[d]))) { if (map[d].success) streak++; d = addDays(d,-1); }
   const total = (m.checkins||[]).filter(c=>c.success).length;
   const okList = (m.checkins||[]).filter(c=>c.success);   // nur geschaffte Tage (max. Limit & gültig)
   const validDays = okList.length;
   const minutes = okList.reduce((a,c)=>a+(c.minutes||0),0);
   let missed = 0; // Frist abgelaufen ohne geschafften Tag (vergessen oder über dem Limit)
-  for (let i=0;i<DAYS;i++){ const dd=addDays(START,i); if (diffDays(today,dd) > GRACE && !(map[dd] && (map[dd].success || isPending(map[dd])))) missed++; }
+  for (let i=0;i<DAYS;i++){ const dd=addDays(START,i); if (today > uploadDeadline(dd, me) && !(map[dd] && (map[dd].success || isPending(map[dd])))) missed++; }
   let best=0, run=0;
   for (let i=0;i<DAYS;i++){ const dd=addDays(START,i); if(map[dd]&&map[dd].success){run++;best=Math.max(best,run);} else if(!isPending(map[dd])) run=0; }
   // Ersparnis: Ausgangswert (vorher pro Tag) minus tatsächliche Minuten, für jeden gültigen Tag
@@ -838,9 +845,9 @@ function renderToday(){
     else {
       if (inWindow(y)) html += checkinCard(s, y, today);
       else html += cdHtml("🔥 Tag 1 läuft! Erster Screenshot in", `Heute zählt's zum ersten Mal: ${goalText()}. Den Screenshot machst du <b>morgen früh</b> – dann steht „Gestern, ${esc(toDate(today).toLocaleDateString("de-DE",{day:"numeric",month:"long",timeZone:"UTC"}))}“ drauf.`);
-      for (let k=2; k<=GRACE; k++){
-        const dk = addDays(today,-k), ek = s.map[dk]; if (!inWindow(dk)) continue;
-        const left = GRACE - k;
+      for (let dk = addDays(today,-2); dk >= START; dk = addDays(dk,-1)){
+        const ek = s.map[dk]; if (!inWindow(dk) || today > uploadDeadline(dk)) continue;
+        const left = diffDays(uploadDeadline(dk), today);
         if (!ek) html += `<div class="card" style="padding:16px 20px;border:2px solid var(--no)"><div class="sectionhead"><div><b>${esc(fmtDate(dk))} fehlt</b><div class="muted small">${left===0?"Heute letzte Chance zum Nachtragen!":`Noch ${left===1?"bis morgen":left+" Tage"} Zeit zum Nachtragen.`}</div></div><button class="pill key" data-up="${dk}">Nachtragen</button></div></div>`;
         else if (canJoker(ek)) html += jokerOffer(dk, ek);
       }
@@ -2374,6 +2381,9 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"95", date:"20. November", items:[
+    "🆕 Späteinsteiger: Wer sich nach dem Start anmeldet, kann eine Woche lang alle Tage seit dem 15.11. nachtragen"
+  ]},
   { v:"94", date:"20. November", items:[
     "🤖 KI liest Dunkelmodus-Screenshots jetzt viel zuverlässiger (App-Liste wurde oft gar nicht erkannt)",
     "📱 Handyzeit: Diagramm-Beschriftungen („8h“) und App-Zeilen werden nicht mehr als Gesamtzeit gelesen – fehlt die Gesamtzahl, fragt die App lieber nach",
@@ -3054,7 +3064,7 @@ function todayBadge(){
   try{
     const m = acc && !acc.hidden && acc.status !== "paused" ? myMember() : null;
     if (m){ const s = statsFor(m), t = berlinToday();
-      for (let k=1; k<=GRACE; k++){ const d = addDays(t,-k); if (inWindow(d) && !s.map[d]) n++; } }
+      for (let d = addDays(t,-1); d >= START; d = addDays(d,-1)){ if (inWindow(d) && !s.map[d] && t <= uploadDeadline(d)) n++; } }
   }catch{}
   const btn = document.querySelector('#tabbar [data-t="today"]');
   if (btn){ let d = btn.querySelector(".tdot.td"); if (n){ if (!d){ d = document.createElement("span"); d.className = "tdot td"; btn.appendChild(d); } d.textContent = n; } else d?.remove(); }
