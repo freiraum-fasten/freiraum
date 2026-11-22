@@ -515,7 +515,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "97";
+const APP_VERSION = "98";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -729,14 +729,14 @@ $("#emojiPick").addEventListener("click", e=>{ const b=e.target.closest("button"
 $("#segAuth").addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return; authMode=b.dataset.a; renderOnboard(); });
 $("#forgotPw").addEventListener("click", ()=>{
   sheet(`<div style="text-align:center;font-size:40px">🔑</div><h3 style="text-align:center;margin:4px 0 6px">Passwort vergessen?</h3>
-    <p class="muted small" style="text-align:center;margin:0 0 14px;line-height:1.5">Kein Problem! Gib deine E-Mail ein – die Admins bekommen Bescheid und schicken dir <b>persönlich ein neues Passwort</b> (meist innerhalb weniger Stunden).</p>
+    <p class="muted small" style="text-align:center;margin:0 0 14px;line-height:1.5">Kein Problem! Gib deine E-Mail ein – die Admins bekommen Bescheid und schicken dir einen <b>Link</b>, mit dem du <b>selbst ein neues Passwort</b> festlegst (meist innerhalb weniger Stunden). Deine Daten bleiben alle erhalten.</p>
     <label class="field"><span>Deine E-Mail</span><input class="input" id="fpMail" type="email" autocomplete="email" inputmode="email" value="${esc($("#inEmail").value.trim())}"></label>
     <button class="btn btn-flame" id="fpSend" style="margin-top:8px">Neues Passwort anfragen</button>`, r=>{
     r.querySelector("#fpSend").onclick = async ()=>{ const m = r.querySelector("#fpMail").value.trim();
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m)){ toast("Bitte eine gültige E-Mail eingeben"); return; }
       const b = r.querySelector("#fpSend"); b.disabled = true;
       try{ await rpc("sf_pw_forgot",{p_email:m});
-        sheet(`<div style="text-align:center;font-size:44px">✅</div><h3 style="text-align:center;margin:4px 0 6px">Anfrage ist raus!</h3><p class="muted small" style="text-align:center;line-height:1.5;margin:0 0 14px">Wenn es ein Konto mit <b>${esc(m)}</b> gibt, bekommen die Admins jetzt Bescheid und melden sich mit deinem neuen Passwort bei dir.<br><br>Danach kannst du es unter <b>Einstellungen → Mein Konto → Passwort ändern</b> selbst neu setzen.</p><button class="btn btn-primary" id="fpOk">Alles klar</button>`, r2=>{ r2.querySelector("#fpOk").onclick = closeSheet; });
+        sheet(`<div style="text-align:center;font-size:44px">✅</div><h3 style="text-align:center;margin:4px 0 6px">Anfrage ist raus!</h3><p class="muted small" style="text-align:center;line-height:1.5;margin:0 0 14px">Wenn es ein Konto mit <b>${esc(m)}</b> gibt, bekommen die Admins jetzt Bescheid und schicken dir einen Link. Damit legst du dein neues Passwort selbst fest. 🔑</p><button class="btn btn-primary" id="fpOk">Alles klar</button>`, r2=>{ r2.querySelector("#fpOk").onclick = closeSheet; });
       }catch(err){ toast(err.message); b.disabled = false; } };
   });
 });
@@ -2189,15 +2189,15 @@ function renderAdmin(){
       ${acc.owner ? `<div class="trkset" style="flex:1 1 100%;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="muted small" style="font-weight:700">Challenge:</span>${[["social","📵 30 Min."],["both","🔥 Beides"],["total","📱 Handyzeit"]].map(([t,l])=>`<button class="pill${(a.track||"social")===t?" on":""}" data-trk="${t}" data-acct="${a.id}" style="${(a.track||"social")===t?"background:var(--ink);color:var(--bg)":""}">${l}</button>`).join("")}</div>
       <button class="pill" data-bl="${a.id}">Ausgangswert</button>` : `<span class="muted small" style="flex:1 1 100%">Challenge: ${a.track==="total"?"📱 Handyzeit":a.track==="both"?"🔥 Beides":"📵 30 Min."} · Konto-Änderungen macht der Haupt-Admin.</span>`}
       ${acc.owner && a.id!==acc.id ? `<button class="pill" data-adm="${a.id}" data-v="${a.admin?0:1}">${a.admin?"Admin entziehen":"Zum Admin"}</button>` : ""}
-      ${acc.owner ? `<button class="pill" data-pw="${a.id}">Passwort neu</button>` : ""}${acc.can_grant && !a.admin ? `<button class="pill" data-cw="${a.id}" data-v="${a.reviewer?0:1}">${a.reviewer?"🧑‍⚖️ Co-Worker entfernen":"🧑‍⚖️ Zum Co-Worker"}</button>` : ""}${acc.owner && a.id!==acc.id ? (a.status==="paused"||a.status==="banned"
+      ${acc.owner ? `<button class="pill" data-pw="${a.id}">🔗 Passwort-Link</button>` : ""}${acc.can_grant && !a.admin ? `<button class="pill" data-cw="${a.id}" data-v="${a.reviewer?0:1}">${a.reviewer?"🧑‍⚖️ Co-Worker entfernen":"🧑‍⚖️ Zum Co-Worker"}</button>` : ""}${acc.owner && a.id!==acc.id ? (a.status==="paused"||a.status==="banned"
         ? `<button class="pill" data-st="${a.id}" data-v="active">▶️ ${a.status==="banned"?"Wieder zulassen":"Fortsetzen"}</button>`
         : `<button class="pill" data-st="${a.id}" data-v="paused">⏸️ Pausieren</button><button class="pill" style="color:var(--no)" data-st="${a.id}" data-v="banned">⛔ Ausschließen</button>`) : ""}${a.has_avatar && acc.owner?`<button class="pill" data-rmav="${a.id}">Bild entfernen</button>`:""}</div></details>`).join("");
   v.innerHTML = `
     <div class="card"><div class="sectionhead"><h3>🛡️ Admin-Bereich</h3><span class="muted small">${d.accounts.length} Konten · ${d.stats?.uploads ?? 0} Uploads</span></div>
       <p class="muted small" style="margin:6px 0 0">Nur Admins sehen diesen Bereich.</p></div>
     ${pwReqs.length ? `<div class="card" style="border:2px solid var(--flame2)"><div class="sectionhead"><h3 style="font-size:17px">🔑 Passwort vergessen</h3><span class="muted small">${pwReqs.length} offen</span></div>
-      <p class="muted small" style="margin:4px 0 6px">Neues Passwort erzeugen und der Person persönlich schicken (z. B. per WhatsApp).</p>
-      <div class="daylist">${pwReqs.map(q=>`<div class="row" style="flex-wrap:wrap;align-items:center"><b style="flex:1;min-width:0">${esc(q.emoji||"🙂")} ${esc(q.name)}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(q.email)} · ${esc(new Date(q.at).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))}</div></b><button class="pill qok" data-pwreq="${q.account}">🔑 Neues Passwort</button></div>`).join("")}</div></div>` : ""}
+      <p class="muted small" style="margin:4px 0 6px">Link erzeugen und per WhatsApp schicken – damit legt die Person selbst ein neues Passwort fest. Du siehst es nie.</p>
+      <div class="daylist">${pwReqs.map(q=>`<div class="row" style="flex-wrap:wrap;align-items:center"><b style="flex:1;min-width:0">${esc(q.emoji||"🙂")} ${esc(q.name)}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(q.email)} · ${esc(new Date(q.at).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))}</div></b><button class="pill qok" data-pwreq="${q.account}">🔗 Link erzeugen</button></div>`).join("")}</div></div>` : ""}
     ${joinReqs.length ? `<div class="card" id="admReqs" style="border:2px solid var(--flame2)"><div class="sectionhead"><h3 style="font-size:17px">🙋 Beitrittsanfragen</h3><span class="muted small">${joinReqs.length} offen</span></div>
       <p class="muted small" style="margin:4px 0 8px;line-height:1.45">Diese Personen möchten nach Anmeldeschluss noch mitmachen.</p>
       <div class="daylist">${joinReqs.map(q=>`<div class="row" style="flex-wrap:wrap"><b style="flex:1 1 100%;min-width:0">${esc(q.emoji)} ${esc(q.name)}<div class="muted small" style="font-weight:500;word-break:break-all">${esc(q.email)} · ${esc(new Date(q.created).toLocaleString("de-DE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))}</div></b>
@@ -2331,11 +2331,17 @@ function renderAdmin(){
       try{ await rpc("sf_admin_set_track",{p_token:T(),p_account:a.id,p_track:t}); await refresh(); await loadAdmin(); show(); toast("✅ Challenge geändert"); }catch(err){ toast(err.message); } }); });
   v.querySelectorAll("[data-pw], [data-pwreq]").forEach(b=>b.onclick=()=>{
     const a = d.accounts.find(x=>x.id===(b.dataset.pw || b.dataset.pwreq));
-    confirmSheet(`Neues Passwort für ${a.name} (${a.email}) erzeugen? Das alte gilt dann nicht mehr.`, async ()=>{
-      try{ const pw = await rpc("sf_admin_reset_pw",{p_token:T(),p_account:a.id});
-        rpc("sf_admin_pw_request_done",{p_token:T(),p_account:a.id}).then(()=>{ pwReqs = pwReqs.filter(q=>q.account!==a.id); }).catch(()=>{});
-        sheet(`<h3 style="margin-bottom:6px">Neues Passwort</h3><p class="muted small" style="margin:0 0 12px">Gib es ${esc(a.name)} persönlich weiter. Danach unter „Infos → Passwort ändern“ ein eigenes setzen.</p>
-          <div class="code-box" style="margin:0 0 12px"><b style="letter-spacing:.06em;font-size:22px">${esc(pw)}</b><button class="pill" id="cpPw">Kopieren</button></div>`, r=>{ r.querySelector("#cpPw").onclick=()=>copy(pw,"Passwort kopiert"); });
+    confirmSheet(`Link zum Zurücksetzen für ${a.name} erzeugen? ${a.name} legt damit selbst ein neues Passwort fest – alle Daten bleiben erhalten.`, async ()=>{
+      try{ const t = await rpc("sf_admin_reset_link",{p_token:T(),p_account:a.id});
+        pwReqs = pwReqs.filter(q=>q.account!==a.id);
+        const link = location.origin + location.pathname + "?reset=" + encodeURIComponent(t);
+        const msg = `Hi ${a.name}! 🔑 Hier kannst du dir ein neues Freiraum-Passwort festlegen (Link gilt 24 Std., nur einmal):\n${link}`;
+        sheet(`<div style="text-align:center;font-size:40px">🔗</div><h3 style="text-align:center;margin:4px 0 6px">Link für ${esc(a.name)}</h3>
+          <p class="muted small" style="text-align:center;margin:0 0 12px;line-height:1.5">Schick ${esc(a.name)} diesen Link. Damit legt sie/er <b>selbst</b> ein neues Passwort fest – du siehst es nie. Alle Daten bleiben erhalten.<br>Gültig <b>24 Stunden</b>, nur <b>einmal</b> nutzbar.</p>
+          <div class="code-box" style="margin:0 0 10px;word-break:break-all;font-size:13px">${esc(link)}</div>
+          <a class="btn btn-flame" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">💬 Per WhatsApp schicken</a>
+          <button class="btn btn-ghost" id="cpLink" style="margin-top:10px">📋 Nachricht kopieren</button>`, r=>{ r.querySelector("#cpLink").onclick=()=>copy(msg,"Nachricht mit Link kopiert"); });
+        if (tab==="admin") renderAdmin();
       }catch(err){ toast(err.message); }
     });
   });
@@ -2448,8 +2454,11 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"98", date:"22. November", items:[
+    "🔗 Passwort zurücksetzen per Link: Admin schickt einen Link, die Person legt selbst ein neues Passwort fest – niemand sonst sieht es, alle Daten bleiben"
+  ]},
   { v:"97", date:"22. November", items:[
-    "🔑 „Passwort vergessen?“ beim Anmelden – David bekommt Bescheid und erzeugt mit einem Tipp ein neues Passwort"
+    "🔑 „Passwort vergessen?“ beim Anmelden – David schickt einen Link, mit dem man selbst ein neues Passwort festlegt (Daten bleiben erhalten)"
   ]},
   { v:"96", date:"22. November", items:[
     "🔔 Erinnerungen jetzt auch morgens um 8 Uhr – und ein Hinweis zum Einschalten für alle, die sie noch nicht an haben",
@@ -3474,6 +3483,25 @@ async function refresh(){
 }
 
 /* ---------- Start ---------- */
+/* Passwort-Link (?reset=…) → neues Passwort selbst festlegen */
+async function handleResetLink(){
+  const rt = params.get("reset"); if (!rt) return;
+  history.replaceState(null, "", location.pathname);
+  let who = null; try{ who = await rpc("sf_pw_reset_check",{p_reset:rt}); }catch{}
+  if (!who){ sheet(`<div style="text-align:center;font-size:40px">⏰</div><h3 style="text-align:center;margin:4px 0 6px">Link nicht mehr gültig</h3><p class="muted small" style="text-align:center;line-height:1.5;margin:0 0 14px">Der Link ist abgelaufen oder wurde schon benutzt. Tippe beim Anmelden auf <b>„Passwort vergessen?“</b> – dann bekommst du einen neuen.</p><button class="btn btn-primary" id="rlOk">Okay</button>`, r=>{ r.querySelector("#rlOk").onclick = closeSheet; }); return; }
+  sheet(`<div style="text-align:center;font-size:40px">🔑</div><h3 style="text-align:center;margin:4px 0 6px">Hallo ${esc(who.name)} ${esc(who.emoji||"")}</h3>
+    <p class="muted small" style="text-align:center;margin:0 0 14px;line-height:1.5">Leg dein neues Passwort fest. Deine Flammen, Screenshots und alles andere bleiben erhalten.</p>
+    <label class="field"><span>Neues Passwort (mind. 8 Zeichen)</span><input class="input" id="rpNew" type="password" autocomplete="new-password"></label>
+    <label class="field"><span>Nochmal zur Sicherheit</span><input class="input" id="rpNew2" type="password" autocomplete="new-password"></label>
+    <button class="btn btn-flame" id="rpSave" style="margin-top:8px">Passwort speichern & anmelden</button>`, r=>{
+    r.querySelector("#rpSave").onclick = async ()=>{ const p1 = r.querySelector("#rpNew").value, p2 = r.querySelector("#rpNew2").value;
+      if (p1.length < 8){ toast("Bitte mindestens 8 Zeichen"); return; } if (p1 !== p2){ toast("Die beiden Passwörter sind nicht gleich"); return; }
+      const b = r.querySelector("#rpSave"); b.disabled = true;
+      try{ const res = await rpc("sf_pw_reset",{p_reset:rt, p_password:p1}); auth = { token:res.token }; save(auth); closeSheet();
+        await refresh(); tab = "group"; show(); toast(`✅ Neues Passwort gespeichert – willkommen zurück, ${who.name}!`); }
+      catch(err){ toast(err.message); b.disabled = false; } };
+  });
+}
 (async function init(){
   if (params.get("g")){ $("#inCode").value = params.get("g").toUpperCase().slice(0,6); mode="join"; authMode = auth ? "login" : "register"; }
   if (params.get("g") || params.get("zugang")) history.replaceState(null,"",location.pathname + (params.get("heute")?`?heute=${params.get("heute")}`:""));
@@ -3481,6 +3509,7 @@ async function refresh(){
   applyLook(getLook());
   if (auth?.token){ await refresh(); show(); if (!maybeShowAnn()) maybeShowWhatsNew(); }
   setTimeout(maybeAskInstall, 1500);
+  handleResetLink();
   $("#btnHelp").onclick = tutSheet;
   document.addEventListener("visibilitychange", async ()=>{ if(!document.hidden && auth?.token){ await refresh(); show(); maybeShowAnn(); } });
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").then(r=>r.update()).catch(()=>{});
