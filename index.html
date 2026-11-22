@@ -250,6 +250,7 @@ html,body{max-width:100%;overflow-x:hidden}
 .chatban .cb-tx{flex:1;min-width:0}.chatban .cb-tx b{display:block;font-size:15.5px}.chatban .cb-tx small{opacity:.9;font-size:12.5px}.chatban .cb-go{font-weight:800;background:rgba(255,255,255,.22);padding:7px 12px;border-radius:99px;white-space:nowrap;font-size:13.5px}
 @keyframes cbPulse{0%,100%{box-shadow:0 10px 26px rgba(124,92,255,.35)}50%{box-shadow:0 10px 34px rgba(255,61,90,.55)}}
 .flag.qflag{background:rgba(124,92,255,.18);color:#B9A8FF;font-weight:700}
+.weekrecap{background:linear-gradient(150deg,rgba(255,138,31,.16),rgba(124,92,255,.14));box-shadow:inset 0 0 0 1.5px rgba(255,138,31,.4)}.wr-h{font-size:20px;font-weight:800;margin:6px 0 2px}.wr-g{margin-top:12px;font-size:14px;line-height:1.5;color:var(--muted)}.wr-g b{color:var(--ink)}
 .frday{display:flex;align-items:center;gap:10px;margin-top:12px}.frday span{font-weight:700;font-size:14px;white-space:nowrap}.frday select{flex:1;padding:10px 12px}
 .frgoal{background:linear-gradient(150deg,rgba(124,92,255,.22),rgba(20,160,107,.16));box-shadow:inset 0 0 0 1.5px rgba(124,92,255,.45)}
 .fg-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.fg-k{font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#A895FF}
@@ -512,7 +513,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "95";
+const APP_VERSION = "96";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -663,6 +664,27 @@ function uploadDeadline(d, mine=true){
   const normal = addDays(d, GRACE), j = mine ? acc?.joined : null;
   if (j && j > START && d <= j){ const late = addDays(j, 7); return late > normal ? late : normal; }
   return normal;
+}
+/* Wochen-Rückblick: sonntags und montags, für die letzten 7 Tage – einmal pro Woche wegklickbar */
+function weekRecapHtml(m, today){
+  try{
+    const dow = toDate(today).getUTCDay();   // 0 = Sonntag, 1 = Montag
+    if (!m || !(dow === 0 || dow === 1) || addDays(today,-7) < addDays(START,-1)) return "";
+    const key = "fr_week_" + (dow===0 ? today : addDays(today,-1)); let off = null; try{ off = localStorage.getItem(key); }catch{}
+    if (off) return "";
+    const from = addDays(today,-7), to = addDays(today,-1), inW = c => c.day >= from && c.day <= to && c.valid !== false;
+    const mine = (m.checkins||[]).filter(inW);
+    const fl = mine.filter(c=>c.success).length, up = mine.length;
+    const saved = m.baseline != null ? mine.filter(c=>!isPending(c)).reduce((a,c)=>a+Math.max(0, m.baseline-(c.minutes||0)),0) : 0;
+    let frs = 0; for (let d = from; d <= to; d = addDays(d,1)) frs += frDone(d).length;
+    let gSaved = 0, gFl = 0; (group?.members||[]).forEach(x=>{ (x.checkins||[]).filter(inW).forEach(c=>{ if (c.success) gFl++; if (x.baseline != null && !isPending(c)) gSaved += Math.max(0, x.baseline-(c.minutes||0)); }); });
+    const head = fl >= 6 ? "Was für eine Woche! 🏆" : fl >= 4 ? "Starke Woche! 💪" : fl >= 1 ? "Weiter so – jede Flamme zählt! 🔥" : "Neue Woche, neue Chance! 🌱";
+    return `<div class="card weekrecap"><div class="sectionhead"><div class="tag grad">📅 Dein Wochen-Rückblick</div><button class="pill" id="wrClose" data-wk="${key}">✕</button></div>
+      <div class="wr-h">${head}</div><div class="muted small" style="margin-bottom:10px">${esc(dayShort(from))} – ${esc(dayShort(to))}</div>
+      <div class="stats3"><div><b>${fl}</b><span>🔥 Flammen</span></div><div><b>${fmtHM(saved)}</b><span>gespart</span></div><div><b>${frs}</b><span>✨ Freiräume</span></div></div>
+      <div class="wr-g">🤝 Die ganze Gruppe: <b>${Math.round(gSaved/60).toLocaleString("de-DE")} Std.</b> gespart · <b>${gFl}</b> Flammen</div>
+      ${up < 7 ? `<div class="muted small" style="margin-top:8px">${7-up===1?"1 Tag fehlt":(7-up)+" Tage fehlen"} – manche kannst du vielleicht noch nachtragen.</div>` : ""}</div>`;
+  }catch{ return ""; }
 }
 function isPending(e){ return !!e && e.edited && !e.reviewed && e.valid!==false && !e.joker && !e.success; }  // Zeit von Hand geändert → wartet auf Admin
 function statsFor(m){
@@ -843,6 +865,7 @@ function renderToday(){
       <div class="progress"><i style="width:${pct}%"></i></div>`;
     if (acc.hidden) html += `<div class="hint" style="display:block;margin-bottom:14px"><b>🕶️ Unsichtbar-Modus aktiv</b><br><span class="muted small">Du machst nicht mit und beobachtest nur. Zum Mitmachen im Admin-Bereich ausschalten.</span></div>`;
     else {
+      html += weekRecapHtml(m, today);
       if (inWindow(y)) html += checkinCard(s, y, today);
       else html += cdHtml("🔥 Tag 1 läuft! Erster Screenshot in", `Heute zählt's zum ersten Mal: ${goalText()}. Den Screenshot machst du <b>morgen früh</b> – dann steht „Gestern, ${esc(toDate(today).toLocaleDateString("de-DE",{day:"numeric",month:"long",timeZone:"UTC"}))}“ drauf.`);
       for (let dk = addDays(today,-2); dk >= START; dk = addDays(dk,-1)){
@@ -858,11 +881,12 @@ function renderToday(){
     html += calendarCard(s, today);
   }
   if (!acc?.hidden && pushSupported() && Notification.permission === "default" && !(()=>{ try{ return localStorage.getItem("fr_push_hint"); }catch{ return "1"; } })())
-    html = `<div class="card" id="pushHint" style="display:flex;gap:12px;align-items:center;padding:14px 16px"><div style="font-size:30px">🔔</div><div style="flex:1"><b>Erinnerung gefällig?</b><div class="muted small">Abends eine Nachricht, wenn dein Screenshot fehlt. <a href="#" id="phVid" style="color:inherit;font-weight:700">Video</a></div></div><button class="pill" id="phYes" style="background:var(--ink);color:var(--bg)">Ja</button><button class="pill" id="phNo">✕</button></div>` + html;
+    html = `<div class="card" id="pushHint" style="display:flex;gap:12px;align-items:center;padding:14px 16px"><div style="font-size:30px">🔔</div><div style="flex:1"><b>Erinnerung gefällig?</b><div class="muted small">Morgens & abends eine Nachricht, wenn dein Screenshot fehlt. <a href="#" id="phVid" style="color:inherit;font-weight:700">Video</a></div></div><button class="pill" id="phYes" style="background:var(--ink);color:var(--bg)">Ja</button><button class="pill" id="phNo">✕</button></div>` + html;
   $("#vToday").innerHTML = html;
   $("#phVid")?.addEventListener("click", e=>{ e.preventDefault(); remindVideoSheet(); });
+  $("#wrClose")?.addEventListener("click", e=>{ try{ localStorage.setItem(e.currentTarget.dataset.wk, "1"); }catch{} e.currentTarget.closest(".weekrecap")?.remove(); });
   $("#phNo")?.addEventListener("click", ()=>{ try{ localStorage.setItem("fr_push_hint","1"); }catch{} $("#pushHint")?.remove(); });
-  $("#phYes")?.addEventListener("click", async ()=>{ try{ localStorage.setItem("fr_push_hint","1"); }catch{} try{ await pushEnable(1); toast("🔔 Erinnerungen sind an – um ca. 18:30 Uhr, wenn was fehlt"); }catch(err){ toast(err.message); } $("#pushHint")?.remove(); });
+  $("#phYes")?.addEventListener("click", async ()=>{ try{ localStorage.setItem("fr_push_hint","1"); }catch{} try{ await pushEnable(1); toast("🔔 Erinnerungen sind an – morgens um 8 und abends um 18:30, wenn was fehlt"); }catch(err){ toast(err.message); } $("#pushHint")?.remove(); });
   $("#goInvite")?.addEventListener("click", invite);
   $("#goProbe")?.addEventListener("click", ()=>uploadFlow(addDays(berlinToday(),-1), true));
   $("#goIdeas")?.addEventListener("click", ()=>{ tab="ideas"; show(); window.scrollTo({top:0}); });
@@ -2106,6 +2130,26 @@ function renderReview(){
   v.querySelectorAll("[data-rq]").forEach(b=>b.onclick=()=>reviewSheet({...q[+b.dataset.rq], track:q[+b.dataset.rq].group}, null));
   $("#rqReload").onclick = ()=>{ reviewData = null; cwMsgs = null; renderReview(); };
 }
+/* Admin: Wer macht (noch) nicht mit? – zum persönlichen Anschreiben */
+function missingPeopleHtml(d){
+  try{
+    if (!group || berlinToday() < START) return "";
+    const today = berlinToday(), byMember = {}; group.members.forEach(m=>byMember[m.id] = m);
+    const accs = (d.accounts||[]).filter(a=>(a.status||"active")==="active" && !a.hidden && a.member && byMember[a.member]);
+    const never = [], quiet = [];
+    accs.forEach(a=>{ const cs = byMember[a.member].checkins||[];
+      if (!cs.length) never.push(a);
+      else { const last = cs.map(c=>c.day).sort().pop(); const gap = diffDays(today, last) - 1; if (gap >= 2) quiet.push({...a, last, gap}); } });
+    if (!never.length && !quiet.length) return "";
+    const row = (a, info) => `<div class="row" style="flex-wrap:wrap;align-items:center"><b style="flex:1;min-width:0">${esc(a.emoji||"🙂")} ${esc(a.name)}<div class="muted small" style="font-weight:500">${info}</div></b>
+      <button class="pill" data-mp="${a.id}">💬 Schreiben</button></div>`;
+    return `<details class="card archbox" id="missBox" open><summary><b>🙋 Wer fehlt?</b><span class="muted small">${never.length + quiet.length} Personen</span></summary>
+      <p class="muted small" style="margin:8px 0 6px;line-height:1.5">Eine kurze persönliche Nachricht wirkt oft Wunder. Sie landet in ihrem Chat – und sie sehen oben den lila Hinweis.</p>
+      ${never.length ? `<div class="muted small" style="font-weight:800;margin:10px 0 2px">Noch nie hochgeladen (${never.length})</div><div class="daylist">${never.map(a=>row(a, a.baseline==null ? "⚠️ Vorher-Zeit fehlt – deshalb geht Hochladen noch nicht" : "Angemeldet am "+esc(new Date(a.created).toLocaleDateString("de-DE",{day:"numeric",month:"numeric"})))).join("")}</div>` : ""}
+      ${quiet.length ? `<div class="muted small" style="font-weight:800;margin:12px 0 2px">Seit 2+ Tagen nichts (${quiet.length})</div><div class="daylist">${quiet.sort((x,y)=>y.gap-x.gap).map(a=>row(a, `Letzter Upload: ${esc(dayShort(a.last))} · ${a.gap} Tage fehlen`)).join("")}</div>` : ""}
+    </details>`;
+  }catch{ return ""; }
+}
 function renderAdmin(){
   const v = $("#vAdmin");
   if (!adminData){ v.innerHTML = `<div class="loader"></div>`; loadAdmin().then(()=>{ if(tab==="admin") renderAdmin(); }); return; }
@@ -2157,6 +2201,7 @@ function renderAdmin(){
       <p class="muted small" style="margin:6px 0 8px">🤖 Die KI hat ${d.stats?.auto ?? 0} Uploads automatisch freigegeben. Hier landen nur Einsprüche 💬 und auffällige Uploads: ✏️ = Minuten von Hand geändert · 📅? = Datum nicht erkannt · 🕵️ = KI vermutet einen Fake. Alle anderen kannst du über die Rangliste prüfen (Person antippen).</p>
       ${(d.stats?.fake_right||d.stats?.fake_wrong) ? `<p class="muted small" style="margin:0 0 8px">🕵️ Fake-Verdacht der KI bisher: <b>${d.stats.fake_right||0}× richtig</b> · ${d.stats.fake_wrong||0}× falsch</p>` : ""}
       <div class="daylist">${queue}</div></div>
+    ${missingPeopleHtml(d)}
     <div class="card" id="allUp"><div class="sectionhead"><h3 style="font-size:17px">📅 Alle Uploads nach Tagen</h3><span class="muted small">${group ? group.members.reduce((a,m)=>a+(m.checkins||[]).length,0) : 0} gesamt</span></div>
       <p class="muted small" style="margin:6px 0 4px">Nach Wochen geordnet, jeder Tag für sich. Pro Tag erst 10 – der Rest mit „Alle anzeigen“. ⏳ Offene stehen immer oben. 📵 = 30-Min-Challenge · 📱 = Handyzeit</p>
       ${group ? allUploadsHtml() : ""}</div>
@@ -2281,6 +2326,7 @@ function renderAdmin(){
       await refresh(); await loadAdmin(); show(); toast("Gespeichert");
     }catch(err){ toast(err.message); }
   };
+  document.querySelectorAll("[data-mp]").forEach(b=>b.onclick=()=>{ const a = (adminData.accounts||[]).find(x=>x.id===b.dataset.mp); if (a) chatSheet({id:a.id, name:a.name, emoji:a.emoji, email:a.email}); });
   $("#errClear")?.addEventListener("click", async ()=>{ try{ await rpc("sf_owner_errors_clear",{p_token:T()}); ownerErrs = []; toast("Erledigt ✓"); renderAdmin(); }catch(err){ toast(err.message); } });
   $("#btnResetApp")?.addEventListener("click", ()=>confirmSheet("Den Zähler „Zeit in Freiraum“ für alle auf 0 zurücksetzen?", async ()=>{
     try{ const r = await rpc("sf_admin_reset_app_time",{p_token:T()}); appTime = r; appTimeAt = Date.now(); appShown = 0; toast("⏱️ Zähler zurückgesetzt"); }catch(err){ toast(err.message); }
@@ -2381,6 +2427,11 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"96", date:"22. November", items:[
+    "🔔 Erinnerungen jetzt auch morgens um 8 Uhr – und ein Hinweis zum Einschalten für alle, die sie noch nicht an haben",
+    "📅 Sonntags & montags: dein Wochen-Rückblick mit Flammen, gesparter Zeit und Freiräumen",
+    "🙋 Admins: „Wer fehlt?“ – wer noch nie oder seit 2+ Tagen nichts hochgeladen hat, mit „Schreiben“-Knopf"
+  ]},
   { v:"95", date:"20. November", items:[
     "🆕 Späteinsteiger: Wer sich nach dem Start anmeldet, kann eine Woche lang alle Tage seit dem 15.11. nachtragen"
   ]},
@@ -2771,11 +2822,35 @@ function newsHtml(){
     <p class="an-foot">Abgezogen wird höchstens so viel, wie auf dem Screenshot bei YouTube steht.<br><b style="color:var(--ink)">Wir vertrauen euch! 🤝</b></p>
     <button class="btn btn-flame" id="annOk">Super, verstanden</button>`;
 }
+/* Einmaliges Popup: Erinnerungen einschalten (nur wenn noch kein Gerät angemeldet ist) */
+async function maybeShowPushPop(){
+  try{
+    if (!acc || acc.hidden || $("#annBg") || berlinToday() < START) return false;
+    let seen = null; try{ seen = localStorage.getItem("fr_push_pop"); }catch{}
+    if (seen) return false;
+    if (pushSupported() && Notification.permission === "granted"){ const st = await rpc("sf_push_status",{p_token:T()}).catch(()=>null); if (st && st.devices > 0) return false; }
+    if (pushSupported() && Notification.permission === "denied") return false;
+    const iosNoHome = isIOS() && !isStandalone();
+    const bg = document.createElement("div"); bg.id = "annBg";
+    bg.innerHTML = `<div id="ann"><div class="an-ic" style="font-size:34px">🔔</div><h3 class="an-h">Nie wieder einen Screenshot vergessen</h3>
+      <p class="an-intro">Freiraum erinnert dich – <b>morgens um 8</b> und <b>abends um 18:30</b>, aber nur, wenn dein Screenshot noch fehlt. Sonst bleibt es ruhig. 🤫</p>
+      ${iosNoHome ? `<div class="hint" style="display:block;margin:0 0 12px;line-height:1.5">📱 Auf dem iPhone geht das nur, wenn Freiraum auf dem <b>Home-Bildschirm</b> liegt. Das Video zeigt, wie's geht.</div>` : ""}
+      ${iosNoHome ? "" : `<button class="btn btn-flame" id="ppOn">🔔 Erinnerungen einschalten</button>`}
+      <button class="btn ${iosNoHome?"btn-flame":"btn-ghost"}" id="ppVid" style="margin-top:10px">▶️ Video: so geht's</button>
+      <button class="btn btn-ghost" id="ppLater" style="margin-top:10px">Später</button></div>`;
+    document.body.appendChild(bg);
+    const close = ()=>{ try{ localStorage.setItem("fr_push_pop","1"); }catch{} bg.classList.add("out"); setTimeout(()=>bg.remove(), 250); };
+    bg.querySelector("#ppLater").onclick = close;
+    bg.querySelector("#ppVid").onclick = ()=>{ close(); setTimeout(remindVideoSheet, 300); };
+    bg.querySelector("#ppOn")?.addEventListener("click", async ()=>{ try{ await pushEnable(1); toast("🔔 Erinnerungen sind an – morgens um 8 und abends um 18:30, wenn was fehlt"); close(); }catch(err){ toast(err.message); } });
+    return true;
+  }catch{ return false; }
+}
 function maybeShowNews(){
   let seen = null; try{ seen = localStorage.getItem("fr_news"); }catch{}
-  if (seen === NEWS_ID || !acc || $("#annBg") || berlinToday() < START || trackOf() === "total") return false;
+  if (seen === NEWS_ID || !acc || $("#annBg") || berlinToday() < START || trackOf() === "total"){ if (seen === NEWS_ID || trackOf() === "total") maybeShowPushPop(); return false; }
   const bg = document.createElement("div"); bg.id = "annBg"; bg.innerHTML = `<div id="ann">${newsHtml()}</div>`; document.body.appendChild(bg);
-  bg.querySelector("#annOk").onclick = ()=>{ try{ localStorage.setItem("fr_news", NEWS_ID); }catch{} bg.classList.add("out"); setTimeout(()=>bg.remove(), 250); };
+  bg.querySelector("#annOk").onclick = ()=>{ try{ localStorage.setItem("fr_news", NEWS_ID); }catch{} bg.classList.add("out"); setTimeout(()=>{ bg.remove(); maybeShowPushPop(); }, 260); };
   return true;
 }
 function maybeShowAnn(){
