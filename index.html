@@ -515,7 +515,7 @@ details p,details ol{color:var(--muted);line-height:1.6;font-size:15px}
 /* ---------- Konfiguration ---------- */
 const SB_URL = "https://jrbfbvlwngvjzddfuesu.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYmZidmx3bmd2anpkZGZ1ZXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTcxMjEsImV4cCI6MjEwODMzMzEyMX0.7v59xZeH4St1ACQAsv7MlcIbVaAfiyT-5kbtihiMVqw";
-const APP_VERSION = "98";
+const APP_VERSION = "99";
 const START = "2026-11-15", END = "2026-12-24", DAYS = 40, GRACE = 3, JOKERS = 3;
 let LIMIT = 30;
 const EMOJI_GROUPS = [
@@ -1160,17 +1160,18 @@ function wrongView(text, apps){
   return null;
 }
 function loadImage(file){ return new Promise((res,rej)=>{ const url=URL.createObjectURL(file); const im=new Image(); im.onload=()=>res({im,url}); im.onerror=rej; im.src=url; }); }
-function ocrCanvas(im, boost=false, maxW=1400, soft=false){
+function ocrCanvas(im, boost=false, maxW=1400, soft=false, hi=false){
   // „soft“: auf ~1100 px Breite bringen (kleine Bilder werden vergrößert) und nur sanft Kontrast anheben –
   // liest Dunkelmodus-Screenshots (graue Schrift auf Schwarz) viel zuverlässiger als die harte Kurve
-  const scale = soft ? Math.min(2.5, 1100/im.width) : Math.min(1, maxW/im.width), c = document.createElement("canvas");
+  // „hi“: stark vergrößert (~1800 px) + kräftiger Kontrast – für winzige graue Zeiten (iPad, helle Listen)
+  const scale = hi ? Math.min(4, 1800/im.width) : soft ? Math.min(2.5, 1100/im.width) : Math.min(1, maxW/im.width), c = document.createElement("canvas");
   c.width = Math.round(im.width*scale); c.height = Math.round(im.height*scale);
   const g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(im,0,0,c.width,c.height);
   const px = g.getImageData(0,0,c.width,c.height), d = px.data;
   let sum=0; for (let i=0;i<d.length;i+=16) sum += (d[i]+d[i+1]+d[i+2])/3;
   const dark = sum/(d.length/16) < 110; // Dark Mode → invertieren
   // Dark Mode oder „boost“: Kontrast-Kurve, damit kleine graue Zeiten („20min“) dunkel genug für die Texterkennung werden
-  const gamma = soft ? 1.6 : dark ? 3 : boost ? 2.2 : 1;
+  const gamma = hi ? 2.2 : soft ? 1.6 : dark ? 3 : boost ? 2.2 : 1;
   for (let i=0;i<d.length;i+=4){ let v=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; if(dark) v=255-v; if(gamma!==1) v=255*Math.pow(v/255,gamma); d[i]=d[i+1]=d[i+2]=v; }
   g.putImageData(px,0,0); c.dark = dark; return c;
 }
@@ -1192,6 +1193,10 @@ async function ocrRead(w, im){
   const got = parseScreenTime(text).map(a=>a.name);
   if (seen.some(n=>!got.includes(n))){
     try{ text += "\n" + ((await w.recognize(ocrCanvas(im, false, 700))).data.text || ""); }catch(e){ console.warn(e); }
+  }
+  // Immer noch eine App ohne Zeit? → letzter Versuch: stark vergrößert mit kräftigem Kontrast
+  if (missingApp(text)){
+    try{ text += "\n" + ((await w.recognize(ocrCanvas(im, false, 1400, false, true))).data.text || ""); }catch(e){ console.warn(e); }
   }
   return text;
 }
@@ -1503,7 +1508,7 @@ function fakeSignals(files, loaded, text, ocrOk, apps, day, isT=false, total=0){
   if (ocrOk && ref < berlinToday() && !shownDate(text) && text.split(/\n/).some(l=>{ const t=l.trim(); return /^\W{0,4}(heute|today)\b/i.test(t) && !/aktualis|updated|anzeigen|show|bisher|so far/i.test(t); }))
     out.push("Screenshot zeigt „Heute“ – er wurde am selben Tag gemacht, der Tag war noch nicht vorbei");
   // Nur bei EINEM Bild prüfen: Wer mehrere Ausschnitte hochlädt (z. B. Diagramm + App-Liste), schneidet bewusst zu – das ist erlaubt
-  if (loaded.length === 1 && loaded[0].im.height < loaded[0].im.width*1.25) out.push("Bild ist stark zugeschnitten oder kein Handy-Screenshot");
+  if (loaded.length === 1 && loaded[0].im.height < loaded[0].im.width*1.0) out.push("Bild ist stark zugeschnitten oder kein Handy-Screenshot");   // Tablets (iPad) sind fast quadratisch – erst Querformat ist verdächtig
   return out;
 }
 function stitch(ims){
@@ -2454,6 +2459,10 @@ function setLook(k,v){ const l = getLook(); l[k]=v; try { localStorage.setItem("
 
 /* ---------- Was ist neu ---------- */
 const CHANGELOG = [
+  { v:"99", date:"23. November", items:[
+    "🤖 KI: Extra-Durchgang für winzige graue Zeiten (z. B. iPad, helle Listen) – liest TikTok & Co. jetzt öfter",
+    "📱 iPad-Screenshots gelten nicht mehr als „zugeschnitten“"
+  ]},
   { v:"98", date:"22. November", items:[
     "🔗 Passwort zurücksetzen per Link: Admin schickt einen Link, die Person legt selbst ein neues Passwort fest – niemand sonst sieht es, alle Daten bleiben"
   ]},
